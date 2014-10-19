@@ -1,0 +1,63 @@
+package model;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import model.syntaxTree.MyTreeNode;
+
+// May be a graph, but force it to be a tree
+public class DependTree {
+	public ArrayList<MyTreeNode> vertexes;
+	
+	public ArrayList<Depend> edges;
+
+	public HashMap<Integer, MyTreeNode> vertexMap;
+	
+	public MyTreeNode root;
+	
+	public DependTree (ArrayList<Depend> edges) {
+		this.vertexes = new ArrayList<MyTreeNode>();
+		this.edges = new ArrayList<Depend>();
+		this.vertexMap = new HashMap<Integer, MyTreeNode>();
+		this.edges = edges;
+		for(Depend edge : edges) {
+			int parent = edge.first;
+			int child = edge.second;
+			String type = edge.type;
+			MyTreeNode pNode = vertexMap.get(parent);
+			if(pNode==null) {
+				pNode = new MyTreeNode();
+				pNode.value = Integer.toString(parent);
+				vertexMap.put(parent, pNode);
+				if(parent==0) {
+					root = pNode;
+				}
+			}
+			MyTreeNode cNode = vertexMap.get(child);
+			if(cNode==null) {
+				cNode = new MyTreeNode();
+				cNode.value = Integer.toString(child);
+				vertexMap.put(child, cNode);
+			}
+			if(cNode.parent!=null && parent!=0) {
+				continue;
+			}
+			
+			boolean loop = false;
+			MyTreeNode pop = pNode.parent;
+			while(pop!=null) {
+				if(pop.value==cNode.value) {
+					loop = true;
+					break;
+				}
+				pop = pop.parent;
+			}
+			if(!loop) {
+				pNode.addChild(cNode);
+			}
+			cNode.backEdge = type;
+		}
+	}
+	
+	
+}
