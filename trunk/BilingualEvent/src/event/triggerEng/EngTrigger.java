@@ -109,6 +109,7 @@ public class EngTrigger {
 			features.add("synonym_" + synonym);	
 		}
 		features.add("nomlex_" + Common.getNomlex(pr.lemmas.get(leftIndex)));
+//		features.add("brown_" + Common.getBrownCluster(pr.words.get(leftIndex)));
 		
 //		for (Depend dep : pr.depends) {
 //			if (dep.first == leftIndex) {

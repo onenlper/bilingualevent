@@ -32,6 +32,20 @@ public class Common {
 
 	private static HashMap<String, String> nomlex;
 	
+	private static HashMap<String, String> brownCluster;
+	
+	public static String getBrownCluster(String str) {
+		if(brownCluster==null) {
+			brownCluster = new HashMap<String, String>();
+		}
+		ArrayList<String> lines = Common.getLines("/users/yzcchen/tool/brownCluster/brown-cluster-master/brown_input-c500-p1.out/paths");
+		for(String line : lines) {
+			String tks[] = line.split("\\s+");
+			brownCluster.put(tks[1], tks[0]);
+		}
+		return brownCluster.get(str);
+	}
+	
 	public static String getNomlex(String str) {
 		if(nomlex==null) {
 			nomlex = new HashMap<String, String>();
@@ -43,16 +57,16 @@ public class Common {
 					String orth = line.substring(k+1, line.length()-1);
 					nomlex.put(orth, orth);
 					
-					while(i+1<lines.size() && lines.get(i+1).startsWith("(NOM")) {
+					while(i+1<lines.size() && !lines.get(i+1).startsWith("(NOM")) {
 						line = lines.get(i+1);
-						if(line.trim().startsWith(":PLURAL")) {
+						if(line.trim().startsWith(":PLURAL \"")) {
 							k = line.indexOf("\"");
 							if(k!=-1) {
 								String plura = line.substring(k+1, line.length()-1);
 								nomlex.put(plura, orth);
 							}
 						}
-						if(line.trim().startsWith(":VERB")) {
+						if(line.trim().startsWith(":VERB \"")) {
 							k = line.indexOf("\"");
 							if(k!=-1) {
 								String VERB = line.substring(k+1, line.length()-1);
@@ -65,7 +79,7 @@ public class Common {
 			}
 		}
 		if(nomlex.containsKey(str))	{
-			return nomlex.remove(str);
+			return nomlex.get(str);
 		} else {
 			return str;
 		}
