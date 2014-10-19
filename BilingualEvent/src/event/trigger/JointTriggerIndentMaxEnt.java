@@ -1,26 +1,20 @@
 package event.trigger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-
-import event.preProcess.ChineseTriggerIndent;
 
 import model.ACEChiDoc;
 import model.EntityMention;
 import model.EventMention;
 import model.EventMentionArgument;
-import model.Feature;
 import model.ParseResult;
 import model.SemanticRole;
 import model.syntaxTree.MyTreeNode;
 import util.ChineseUtil;
 import util.Common;
 import util.Util;
+import event.preProcess.ChineseTriggerIndent;
 
 public class JointTriggerIndentMaxEnt {
 

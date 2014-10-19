@@ -2,13 +2,11 @@ package event.postProcess;
 
 import java.util.ArrayList;
 
-import event.preProcess.ChineseTriggerIndent;
-import event.trigger.TriggerIndent;
-
 import model.ACEChiDoc;
 import model.EventMention;
 import util.Common;
 import util.Util;
+import event.preProcess.ChineseTriggerIndent;
 
 public class TriggerEvaluate {
 	public static void main(String args[]) {

@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import model.ACEChiDoc;
-import model.Depend;
 import model.EntityMention;
 import model.EventMention;
 import model.EventMentionArgument;

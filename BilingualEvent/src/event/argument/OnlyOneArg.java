@@ -1,17 +1,15 @@
 package event.argument;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import event.postProcess.CrossValidation;
 
 import model.ACEChiDoc;
 import model.EventMention;
 import model.EventMentionArgument;
 import util.Common;
 import util.Util;
+import event.postProcess.CrossValidation;
 
 public class OnlyOneArg {
 	public static void main(String args[]) {
