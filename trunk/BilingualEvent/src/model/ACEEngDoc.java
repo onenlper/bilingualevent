@@ -92,14 +92,26 @@ public class ACEEngDoc extends ACEDoc {
 	
 	public static void main(String args[]) {
 //		check();
-		ArrayList<String> files = Common.getLines("ACE_English_test0");
+		ArrayList<String> files = Common.getLines("ACE_English_all");
 		double all = 0;
 		double single = 0;
 		
 		int ss = 0;
+		
+		ArrayList<String> lines = new ArrayList<String>();
+		
 		for(String file : files) {
 			ACEDoc doc = new ACEEngDoc(file);
-			Common.outputLine(doc.content, file + ".source");
+			
+			for(ParseResult pr : doc.parseReults) {
+				StringBuilder sb = new StringBuilder();
+				for(String word : pr.words) {
+					sb.append(word).append(" ");
+				}
+				lines.add(sb.toString().trim());
+			}
+			
+//			Common.outputLine(doc.content, file + ".source");
 //			for(EventMention em : doc.goldEventMentions) {
 //				if(em.anchor.trim().split("\\s+").length==1) {
 //					single += 1;
@@ -108,7 +120,7 @@ public class ACEEngDoc extends ACEDoc {
 //				}
 //			}
 //			all += doc.goldEventMentions.size();
-			ss += doc.parseReults.size();
+//			ss += doc.parseReults.size();
 //			for(EventMention em: doc.goldEventMentions) {
 //				if(em.anchor.contains("-") || (em.anchorStart!=0 && doc.content.charAt(em.anchorStart-1)=='-')) {
 //					System.out.println(em.anchor);
@@ -116,7 +128,8 @@ public class ACEEngDoc extends ACEDoc {
 //			}
 		}
 //		System.out.println(single/all);
-		System.out.println(ss);
+//		System.out.println(ss);
+		Common.outputLines(lines, "brown_input");
 	}
 
 	private static void check() {

@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import event.preProcess.ChineseTriggerIndent;
-
 import model.ACEChiDoc;
 import model.EntityMention;
 import model.EventMention;

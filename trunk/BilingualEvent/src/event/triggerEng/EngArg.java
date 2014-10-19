@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import model.ACEChiDoc;
 import model.ACEDoc;
 import model.ACEEngDoc;
 import model.EntityMention;
@@ -12,7 +11,6 @@ import model.EventMention;
 import model.EventMentionArgument;
 import model.Feature;
 import model.ParseResult;
-import model.SemanticRole;
 import model.syntaxTree.MyTreeNode;
 import util.ChineseUtil;
 import util.Common;

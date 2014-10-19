@@ -1,11 +1,14 @@
 package util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,8 +16,101 @@ import java.util.HashSet;
 
 import model.syntaxTree.MyTree;
 import model.syntaxTree.MyTreeNode;
+import edu.mit.jwi.Dictionary;
+import edu.mit.jwi.IDictionary;
+import edu.mit.jwi.item.IIndexWord;
+import edu.mit.jwi.item.ISynset;
+import edu.mit.jwi.item.IWord;
+import edu.mit.jwi.item.IWordID;
+import edu.mit.jwi.item.POS;
 
 public class Common {
+
+	public static String wordnet = "/usr/local/WordNet-3.0/";
+
+	static private IDictionary dict = null;
+
+	private static HashMap<String, String> nomlex;
+	
+	public static String getNomlex(String str) {
+		if(nomlex==null) {
+			nomlex = new HashMap<String, String>();
+			ArrayList<String> lines = Common.getLines("NOMLEX-2001.reg");
+			for(int i=0;i<lines.size();i++) {
+				String line = lines.get(i);
+				if(line.startsWith("(NOM :ORTH")) {
+					int k = line.indexOf("\"");
+					String orth = line.substring(k+1, line.length()-1);
+					nomlex.put(orth, orth);
+					
+					while(i+1<lines.size() && lines.get(i+1).startsWith("(NOM")) {
+						line = lines.get(i+1);
+						if(line.trim().startsWith(":PLURAL")) {
+							k = line.indexOf("\"");
+							if(k!=-1) {
+								String plura = line.substring(k+1, line.length()-1);
+								nomlex.put(plura, orth);
+							}
+						}
+						if(line.trim().startsWith(":VERB")) {
+							k = line.indexOf("\"");
+							if(k!=-1) {
+								String VERB = line.substring(k+1, line.length()-1);
+								nomlex.put(VERB, orth);
+							}
+						}
+						i++;
+					}
+				}
+			}
+		}
+		if(nomlex.containsKey(str))	{
+			return nomlex.remove(str);
+		} else {
+			return str;
+		}
+	}
+	
+	public static HashSet<String> getSynonyms(String str, String pos) {
+		if (dict == null) {
+			String path = Common.wordnet + File.separator + "dict";
+			URL url;
+			try {
+				url = new URL("file", null, path);
+				dict = new Dictionary(url);
+				dict.open();
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		POS p = null;
+		if(pos.equalsIgnoreCase("JJ")) {
+			p = POS.ADJECTIVE;
+		} else if(pos.equalsIgnoreCase("RB")) {
+			p = POS.ADVERB;
+		} else if(pos.startsWith("N") || pos.startsWith("PRP")) {
+			p = POS.NOUN;
+		} else if(pos.startsWith("V")) {
+			p = POS.VERB;
+		}
+		HashSet<String> synonyms = new HashSet<String>();
+		if(p!=null) {
+			IIndexWord idxWord = dict.getIndexWord(str, p);
+			if(idxWord!=null) {
+				IWordID wordID = idxWord.getWordIDs().get(0); // 1st meaning
+				IWord word = dict.getWord(wordID);
+				ISynset synset = word.getSynset();
+				for (IWord w : synset.getWords()) {
+					synonyms.add(w.getLemma());
+				}
+			}
+		}
+		return synonyms;
+	}
 
 	public static void bangErrorPOS(String message) {
 		try {
@@ -25,11 +121,12 @@ public class Common {
 			System.exit(1);
 		}
 	}
-	
+
 	public static String concat(String antHead, String mHead) {
-		return antHead.compareTo(mHead)>0?(antHead+"_"+mHead):(mHead+"_"+antHead);		
+		return antHead.compareTo(mHead) > 0 ? (antHead + "_" + mHead) : (mHead
+				+ "_" + antHead);
 	}
-	
+
 	public static void addKey(HashMap<String, Integer> maps, String key) {
 		if (maps.containsKey(key)) {
 			int k = maps.get(key);
@@ -38,7 +135,7 @@ public class Common {
 			maps.put(key, 1);
 		}
 	}
-	
+
 	public static void pause(Object message) {
 		try {
 			System.err.println("Pause: " + message.toString());
@@ -59,10 +156,10 @@ public class Common {
 			e.printStackTrace();
 		}
 	}
-	
+
 	// cache, store file content
 	public static HashMap<String, ArrayList<String>> fileCache = new HashMap<String, ArrayList<String>>();
-	
+
 	// whether the first String includes the second
 	public static boolean engWordInclude(String str1, String str2) {
 		String token1[] = str1.split("\\s+");
@@ -71,14 +168,14 @@ public class Common {
 		HashSet<String> set2 = new HashSet<String>();
 		set1.addAll(Arrays.asList(token1));
 		set2.addAll(Arrays.asList(token2));
-		for(String  s2 : set2) {
-			if(!set1.contains(s2)) {
+		for (String s2 : set2) {
+			if (!set1.contains(s2)) {
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	public static void outputHashSet(HashSet<String> set, String filename) {
 		try {
 			FileWriter fw = new FileWriter(filename);
@@ -118,7 +215,8 @@ public class Common {
 	public static int PRONOUN_WHO = 10;
 
 	public static int getPronounType(String str) {
-		if (str.equals("我") || str.equals("俺") || str.equals("自己") || str.equals("本身") || str.equals("本人")) {
+		if (str.equals("我") || str.equals("俺") || str.equals("自己")
+				|| str.equals("本身") || str.equals("本人")) {
 			return PRONOUN_ME;
 		} else if (str.equals("你") || str.equals("您")) {
 			return PRONOUN_YOU;
@@ -126,8 +224,8 @@ public class Common {
 			return PRONOUN_HE;
 		} else if (str.equals("她")) {
 			return PRONOUN_SHE;
-		} else if (str.equals("它") || str.equals("这") || str.equals("那") || str.equals("那里") || str.equals("其它")
-				|| str.equals("其")) {
+		} else if (str.equals("它") || str.equals("这") || str.equals("那")
+				|| str.equals("那里") || str.equals("其它") || str.equals("其")) {
 			return PRONOUN_IT;
 		} else if (str.equals("他们") || str.equals("双方")) {
 			return PRONOUN_HE_S;
@@ -137,7 +235,8 @@ public class Common {
 			return PRONOUN_SHE_S;
 		} else if (str.equals("你们")) {
 			return PRONOUN_YOU_S;
-		} else if (str.equals("它们") || str.equals("这些") || str.equals("那些") || str.equals("一些")) {
+		} else if (str.equals("它们") || str.equals("这些") || str.equals("那些")
+				|| str.equals("一些")) {
 			return PRONOUN_IT_S;
 		} else if (str.equals("谁") || str.equals("什么") || str.equals("哪个")) {
 			return PRONOUN_WHO;
@@ -155,7 +254,7 @@ public class Common {
 		}
 		return true;
 	}
-	
+
 	public static boolean isEnglishAbbreviation(String str1, String str2) {
 		return false;
 	}
@@ -170,18 +269,21 @@ public class Common {
 				for (String token : tokens) {
 					abbreHash.put(token, i);
 					if (token.endsWith("省") || token.endsWith("市")) {
-						abbreHash.put(token.substring(0, token.length() - 1), i);
+						abbreHash
+								.put(token.substring(0, token.length() - 1), i);
 					}
 				}
 			}
 		}
 		if (abbreHash.containsKey(str1) && abbreHash.containsKey(str2)) {
-			return (abbreHash.get(str1).intValue() == abbreHash.get(str2).intValue());
+			return (abbreHash.get(str1).intValue() == abbreHash.get(str2)
+					.intValue());
 		} else {
-			String l = str1.length()<str2.length()?str2:str1;
-			String s = str1.length()>=str2.length()?str2:str1;
+			String l = str1.length() < str2.length() ? str2 : str1;
+			String s = str1.length() >= str2.length() ? str2 : str1;
 			if (l.substring(0, l.length() - 1).equalsIgnoreCase(s)
-					&& (l.charAt(l.length() - 1) == '省' || l.charAt(l.length() - 1) == '市')) {
+					&& (l.charAt(l.length() - 1) == '省' || l
+							.charAt(l.length() - 1) == '市')) {
 				return true;
 			} else {
 				return false;
@@ -242,18 +344,18 @@ public class Common {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-//			fileCache.put(filename, lines);
+			// fileCache.put(filename, lines);
 			return lines;
 		}
 	}
-	
+
 	public static String getLine(String filename) {
 		StringBuilder sb = new StringBuilder();
 		try {
 			BufferedReader br;
 			br = new BufferedReader(new FileReader(filename));
 			String line;
-			while((line=br.readLine())!=null){
+			while ((line = br.readLine()) != null) {
 				sb.append(line).append("\n");
 			}
 			return sb.toString();
@@ -266,7 +368,7 @@ public class Common {
 		}
 		return sb.toString();
 	}
-	
+
 	public static void outputLine(String line, String filename) {
 		FileWriter fw;
 		try {
@@ -293,7 +395,7 @@ public class Common {
 		}
 	}
 
-	//	
+	//
 	// public static void outputHashMap(HashMap<String, Integer> map,
 	// String filename) {
 	// try {
@@ -307,13 +409,14 @@ public class Common {
 	// e.printStackTrace();
 	// }
 	// }
-	//	
-	
-	public static void outputHashMap7(HashMap<String, HashMap<String, Double>> mapses, String filename) {
+	//
+
+	public static void outputHashMap7(
+			HashMap<String, HashMap<String, Double>> mapses, String filename) {
 		ArrayList<String> outputs = new ArrayList<String>();
-		for(String key : mapses.keySet()) {
+		for (String key : mapses.keySet()) {
 			HashMap<String, Double> prob = mapses.get(key);
-			for(String k : prob.keySet()) {
+			for (String k : prob.keySet()) {
 				double p = prob.get(k);
 				StringBuilder sb = new StringBuilder();
 				sb.append(key).append("_").append(k).append(" ").append(p);
@@ -322,57 +425,59 @@ public class Common {
 		}
 		Common.outputLines(outputs, filename);
 	}
-	
-	public static HashMap<String, HashMap<String, Double>> readHashMap7(String filename) {
+
+	public static HashMap<String, HashMap<String, Double>> readHashMap7(
+			String filename) {
 		HashMap<String, HashMap<String, Double>> mapses = new HashMap<String, HashMap<String, Double>>();
 		ArrayList<String> lines = Common.getLines(filename);
-		for(String line : lines) {
+		for (String line : lines) {
 			int a = line.indexOf(" ");
-			double prob = Double.valueOf(line.substring(a+1));
+			double prob = Double.valueOf(line.substring(a + 1));
 			int b = line.indexOf("_");
 			String trigger = line.substring(0, b);
-			String combine = line.substring(b+1, a);
-			
+			String combine = line.substring(b + 1, a);
+
 			HashMap<String, Double> map = mapses.get(trigger);
-			if(map==null) {
+			if (map == null) {
 				map = new HashMap<String, Double>();
 				mapses.put(trigger, map);
 			}
 			map.put(combine, prob);
 		}
-		
+
 		return mapses;
 	}
-	
-	public static void outputHashMap6(HashMap<String, HashSet<String>> maps, String filename) {
+
+	public static void outputHashMap6(HashMap<String, HashSet<String>> maps,
+			String filename) {
 		ArrayList<String> lines = new ArrayList<String>();
-		for(String key : maps.keySet()) {
+		for (String key : maps.keySet()) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(key).append(" ");
-			for(String value : maps.get(key)) {
+			for (String value : maps.get(key)) {
 				sb.append(value).append(" ");
 			}
 			lines.add(sb.toString().trim());
 		}
-		
+
 		Common.outputLines(lines, filename);
 	}
-	
+
 	public static HashMap<String, HashSet<String>> readFile2Map6(String filename) {
 		HashMap<String, HashSet<String>> maps = new HashMap<String, HashSet<String>>();
 		ArrayList<String> lines = Common.getLines(filename);
-		for(String line : lines) {
+		for (String line : lines) {
 			String tokens[] = line.split("\\s+");
 			String key = tokens[0];
 			HashSet<String> values = new HashSet<String>();
-			for(int k=1;k<tokens.length;k++) {
+			for (int k = 1; k < tokens.length; k++) {
 				values.add(tokens[k]);
 			}
 			maps.put(key, values);
 		}
 		return maps;
 	}
-	
+
 	public static void outputHashMap(HashMap map, String filename) {
 		try {
 			FileWriter fw = new FileWriter(filename);
@@ -387,7 +492,8 @@ public class Common {
 					}
 					fw.write(sb.toString().trim() + "\n");
 				} else {
-					fw.write(str.toString() + " " + map.get(str).toString() + "\n");
+					fw.write(str.toString() + " " + map.get(str).toString()
+							+ "\n");
 				}
 			}
 			fw.close();
@@ -473,11 +579,12 @@ public class Common {
 					continue;
 				}
 				int pos = line.lastIndexOf(' ');
-				if(pos==-1) {
+				if (pos == -1) {
 					pos = line.lastIndexOf('\t');
 				}
 				String str = line.substring(0, pos);
-				int value = Integer.valueOf(line.substring(pos + 1, line.length()));
+				int value = Integer.valueOf(line.substring(pos + 1,
+						line.length()));
 				map.put(str, value);
 			}
 			br.close();
@@ -527,7 +634,8 @@ public class Common {
 			while ((line = br.readLine()) != null) {
 				int pos = line.lastIndexOf(' ');
 				String str = line.substring(0, pos);
-				double value = Double.valueOf(line.substring(pos + 1, line.length()));
+				double value = Double.valueOf(line.substring(pos + 1,
+						line.length()));
 				map.put(str, value);
 			}
 			br.close();
@@ -541,7 +649,7 @@ public class Common {
 		}
 		return map;
 	}
-	
+
 	public static HashMap<String, String> readFile2Map2(String filename) {
 		HashMap<String, String> map = null;
 		try {
@@ -565,8 +673,7 @@ public class Common {
 		}
 		return map;
 	}
-	
-	
+
 	public static HashMap<String, String> readFile2Map2_(String filename) {
 		HashMap<String, String> map = null;
 		try {
@@ -653,8 +760,8 @@ public class Common {
 		return tree;
 	}
 
-	
-	public static HashMap<String, Integer> combineHashMap(HashMap<String, Integer> total, HashMap<String, Integer> map) {
+	public static HashMap<String, Integer> combineHashMap(
+			HashMap<String, Integer> total, HashMap<String, Integer> map) {
 		for (String str : map.keySet()) {
 			int value = map.get(str);
 			if (total.containsKey(str)) {
@@ -687,7 +794,8 @@ public class Common {
 
 	// determine if this is a stop sign punctuation
 	public static boolean isPun(char c) {
-		if (c == '。' || c == '？' || c == '！' || c == '．' || c == '：' || c == '，' || c == '；')
+		if (c == '。' || c == '？' || c == '！' || c == '．' || c == '：'
+				|| c == '，' || c == '；')
 			return true;
 		return false;
 	}
@@ -769,7 +877,8 @@ public class Common {
 
 	public static void loadSemanticDic() {
 		semanticDic = new HashMap<String, String[]>();
-		ArrayList<String> lines = Common.getLines(dicPath + "TongyiciCiLin_8.txt");
+		ArrayList<String> lines = Common.getLines(dicPath
+				+ "TongyiciCiLin_8.txt");
 		for (String line : lines) {
 			String tokens[] = line.split("\\s+");
 			String word = tokens[0];
@@ -782,12 +891,12 @@ public class Common {
 	}
 
 	public static String[] getSemantic(String head) {
-		if(semanticDic==null) {
+		if (semanticDic == null) {
 			loadSemanticDic();
 		}
 		return semanticDic.get(head);
 	}
-	
+
 	// determine whether is person, 1=true, -1=false, 0=NA
 	public static int isSemanticPerson(String str) {
 		String[] codes = semanticDic.get(str);
@@ -926,7 +1035,8 @@ public class Common {
 					cost = 1;
 				}
 				// Step 6
-				d[i][j] = Minimum(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+				d[i][j] = Minimum(d[i - 1][j] + 1, d[i][j - 1] + 1,
+						d[i - 1][j - 1] + cost);
 			}
 		}
 		// Step 7

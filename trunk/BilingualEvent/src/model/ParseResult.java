@@ -2,7 +2,7 @@ package model;
 
 import java.util.ArrayList;
 
-import model.syntaxTree.*;;
+import model.syntaxTree.MyTree;
 
 public class ParseResult {
 	

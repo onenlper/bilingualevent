@@ -8,8 +8,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import util.Common;
-
 public class SourceReader extends DefaultHandler {
 	ACEDoc document;
 

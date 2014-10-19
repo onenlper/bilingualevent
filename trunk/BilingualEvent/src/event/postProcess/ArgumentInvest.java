@@ -3,12 +3,11 @@ package event.postProcess;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import util.Common;
-import util.Util;
-
 import model.ACEChiDoc;
 import model.EventMention;
 import model.EventMentionArgument;
+import util.Common;
+import util.Util;
 
 public class ArgumentInvest {
 	public static void main(String args[]) {

@@ -3,11 +3,10 @@ package event.postProcess;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import util.Common;
-import util.Util;
-
 import model.ACEChiDoc;
 import model.EventMention;
+import util.Common;
+import util.Util;
 
 public class TriggerIndentEval {
 

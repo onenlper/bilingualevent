@@ -10,7 +10,6 @@ import java.util.List;
 import model.ACEChiDoc;
 import model.ACEDoc;
 import model.ACEEngDoc;
-import model.Depend;
 import model.EntityMention;
 import model.EventMention;
 import model.EventMentionArgument;
@@ -34,7 +33,7 @@ public class EngTrigger {
 		}
 		return mentions;
 	}
-
+	
 	public String buildFeature(EventMention em, ACEDoc document, String label) {
 		String trigger = em.getAnchor();
 		int position[] = ChineseUtil.findParseFilePosition2(
@@ -104,99 +103,105 @@ public class EngTrigger {
 			features.add("BiPOS_" + i + "_" + pos1 + "#" + pos2);
 		}
 		features.add("lemma_" + pr.lemmas.get(leftIndex));
+		features.add("posTag_" + pr.posTags.get(leftIndex));
 
+		for(String synonym : Common.getSynonyms(pr.words.get(leftIndex), pr.posTags.get(leftIndex))) {
+			features.add("synonym_" + synonym);	
+		}
+		features.add("nomlex_" + Common.getNomlex(pr.lemmas.get(leftIndex)));
+		
 //		for (Depend dep : pr.depends) {
 //			if (dep.first == leftIndex) {
 //				features.add("depWord_" + pr.words.get(dep.second));
 //				features.add("firstDepType_" + dep.type);
 //			}
-//			if (dep.second == rightIndex) {
+//			if (dep.second == leftIndex) {
 //				features.add("govWord_" + pr.words.get(dep.first));
 //				features.add("secondDepType_" + dep.type);
 //			}
 //		}
-
-		features.add(trigger);
-		features.add(pos);
-		features.add(previousW + "_" + word);
-		features.add(word + "_" + nextW);
-		features.add(previousPOS + "_" + pos);
-		features.add(pos + "_" + nextPOS);
-		features.add(Integer.toString(leaf.getAncestors().size()));
-		features.add(path);
-		features.add(path2);
-
-		features.add(leaf.parent.parent.value);
-		features.add(leaf.parent.parent.productionRule());
-
-		ArrayList<EntityMention> leftNearbyMentions = this.getEntities(
-				document, positions.get(1)[0], em.getAnchorStart());
-
-		int shortest = Integer.MAX_VALUE;
-		String type1 = "";
-		String extent = "";
-		for (EntityMention mention : leftNearbyMentions) {
-			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
-					position[0], position[1], position[3]);
-			int distance = this.getSyntaxTreeDistance(leaf, node);
-			if (distance < shortest) {
-				shortest = distance;
-				type1 = mention.entity.getType();
-				extent = mention.extent.replace(" ", "").replace("\n", "");
-			}
-		}
-		features.add(type1);
-
-		shortest = Integer.MAX_VALUE;
-		String type2 = "";
-		for (EntityMention mention : leftNearbyMentions) {
-			int distance = 0;
-			if (mention.end < em.getAnchorStart()) {
-				distance = em.getAnchorStart() - mention.end;
-			} else {
-				distance = mention.start - em.getAnchorEnd();
-			}
-			if (distance < shortest) {
-				shortest = distance;
-				type2 = mention.entity.getType();
-				extent = mention.extent.replace(" ", "").replace("\n", "");
-			}
-		}
-		features.add(type2);
-
-		ArrayList<EntityMention> rightNearbyMentions = this.getEntities(
-				document, em.getAnchorEnd() + 1,
-				positions.get(positions.size() - 1)[1]);
-		shortest = Integer.MAX_VALUE;
-		type1 = "null";
-		for (EntityMention mention : rightNearbyMentions) {
-			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
-					position[0], position[1], position[3]);
-			int distance = this.getSyntaxTreeDistance(leaf, node);
-			if (distance < shortest) {
-				shortest = distance;
-				type1 = mention.entity.getType();
-				extent = mention.extent.replace(" ", "").replace("\n", "");
-			}
-		}
-		features.add(type1);
-
-		shortest = Integer.MAX_VALUE;
-		type2 = "null";
-		for (EntityMention mention : rightNearbyMentions) {
-			int distance = 0;
-			if (mention.end < em.getAnchorStart()) {
-				distance = em.getAnchorStart() - mention.end;
-			} else {
-				distance = mention.start - em.getAnchorEnd();
-			}
-			if (distance < shortest) {
-				shortest = distance;
-				type2 = mention.entity.getType();
-				extent = mention.extent.replace(" ", "").replace("\n", "");
-			}
-		}
-		features.add(type2);
+//
+//		features.add(trigger);
+//		features.add(pos);
+//		features.add(previousW + "_" + word);
+//		features.add(word + "_" + nextW);
+//		features.add(previousPOS + "_" + pos);
+//		features.add(pos + "_" + nextPOS);
+//		features.add(Integer.toString(leaf.getAncestors().size()));
+//		features.add(path);
+//		features.add(path2);
+//
+//		features.add(leaf.parent.parent.value);
+//		features.add(leaf.parent.parent.productionRule());
+//
+//		ArrayList<EntityMention> leftNearbyMentions = this.getEntities(
+//				document, positions.get(1)[0], em.getAnchorStart());
+//
+//		int shortest = Integer.MAX_VALUE;
+//		String type1 = "";
+//		String extent = "";
+//		for (EntityMention mention : leftNearbyMentions) {
+//			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
+//					position[0], position[1], position[3]);
+//			int distance = this.getSyntaxTreeDistance(leaf, node);
+//			if (distance < shortest) {
+//				shortest = distance;
+//				type1 = mention.entity.getType();
+//				extent = mention.extent.replace(" ", "").replace("\n", "");
+//			}
+//		}
+//		features.add(type1);
+//
+//		shortest = Integer.MAX_VALUE;
+//		String type2 = "";
+//		for (EntityMention mention : leftNearbyMentions) {
+//			int distance = 0;
+//			if (mention.end < em.getAnchorStart()) {
+//				distance = em.getAnchorStart() - mention.end;
+//			} else {
+//				distance = mention.start - em.getAnchorEnd();
+//			}
+//			if (distance < shortest) {
+//				shortest = distance;
+//				type2 = mention.entity.getType();
+//				extent = mention.extent.replace(" ", "").replace("\n", "");
+//			}
+//		}
+//		features.add(type2);
+//
+//		ArrayList<EntityMention> rightNearbyMentions = this.getEntities(
+//				document, em.getAnchorEnd() + 1,
+//				positions.get(positions.size() - 1)[1]);
+//		shortest = Integer.MAX_VALUE;
+//		type1 = "null";
+//		for (EntityMention mention : rightNearbyMentions) {
+//			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
+//					position[0], position[1], position[3]);
+//			int distance = this.getSyntaxTreeDistance(leaf, node);
+//			if (distance < shortest) {
+//				shortest = distance;
+//				type1 = mention.entity.getType();
+//				extent = mention.extent.replace(" ", "").replace("\n", "");
+//			}
+//		}
+//		features.add(type1);
+//
+//		shortest = Integer.MAX_VALUE;
+//		type2 = "null";
+//		for (EntityMention mention : rightNearbyMentions) {
+//			int distance = 0;
+//			if (mention.end < em.getAnchorStart()) {
+//				distance = em.getAnchorStart() - mention.end;
+//			} else {
+//				distance = mention.start - em.getAnchorEnd();
+//			}
+//			if (distance < shortest) {
+//				shortest = distance;
+//				type2 = mention.entity.getType();
+//				extent = mention.extent.replace(" ", "").replace("\n", "");
+//			}
+//		}
+//		features.add(type2);
 
 		return convert(features, label);
 	}
