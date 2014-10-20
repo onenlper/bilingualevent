@@ -152,74 +152,47 @@ public class EngTrigger {
 //		features.add(leaf.parent.parent.value);
 //		features.add(leaf.parent.parent.productionRule());
 //
-//		ArrayList<EntityMention> leftNearbyMentions = this.getEntities(
-//				document, positions.get(1)[0], em.getAnchorStart());
-//
-//		int shortest = Integer.MAX_VALUE;
-//		String type1 = "";
-//		String extent = "";
-//		for (EntityMention mention : leftNearbyMentions) {
-//			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
-//					position[0], position[1], position[3]);
-//			int distance = this.getSyntaxTreeDistance(leaf, node);
-//			if (distance < shortest) {
-//				shortest = distance;
-//				type1 = mention.entity.getType();
-//				extent = mention.extent.replace(" ", "").replace("\n", "");
-//			}
-//		}
-//		features.add(type1);
-//
-//		shortest = Integer.MAX_VALUE;
-//		String type2 = "";
-//		for (EntityMention mention : leftNearbyMentions) {
-//			int distance = 0;
-//			if (mention.end < em.getAnchorStart()) {
-//				distance = em.getAnchorStart() - mention.end;
-//			} else {
-//				distance = mention.start - em.getAnchorEnd();
-//			}
-//			if (distance < shortest) {
-//				shortest = distance;
-//				type2 = mention.entity.getType();
-//				extent = mention.extent.replace(" ", "").replace("\n", "");
-//			}
-//		}
-//		features.add(type2);
-//
-//		ArrayList<EntityMention> rightNearbyMentions = this.getEntities(
-//				document, em.getAnchorEnd() + 1,
-//				positions.get(positions.size() - 1)[1]);
-//		shortest = Integer.MAX_VALUE;
-//		type1 = "null";
-//		for (EntityMention mention : rightNearbyMentions) {
-//			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
-//					position[0], position[1], position[3]);
-//			int distance = this.getSyntaxTreeDistance(leaf, node);
-//			if (distance < shortest) {
-//				shortest = distance;
-//				type1 = mention.entity.getType();
-//				extent = mention.extent.replace(" ", "").replace("\n", "");
-//			}
-//		}
-//		features.add(type1);
-//
-//		shortest = Integer.MAX_VALUE;
-//		type2 = "null";
-//		for (EntityMention mention : rightNearbyMentions) {
-//			int distance = 0;
-//			if (mention.end < em.getAnchorStart()) {
-//				distance = em.getAnchorStart() - mention.end;
-//			} else {
-//				distance = mention.start - em.getAnchorEnd();
-//			}
-//			if (distance < shortest) {
-//				shortest = distance;
-//				type2 = mention.entity.getType();
-//				extent = mention.extent.replace(" ", "").replace("\n", "");
-//			}
-//		}
-//		features.add(type2);
+		ArrayList<EntityMention> leftNearbyMentions = this.getEntities(
+				document, positions.get(1)[0], em.getAnchorStart());
+
+		int shortest = Integer.MAX_VALUE;
+		String type1 = "null";
+		String extent1 = "null";
+		for (EntityMention mention : leftNearbyMentions) {
+			MyTreeNode node = this.getNPTreeNode(mention, document.parseReults,
+					position[0], position[1], position[3]);
+			int distance = this.getSyntaxTreeDistance(leaf, node);
+			if (distance < shortest) {
+				shortest = distance;
+				type1 = mention.entity.getType();
+				extent1 = mention.extent.replace(" ", "").replace("\n", "");
+			}
+		}
+		features.add("leftMType_" + type1);
+		features.add("leftMExtent_" + extent1);
+
+		ArrayList<EntityMention> rightNearbyMentions = this.getEntities(
+				document, em.getAnchorEnd() + 1,
+				positions.get(positions.size() - 1)[1]);
+
+		shortest = Integer.MAX_VALUE;
+		String type2 = "null";
+		String extent2 = "null";
+		for (EntityMention mention : rightNearbyMentions) {
+			int distance = 0;
+			if (mention.end < em.getAnchorStart()) {
+				distance = em.getAnchorStart() - mention.end;
+			} else {
+				distance = mention.start - em.getAnchorEnd();
+			}
+			if (distance < shortest) {
+				shortest = distance;
+				type2 = mention.entity.getType();
+				extent2 = mention.extent.replace(" ", "").replace("\n", "");
+			}
+		}
+		features.add("rightMType_" + type2);
+		features.add("rightMExtent_" + extent2);
 
 		return convert(features, label);
 	}
