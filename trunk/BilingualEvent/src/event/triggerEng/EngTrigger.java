@@ -10,6 +10,7 @@ import java.util.List;
 import model.ACEChiDoc;
 import model.ACEDoc;
 import model.ACEEngDoc;
+import model.Depend;
 import model.EntityMention;
 import model.EventMention;
 import model.EventMentionArgument;
@@ -87,20 +88,35 @@ public class EngTrigger {
 			String pos2 = "null";
 			String word1 = "null";
 			String word2 = "null";
+			
+			String type1 = "null";
+			String type2 = "null";
 
 			if (k1 >= 1 && k1 < pr.words.size()) {
 				word1 = pr.words.get(k1);
 				pos1 = pr.posTags.get(k1);
+				
+				type1 = word1;
+				if(document.allGoldNPEndMap.containsKey(pr.positions.get(k1)[1])) {
+					type1 = document.allGoldNPEndMap.get(pr.positions.get(k1)[1]).entity.type;
+				}
 			}
 			features.add("Uni_" + i + "_" + word1);
 			features.add("UniPOS_" + i + "_" + pos1);
+//			features.add("UniType_" + i + "_" + type1);
 
 			if (k2 >= 1 && k2 < pr.words.size()) {
 				word2 = pr.words.get(k2);
 				pos2 = pr.posTags.get(k2);
+				
+				type2 = word2;
+				if(document.allGoldNPEndMap.containsKey(pr.positions.get(k2)[1])) {
+					type2 = document.allGoldNPEndMap.get(pr.positions.get(k2)[1]).entity.type;
+				}
 			}
 			features.add("Bi_" + i + "_" + word1 + "#" + word2);
 			features.add("BiPOS_" + i + "_" + pos1 + "#" + pos2);
+//			features.add("BiType_" + i + "_" + type1 + "#" + type2);
 		}
 		features.add("lemma_" + pr.lemmas.get(leftIndex));
 		features.add("posTag_" + pr.posTags.get(leftIndex));
@@ -109,8 +125,9 @@ public class EngTrigger {
 			features.add("synonym_" + synonym);	
 		}
 		features.add("nomlex_" + Common.getNomlex(pr.lemmas.get(leftIndex)));
+
 //		features.add("brown_" + Common.getBrownCluster(pr.words.get(leftIndex)));
-		
+//		features.add("porter_" + Common.getPorterStem(pr.words.get(leftIndex)));
 //		for (Depend dep : pr.depends) {
 //			if (dep.first == leftIndex) {
 //				features.add("depWord_" + pr.words.get(dep.second));
@@ -121,7 +138,7 @@ public class EngTrigger {
 //				features.add("secondDepType_" + dep.type);
 //			}
 //		}
-//
+
 //		features.add(trigger);
 //		features.add(pos);
 //		features.add(previousW + "_" + word);

@@ -68,7 +68,7 @@ public abstract class ACEDoc {
 
 	public ArrayList<EntityMention> allGoldNPMentions = new ArrayList<EntityMention>();
 
-	public HashMap<Integer, EntityMention> allGoldNPMentionsMap;
+	public HashMap<Integer, EntityMention> allGoldNPEndMap;
 
 	public HashMap<String, Entity> id2EntityMap = new HashMap<String, Entity>();
 
@@ -106,9 +106,9 @@ public abstract class ACEDoc {
 		this.calSalienceEntity();
 		this.readSemanticRole();
 		
-		this.allGoldNPMentionsMap = new HashMap<Integer, EntityMention>();
+		this.allGoldNPEndMap = new HashMap<Integer, EntityMention>();
 		for (EntityMention mention : this.allGoldNPMentions) {
-			this.allGoldNPMentionsMap.put(mention.end, mention);
+			this.allGoldNPEndMap.put(mention.end, mention);
 		}
 	}
 	
