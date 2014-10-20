@@ -8,7 +8,7 @@ java -Xmx32g -cp $cp event/triggerEng/EngTrigger test svm $1
 cd /users/yzcchen/tool/svm_multiclass
 echo train trigger identify
 #-c 2000000
-./svm_multiclass_learn -c 2000000  /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/engTrFea_train$1 engTrModel$1
+./svm_multiclass_learn -c 3000000  /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/engTrFea_train$1 engTrModel$1
 
 echo test trigger identify
 ./svm_multiclass_classify /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/engTrFea_test$1 engTrModel$1 engTrOutput_test$1 1>&-
