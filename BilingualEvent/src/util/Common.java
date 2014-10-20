@@ -16,6 +16,9 @@ import java.util.HashSet;
 
 import model.syntaxTree.MyTree;
 import model.syntaxTree.MyTreeNode;
+
+import org.tartarus.martin.Stemmer;
+
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
 import edu.mit.jwi.item.IIndexWord;
@@ -34,14 +37,27 @@ public class Common {
 	
 	private static HashMap<String, String> brownCluster;
 	
+	public static String getPorterStem(String w) {
+		Stemmer stemmer = new Stemmer();
+		for (int i = 0; i < w.length(); i++) {
+			stemmer.add(w.charAt(i));
+		}
+		stemmer.stem();
+		String s = stemmer.toString();
+		return s;
+	}
+	
 	public static String getBrownCluster(String str) {
 		if(brownCluster==null) {
+			int maxLen = 0;
 			brownCluster = new HashMap<String, String>();
-		}
-		ArrayList<String> lines = Common.getLines("/users/yzcchen/tool/brownCluster/brown-cluster-master/brown_input-c500-p1.out/paths");
-		for(String line : lines) {
-			String tks[] = line.split("\\s+");
-			brownCluster.put(tks[1], tks[0]);
+			ArrayList<String> lines = Common.getLines("/users/yzcchen/tool/brownCluster/brown-cluster-master/brown_input-c2000-p1.out/paths");
+			for(String line : lines) {
+				String tks[] = line.split("\\s+");
+				brownCluster.put(tks[1], tks[0]);
+				maxLen = Math.max(maxLen, tks[0].length());
+			}
+			System.out.println("MaxLen big string:" + maxLen);
 		}
 		return brownCluster.get(str);
 	}

@@ -675,11 +675,11 @@ public class Util {
 						Collections.reverse(mentions);
 						if (mentions.size() > 0) {
 							for (EntityMention mention : mentions) {
-								if (document.allGoldNPMentionsMap.containsKey(mention.end)
-										&& document.allGoldNPMentionsMap.get(mention.end).getType().equalsIgnoreCase("time")) {
-								} else if(document.allGoldNPMentionsMap.containsKey(mention.end)){
+								if (document.allGoldNPEndMap.containsKey(mention.end)
+										&& document.allGoldNPEndMap.get(mention.end).getType().equalsIgnoreCase("time")) {
+								} else if(document.allGoldNPEndMap.containsKey(mention.end)){
 									got = true;
-									eventMention.zeroSubjects.add(document.allGoldNPMentionsMap.get(mention.end));
+									eventMention.zeroSubjects.add(document.allGoldNPEndMap.get(mention.end));
 									break;
 								}
 							}
@@ -794,11 +794,11 @@ public class Util {
 						Collections.reverse(mentions);
 						if (mentions.size() > 0) {
 							for (EntityMention mention : mentions) {
-								if (document.allGoldNPMentionsMap.containsKey(mention.end)
-										&& document.allGoldNPMentionsMap.get(mention.end).getType().equalsIgnoreCase("time")) {
-								} else if(document.allGoldNPMentionsMap.containsKey(mention.end)){
+								if (document.allGoldNPEndMap.containsKey(mention.end)
+										&& document.allGoldNPEndMap.get(mention.end).getType().equalsIgnoreCase("time")) {
+								} else if(document.allGoldNPEndMap.containsKey(mention.end)){
 									got = true;
-									eventMention.zeroSubjects.add(document.allGoldNPMentionsMap.get(mention.end));
+									eventMention.zeroSubjects.add(document.allGoldNPEndMap.get(mention.end));
 									break;
 								}
 							}
@@ -823,8 +823,8 @@ public class Util {
 							}
 							if(deLeaf!=null) {
 								int end = pr.positions.get(leafs.get(leafs.size()-1).leafIdx)[1];
-								if(document.allGoldNPMentionsMap.get(end)!=null) {
-									eventMention.zeroSubjects.add(0, document.allGoldNPMentionsMap.get(end));
+								if(document.allGoldNPEndMap.get(end)!=null) {
+									eventMention.zeroSubjects.add(0, document.allGoldNPEndMap.get(end));
 								}
 							}
 						}
