@@ -289,12 +289,12 @@ public class ArgumentPair {
 				distance++;
 			}
 			path = sb.toString();
-			while (!pr.dependTree.vertexMap.containsKey(entityID) && entityID != 0) {
+			while (!pr.dependTree.vertexMapTree.containsKey(entityID) && entityID != 0) {
 				entityID--;
 			}
 			if (entityID != eventID) {
-				MyTreeNode entityDepNode = pr.dependTree.vertexMap.get(entityID);
-				MyTreeNode eventDepNode = pr.dependTree.vertexMap.get(eventID);
+				MyTreeNode entityDepNode = pr.dependTree.vertexMapTree.get(entityID);
+				MyTreeNode eventDepNode = pr.dependTree.vertexMapTree.get(eventID);
 				entityAncestors = entityDepNode.getAncestors();
 				eventAncestors = eventDepNode.getAncestors();
 				common = 0;

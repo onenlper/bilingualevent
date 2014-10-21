@@ -16,6 +16,7 @@ import model.EventMention;
 import model.EventMentionArgument;
 import model.ParseResult;
 import model.SemanticRole;
+import model.syntaxTree.GraphNode;
 import model.syntaxTree.MyTree;
 import model.syntaxTree.MyTreeNode;
 
@@ -937,7 +938,137 @@ public class Util {
 		// features.add("-1");
 		// }
 	}
+	
+	public static ArrayList<String> getPathFeature(String prefix,
+			ArrayList<GraphNode> path, ParseResult s) {
+		ArrayList<String> feas = new ArrayList<String>();
+		StringBuilder vertexSb = new StringBuilder();
+		StringBuilder edgeSb = new StringBuilder();
+		for (int i = 0; i < path.size(); i++) {
+			GraphNode n = path.get(i);
+			String word = "#ROOT#";
+			if(n.value!=0) {
+				word = s.words.get(n.value - 1);
+			}
+			vertexSb.append(word).append(" ");
+			if (i < path.size() - 1) {
+				edgeSb.append(n.getEdgeName(path.get(i + 1))).append(" ");
+//				feas.add(prefix + "subcate#" + word + "." +  n.getEdgeName(path.get(i + 1)) + "." + 
+//						Util.getTkFromDepNode(path.get(i+1), s).word);
+			}
+		}
+		feas.add(prefix + "vertexWalk#" + vertexSb.toString().trim());
+		feas.add(prefix + "edgeWalk#" + edgeSb.toString().trim());
+		feas.add(prefix + "pathLength#" + path.size());
 
+		// bigram along path
+		for (int i = 0; i < path.size() - 1; i++) {
+			GraphNode n1 = path.get(i);
+			GraphNode n2 = path.get(i + 1);
+			String t1 = s.words.get(n1.value);
+			String t2 = s.words.get(n2.value);
+
+			feas.add(prefix + "biLex#" + t1 + "_" + t2);
+			feas.add(prefix + "biPos#" + s.posTags.get(n1.value) + "_" + s.posTags.get(n2.value));
+
+			if (i < path.size() - 2) {
+				feas.add(prefix + prefix + "biDep#" + n1.getEdgeName(n2) + "_"
+						+ n2.getEdgeName(path.get(i + 2)));
+			}
+		}
+
+		// trigram along path
+		for (int i = 0; i < path.size() - 2; i++) {
+			GraphNode n1 = path.get(i);
+			GraphNode n2 = path.get(i + 1);
+			GraphNode n3 = path.get(i + 2);
+			String t1 = s.words.get(n1.value);
+			String t2 = s.words.get(n2.value);
+			String t3 = s.words.get(n3.value);
+
+			feas.add(prefix + "triLex#" + t1 + "_" + t2 + "_" + t3);
+			feas.add(prefix + "triPos#" + s.posTags.get(n1.value) + "_" + s.posTags.get(n2.value) + "_" + s.posTags.get(n3.value));
+
+			if (i < path.size() - 3) {
+				feas.add(prefix + "triDep#" + n1.getEdgeName(n2) + "_"
+						+ n2.getEdgeName(n3) + "_"
+						+ n3.getEdgeName(path.get(i + 3)));
+			}
+		}
+
+		return feas;
+	}
+
+	public static ArrayList<GraphNode> findPath(GraphNode from, GraphNode to) {
+//		System.out.println("start...");
+		ArrayList<GraphNode> path = new ArrayList<GraphNode>();
+
+		HashSet<GraphNode> visited = new HashSet<GraphNode>();
+		ArrayList<GraphNode> fronties = new ArrayList<GraphNode>();
+		fronties.add(from);
+		if (from == null) {
+			return path;
+		}
+		if (to == null) {
+			return path;
+		}
+
+		if (from != to) {
+			loop: while (true) {
+				ArrayList<GraphNode> nextLevel = new ArrayList<GraphNode>();
+				for (GraphNode node : fronties) {
+					if (node == null) {
+						Common.bangErrorPOS("Null Dep node");
+					}
+					for (GraphNode next : node.nexts) {
+						if (!visited.contains(next)) {
+							next.backNode = node;
+							if (next.backNode == next) {
+//								System.out.println(s.tokens.get(Integer
+//										.valueOf(next.value) - 1).word);
+//								System.out.println(s.d.fn);
+//								Common.bangErrorPOS("Self Dep: " + next.value
+//										+ " " + next.backNode.value);
+							}
+							if (next == to) {
+								break loop;
+							}
+							nextLevel.add(next);
+						}
+					}
+					visited.add(node);
+				}
+				fronties = nextLevel;
+				if (fronties.size() == 0) {
+//					 Token t1 = Util.getTkFromDepNode(from, s);
+//					 Token t2 = Util.getTkFromDepNode(to, s);
+//					 System.out.println(t1.word + " " + t1.idInSentence);
+//					 System.out.println(t2.word + " " + t2.idInSentence);
+//					 System.out.println(s.d.fn);
+//					 Common.bangErrorPOS("");
+//					System.out.println("No Path");
+					return path;
+				}
+			}
+		}
+
+		GraphNode tmp = to;
+		while (true) {
+			path.add(0, tmp);
+			if (tmp == from) {
+				break;
+			}
+			tmp = tmp.backNode;
+			if(tmp==tmp.backNode) {
+//				System.out.println("GEEE");
+				return new ArrayList<GraphNode>();
+			}
+			// System.out.println(fronties.size() + " " + (tmp==tmp.backNode));
+		}
+//		System.out.println("end");
+		return path;
+	}
+	
 	public static void addSemanticRoleFeautre(ArrayList<String> features, ACEChiDoc document,
 			EventMention eventMention, EntityMention entityMention) {
 		ArrayList<SemanticRole> semanticRoles = document.semanticRoles;
