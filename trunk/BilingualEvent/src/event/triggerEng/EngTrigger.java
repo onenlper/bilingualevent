@@ -130,15 +130,14 @@ public class EngTrigger {
 //		features.add("porter_" + Common.getPorterStem(pr.words.get(leftIndex)));
 //		for (Depend dep : pr.depends) {
 //			if (dep.first == leftIndex) {
-//				features.add("depWord_" + pr.words.get(dep.second));
-//				features.add("firstDepType_" + dep.type);
+//				features.add("depWord_" + pr.words.get(dep.second) + pr.words.get(leftIndex));
+////				features.add("firstDepType_" + dep.type + "#" + pr.words.get(leftIndex));
 //			}
 //			if (dep.second == leftIndex) {
-//				features.add("govWord_" + pr.words.get(dep.first));
-//				features.add("secondDepType_" + dep.type);
+//				features.add("govWord_" + pr.words.get(dep.first) + pr.words.get(leftIndex));
+////				features.add("secondDepType_" + dep.type + "#" + pr.words.get(leftIndex));
 //			}
 //		}
-
 //		features.add(trigger);
 //		features.add(pos);
 //		features.add(previousW + "_" + word);

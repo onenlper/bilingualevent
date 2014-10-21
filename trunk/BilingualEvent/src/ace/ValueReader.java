@@ -43,6 +43,8 @@ public class ValueReader extends DefaultHandler {
 			int end = Integer.valueOf(atts.getValue("END"));
 			this.currentValueMention.start = start;
 			this.currentValueMention.end = end;
+			this.currentValueMention.headStart = start;
+			this.currentValueMention.headEnd = end;
 		}
 	}
 

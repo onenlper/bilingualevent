@@ -43,6 +43,8 @@ public class TimeReader extends DefaultHandler {
 			int end = Integer.valueOf(atts.getValue("END"));
 			this.currentTimeMention.start = start;
 			this.currentTimeMention.end = end;
+			this.currentTimeMention.headStart = start;
+			this.currentTimeMention.headEnd = end;
 		}
 	}
 

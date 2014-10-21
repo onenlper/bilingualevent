@@ -32,6 +32,8 @@ public abstract class ACEDoc {
 	public String content;
 
 	public int end;
+	
+	public HashMap<Integer, int[]> positionMap;
 
 	public ArrayList<EventMention> eventMentions;
 	public ArrayList<EventMention> goldEventMentions;
