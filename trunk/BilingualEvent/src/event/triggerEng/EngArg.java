@@ -12,6 +12,7 @@ import model.EventMention;
 import model.EventMentionArgument;
 import model.Feature;
 import model.ParseResult;
+import model.syntaxTree.GraphNode;
 import model.syntaxTree.MyTreeNode;
 import util.ChineseUtil;
 import util.Common;
@@ -27,26 +28,30 @@ public class EngArg {
 
 	int near = 0;
 	int far = 0;
-	
+
 	public static void main(String args[]) {
-		if (args.length <3) {
-			System.out.println("java ~ [train|test|development] [svm|maxent] [folder]");
+		if (args.length < 3) {
+			System.out
+					.println("java ~ [train|test|development] [svm|maxent] [folder]");
 		}
 		mode = args[0];
 		String model = args[1];
 		Util.part = args[2];
 		if (!args[0].equalsIgnoreCase("train")) {
-			systemEventMentionses = Util.readResult("data/engTrResult" + Util.part, "eng");
+			systemEventMentionses = Util.readResult("data/engTrResult"
+					+ Util.part, "eng");
 		}
 
 		EngArg argumentFeature = new EngArg();
 		if (mode.equals("train")) {
 			argumentFeature.featureSpace = new HashMap<String, Integer>();
 		} else {
-			argumentFeature.featureSpace = Common.readFile2Map("engArgSpace" + Util.part);
+			argumentFeature.featureSpace = Common.readFile2Map("engArgSpace"
+					+ Util.part);
 		}
 
-		ArrayList<String> files = Common.getLines("ACE_English_" + args[0] + Util.part);
+		ArrayList<String> files = Common.getLines("ACE_English_" + args[0]
+				+ Util.part);
 
 		ArrayList<String> argumentRoleFeatures = new ArrayList<String>();
 
@@ -57,48 +62,59 @@ public class EngArg {
 			ACEDoc document = new ACEEngDoc(file);
 			if (args[0].equalsIgnoreCase("train")) {
 				for (EventMention eventMention : document.goldEventMentions) {
-					argumentRoleFeatures.addAll(argumentFeature.buildTrainRoleFeatures(eventMention, document));
+					argumentRoleFeatures.addAll(argumentFeature
+							.buildTrainRoleFeatures(eventMention, document));
 				}
 			} else {
 				ArrayList<EventMention> eventMentions = new ArrayList<EventMention>();
-//				eventMentions.addAll(document.goldEventMentions);
+				// eventMentions.addAll(document.goldEventMentions);
 				if (systemEventMentionses.containsKey(file)) {
-					eventMentions.addAll(systemEventMentionses.get(file).values());
+					eventMentions.addAll(systemEventMentionses.get(file)
+							.values());
 				}
 				if (eventMentions == null) {
 					continue;
 				}
 				for (EventMention eventMention : eventMentions) {
-					if(eventMention.subType.equals("None")) {
+					if (eventMention.subType.equals("None")) {
 						continue;
 					}
 					StringBuilder sb = new StringBuilder();
-					sb.append(document.fileID).append(" ").append(eventMention.getAnchorStart()).append(" ").append(
-							eventMention.getAnchorEnd()).append(" ").append(eventMention.confidence).append(" ")
-							.append(eventMention.type).append(" ").append(eventMention.typeConfidence).append(" ")
-							.append(eventMention.subType).append(" ").append(eventMention.subTypeConfidence).append(" ").append(eventMention.inferFrom);
-					for(double confidence : eventMention.typeConfidences) {
+					sb.append(document.fileID).append(" ")
+							.append(eventMention.getAnchorStart()).append(" ")
+							.append(eventMention.getAnchorEnd()).append(" ")
+							.append(eventMention.confidence).append(" ")
+							.append(eventMention.type).append(" ")
+							.append(eventMention.typeConfidence).append(" ")
+							.append(eventMention.subType).append(" ")
+							.append(eventMention.subTypeConfidence).append(" ")
+							.append(eventMention.inferFrom);
+					for (double confidence : eventMention.typeConfidences) {
 						sb.append(" ").append(confidence);
 					}
 					relateEMs.add(sb.toString());
 					argumentRoleFeatures.addAll(argumentFeature
-							.buildTestFeatures(eventMention, document, argumentLines));
+							.buildTestFeatures(eventMention, document,
+									argumentLines));
 				}
 			}
 		}
 		Common.outputLines(argumentLines, "data/engArgName_" + mode + Util.part);
-		Common.outputLines(argumentRoleFeatures, "data/engArgFea_" + mode + Util.part);
+		Common.outputLines(argumentRoleFeatures, "data/engArgFea_" + mode
+				+ Util.part);
 		Common.outputLines(relateEMs, "data/engTrofArgName_" + mode + Util.part);
-		
+
 		System.out.println("Build argument detection feature " + mode + "...");
 		System.out.println("=================");
 
 		if (mode.equals("train")) {
-			Common.outputHashMap(argumentFeature.featureSpace, "engArgSpace" + Util.part);
+			Common.outputHashMap(argumentFeature.featureSpace, "engArgSpace"
+					+ Util.part);
 		}
 	}
 
-	public ArrayList<EntityMention> getArgumentCandidates(EventMention em, ACEDoc document) {
+	public ArrayList<EntityMention> getArgumentCandidates(EventMention em,
+			ACEDoc document) {
 		ArrayList<EntityMention> candidates = new ArrayList<EntityMention>();
 
 		ArrayList<EntityMention> mentions = new ArrayList<EntityMention>();
@@ -111,7 +127,8 @@ public class EngArg {
 		mentions.addAll(timeMentions);
 		mentions.addAll(valueMentions);
 
-		ParseResult pr = document.parseReults.get(document.positionMap.get(em.getAnchorStart())[0]);
+		ParseResult pr = document.parseReults.get(document.positionMap.get(em
+				.getAnchorStart())[0]);
 
 		int leftBound = pr.positions.get(1)[0];
 		int rightBound = pr.positions.get(pr.positions.size() - 1)[1];
@@ -123,9 +140,13 @@ public class EngArg {
 		}
 		return candidates;
 	}
+
 	static boolean sw = false;
-	public ArrayList<String> buildTrainRoleFeatures(EventMention eventMention, ACEDoc document) {
-		ArrayList<EventMentionArgument> arguments = eventMention.getEventMentionArguments();
+
+	public ArrayList<String> buildTrainRoleFeatures(EventMention eventMention,
+			ACEDoc document) {
+		ArrayList<EventMentionArgument> arguments = eventMention
+				.getEventMentionArguments();
 
 		HashMap<String, EventMentionArgument> goldArgHash = new HashMap<String, EventMentionArgument>();
 
@@ -133,7 +154,8 @@ public class EngArg {
 			goldArgHash.put(arg.toString(), arg);
 		}
 
-		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(eventMention, document);
+		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(
+				eventMention, document);
 		sw = true;
 		ArrayList<String> features = new ArrayList<String>();
 		for (EntityMention mention : entityMentions) {
@@ -144,15 +166,17 @@ public class EngArg {
 			if (arg != null) {
 				role = arg.getRole();
 			}
-			String feature = this.buildFeature(mention, eventMention, document, Integer.toString(Util.roles
-					.indexOf(role) + 1), entityMentions);
+			String feature = this.buildFeature(mention, eventMention, document,
+					Integer.toString(Util.roles.indexOf(role) + 1),
+					entityMentions);
 			features.add(feature);
 		}
 		sw = false;
 		return features;
 	}
 
-	public EntityMention getEntityMention(int start, int end, ArrayList<EntityMention> mentions1) {
+	public EntityMention getEntityMention(int start, int end,
+			ArrayList<EntityMention> mentions1) {
 		for (EntityMention mention : mentions1) {
 			if (mention.start == start && mention.end == end) {
 				return mention;
@@ -161,23 +185,30 @@ public class EngArg {
 		return null;
 	}
 
-	public ArrayList<String> buildTestFeatures(EventMention eventMention, ACEDoc document,
-			ArrayList<String> argumentLines) {
-		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(eventMention, document);
+	public ArrayList<String> buildTestFeatures(EventMention eventMention,
+			ACEDoc document, ArrayList<String> argumentLines) {
+		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(
+				eventMention, document);
 		ArrayList<String> features = new ArrayList<String>();
 
 		for (EntityMention entityMention : entityMentions) {
-			String feature = this.buildFeature(entityMention, eventMention, document, Integer.toString(Util.roles
-					.indexOf("null") + 1), entityMentions);
+			String feature = this.buildFeature(entityMention, eventMention,
+					document, Integer.toString(Util.roles.indexOf("null") + 1),
+					entityMentions);
 			features.add(feature);
 
 			if (argumentLines != null) {
 				StringBuilder sb = new StringBuilder();
-				sb.append(document.fileID).append(" ").append(eventMention.getAnchorStart()).append(" ").append(
-						eventMention.getAnchorEnd()).append(" ").append(eventMention.confidence).append(" ").append(
-						eventMention.type).append(" ").append(eventMention.typeConfidence).append(" ").append(
-						eventMention.subType).append(" ").append(eventMention.subTypeConfidence).append(" ").append(
-						entityMention.start).append(" ").append(entityMention.end);
+				sb.append(document.fileID).append(" ")
+						.append(eventMention.getAnchorStart()).append(" ")
+						.append(eventMention.getAnchorEnd()).append(" ")
+						.append(eventMention.confidence).append(" ")
+						.append(eventMention.type).append(" ")
+						.append(eventMention.typeConfidence).append(" ")
+						.append(eventMention.subType).append(" ")
+						.append(eventMention.subTypeConfidence).append(" ")
+						.append(entityMention.start).append(" ")
+						.append(entityMention.end);
 
 				argumentLines.add(sb.toString());
 			}
@@ -185,7 +216,6 @@ public class EngArg {
 		return features;
 	}
 
-	
 	public int getFeaIdx(String feature) {
 		if (!featureSpace.containsKey(feature)) {
 			if (mode.equalsIgnoreCase("train")) {
@@ -198,24 +228,25 @@ public class EngArg {
 			return featureSpace.get(feature);
 		}
 	}
-	
-	public String buildFeature(EntityMention arg, EventMention eventMention, ACEDoc document, String label,
-			ArrayList<EntityMention> allArgs) {
+
+	public String buildFeature(EntityMention arg, EventMention tr,
+			ACEDoc document, String label, ArrayList<EntityMention> allArgs) {
 		ArrayList<String> features = new ArrayList<String>();
-		ParseResult pr = document.parseReults.get(document.positionMap.get(arg.start)[0]);
-		
+		ParseResult pr = document.parseReults.get(document.positionMap
+				.get(arg.start)[0]);
+
 		int arg_start = document.positionMap.get(arg.start)[1];
 		int arg_end = document.positionMap.get(arg.end)[1];
-		int arg_head = document.positionMap.get(arg.headStart)[1];
-		
-		int tr_start = document.positionMap.get(eventMention.getAnchorStart())[1];
-		int tr_end = document.positionMap.get(eventMention.getAnchorEnd())[1];
-		int tr_head = document.positionMap.get(eventMention.getAnchorStart())[1];
-		
+		int arg_head = document.positionMap.get(arg.headEnd)[1];
+
+		int tr_start = document.positionMap.get(tr.getAnchorStart())[1];
+		int tr_end = document.positionMap.get(tr.getAnchorEnd())[1];
+		int tr_head = document.positionMap.get(tr.getAnchorStart())[1];
+
 		ArrayList<String> aroundTr = new ArrayList<String>();
 		for (int i = tr_head - 2; i <= tr_head + 2; i++) {
 			if (i >= 1 && i < pr.words.size()) {
-				aroundTr.add(pr.lemmas.get(i) + (i-tr_head));
+				aroundTr.add(pr.lemmas.get(i) + (i - tr_head));
 			}
 		}
 		features.addAll(Common.get1234Ngram(aroundTr, "aroundTr_"));
@@ -223,43 +254,44 @@ public class EngArg {
 		ArrayList<String> aroundArg = new ArrayList<String>();
 		for (int i = arg_head - 2; i <= arg_head + 2; i++) {
 			if (i >= 1 && i < pr.words.size()) {
-				aroundArg.add(pr.lemmas.get(i) + (i-arg_head));
+				aroundArg.add(pr.lemmas.get(i) + (i - arg_head));
 			}
 		}
 		features.addAll(Common.get1234Ngram(aroundArg, "aroundArg_"));
-		
-		
-		features.add("anchor_" + eventMention.getAnchor());
-		features.add("anchorType_" + eventMention.getType());
-		
-		features.add("entityType_" + arg.entity.getType() + "#" + eventMention.getType());
-		features.add("entitySubType_" + arg.entity.getSubType() + "#" + eventMention.getType());
-		
-		for(EntityMention m : arg.entity.mentions) {
+
+		features.add("anchor_" + tr.getAnchor());
+		features.add("anchorType_" + tr.getType());
+
+		features.add("entityType_" + arg.entity.getType() + "#"
+				+ tr.getType());
+		features.add("entitySubType_" + arg.entity.getSubType() + "#"
+				+ tr.getType());
+
+		for (EntityMention m : arg.entity.mentions) {
 			features.add("head_" + m.head);
 		}
-		
+
 		boolean overlap = false;
-		if(arg_end<tr_start) {
+		if (arg_end < tr_start) {
 			boolean punc = false;
-			for(int i=arg_end+1;i<tr_start;i++) {
-				if(pr.words.get(i).equals(",")) {
+			for (int i = arg_end + 1; i < tr_start; i++) {
+				if (pr.words.get(i).equals(",")) {
 					punc = true;
 				}
 			}
-			if(punc) {
+			if (punc) {
 				features.add("sep_left" + punc);
 			} else {
 				features.add("sep_" + "left");
 			}
-		} else if(arg_start>tr_end) {
+		} else if (arg_start > tr_end) {
 			boolean punc = false;
-			for(int i=tr_end+1;i<arg_start;i++) {
-				if(pr.words.get(i).equals(",")) {
+			for (int i = tr_end + 1; i < arg_start; i++) {
+				if (pr.words.get(i).equals(",")) {
 					punc = true;
 				}
 			}
-			if(punc) {
+			if (punc) {
 				features.add("sep_right" + punc);
 			} else {
 				features.add("sep_" + "right");
@@ -268,89 +300,125 @@ public class EngArg {
 			overlap = true;
 			features.add("sep_" + "overlap");
 		}
-		
+
 		HashMap<String, Integer> minSubTypeDis = new HashMap<String, Integer>();
 		HashMap<String, Integer> subtypeMs = new HashMap<String, Integer>();
-		
+
 		HashMap<String, Integer> minTypeDis = new HashMap<String, Integer>();
 		HashMap<String, Integer> typeMs = new HashMap<String, Integer>();
 		int minDis = Integer.MAX_VALUE;
-		for(EntityMention m : allArgs) {
+		for (EntityMention m : allArgs) {
 			String subType = m.entity.subType;
 			int arg_head2 = document.positionMap.get(m.headStart)[1];
 			int diss = Math.abs(arg_head2 - tr_head);
 			minDis = Math.min(minDis, diss);
 			Integer minD = minSubTypeDis.get(subType);
-			if(minD!=null) {
+			if (minD != null) {
 				minSubTypeDis.put(subType, Math.min(minD.intValue(), diss));
 			} else {
 				minSubTypeDis.put(subType, diss);
 			}
-			if(subtypeMs.containsKey(subType)) {
-				subtypeMs.put(subType, subtypeMs.get(subType)+1);
+			if (subtypeMs.containsKey(subType)) {
+				subtypeMs.put(subType, subtypeMs.get(subType) + 1);
 			} else {
 				subtypeMs.put(subType, 1);
 			}
-			
+
 			String type = m.entity.type;
 			minD = minTypeDis.get(type);
-			if(minD!=null) {
+			if (minD != null) {
 				minTypeDis.put(type, Math.min(minD.intValue(), diss));
 			} else {
 				minTypeDis.put(type, diss);
 			}
-			if(typeMs.containsKey(type)) {
-				typeMs.put(type, typeMs.get(type)+1);
+			if (typeMs.containsKey(type)) {
+				typeMs.put(type, typeMs.get(type) + 1);
 			} else {
 				typeMs.put(type, 1);
 			}
 		}
 		int diss = Math.abs(arg_head - tr_head);
-		if(diss==minSubTypeDis.get(arg.entity.subType)) {
+		if (diss == minSubTypeDis.get(arg.entity.subType)) {
 			features.add("closeSubType_" + "yes" + arg.entity.subType);
 		} else {
 			features.add("closeSubType_" + "no" + arg.entity.subType);
 		}
-		if(subtypeMs.get(arg.entity.subType)==1) {
+		if (subtypeMs.get(arg.entity.subType) == 1) {
 			features.add("onlySubType_" + "yes" + arg.entity.subType);
 		} else {
 			features.add("onlySubType_" + "no" + arg.entity.subType);
 		}
-		
-		if(diss==minTypeDis.get(arg.entity.type)) {
+
+		if (diss == minTypeDis.get(arg.entity.type)) {
 			features.add("closeType_" + "yes" + arg.entity.type);
 		} else {
 			features.add("closeType_" + "no" + arg.entity.type);
 		}
-		if(typeMs.get(arg.entity.type)==1) {
+		if (typeMs.get(arg.entity.type) == 1) {
 			features.add("closeType_" + "yes" + arg.entity.type);
 		} else {
 			features.add("closeType_" + "no" + arg.entity.type);
 		}
-		
-//		if(minDis==diss) {
-//			features.add("closest_" + "yes" + arg.entity.subType);
-//		} else {
-//			features.add("closest_" + "no" + arg.entity.subType);
-//		}
-		
-		if(!overlap) {
+
+		// if(minDis==diss) {
+		// features.add("closest_" + "yes" + arg.entity.subType);
+		// } else {
+		// features.add("closest_" + "no" + arg.entity.subType);
+		// }
+
+		if (!overlap) {
 			features.add("lexicalDiss_" + Integer.toString(arg_head - tr_head));
 		} else {
 			features.add("lexicalDiss_0");
 		}
-		
-		GraphNode trDep = pr.dependTree.vertexMap.get(tr_head + 1);
-		GraphNode argDep = pr.dependTree.vertexMap.get(arg_head + 1);
-		
+
+//		GraphNode trDep = pr.dependTree.vertexMap.get(tr_head + 1);
+//		GraphNode argDep = pr.dependTree.vertexMap.get(arg_head + 1);
+//
+//		ArrayList<GraphNode> path = Util.findPath(trDep, argDep);
+//		features.addAll(Util.getPathFeature("edge_", path, pr));
+//
+//		// unigram along path
+//		StringBuilder sb = new StringBuilder();
+//		StringBuilder sb22 = new StringBuilder();
+//
+//		for (int i = 0; i < path.size() - 1; i++) {
+//			GraphNode node = path.get(i);
+//			String tk = pr.words.get(node.value);
+//			String edge = node.getEdgeName(path.get(i + 1));
+//			sb22.append(tk).append("#").append(edge).append("#");
+//			features.add("between_" + tk);
+//			if (i < path.size() - 1) {
+//				sb.append(node.getEdgeName(path.get(i + 1))).append(" ");
+//				features.add("uniDep#" + edge);
+//			}
+//		}
+//
+//		if (path.size() != 0) {
+//			sb22.append(pr.words.get((path.get(path.size() - 1).value)));
+//		} else {
+//			sb22.append("null");
+//		}
+//
+//		// System.out.println(sb22.toString());
+//		features.add("dePath22#" + sb22.toString());
+//		
+//		features.add("dePath#"+ sb.toString());
+//
+//		System.out.println(arg.extent + "#" + tr.getAnchor());
+//		System.out.println(sb.toString());
+//		System.out.println(sb22.toString());
+//		System.out.println("===============================");
 		return this.convert(features, label);
 	}
 
-	public String buildFeature2(EntityMention entityMention, EventMention eventMention, ACEDoc document,
-			String label) {
+	public String buildFeature2(EntityMention entityMention,
+			EventMention eventMention, ACEDoc document, String label) {
 		String trigger = eventMention.getAnchor();
-		int position[] = ChineseUtil.findParseFilePosition2(entityMention.start, entityMention.end, document);
-		int position2[] = ChineseUtil.findParseFilePosition2(eventMention.getAnchorStart(), eventMention.getAnchorEnd(),
+		int position[] = ChineseUtil.findParseFilePosition2(
+				entityMention.start, entityMention.end, document);
+		int position2[] = ChineseUtil.findParseFilePosition2(
+				eventMention.getAnchorStart(), eventMention.getAnchorEnd(),
 				document);
 
 		int leftIndex2 = position2[1];
@@ -375,42 +443,46 @@ public class EngArg {
 		int distance = -1;
 		MyTreeNode entityNode = pr.tree.leaves.get(position[3]);
 		MyTreeNode eventNode = pr2.tree.leaves.get(position2[3]);
-		
+
 		int entityID = position[3];
 		int eventID = position2[3];
-		
+
 		if (position[0] == position2[0]) {
 			ArrayList<MyTreeNode> entityAncestors = entityNode.getAncestors();
 			ArrayList<MyTreeNode> eventAncestors = eventNode.getAncestors();
-			
+
 			MyTreeNode entityIP = null;
 			MyTreeNode eventIP = null;
-			for(int k=entityAncestors.size()-1;k>=0;k--) {
+			for (int k = entityAncestors.size() - 1; k >= 0; k--) {
 				MyTreeNode node = entityAncestors.get(k);
-				if(node.value.equalsIgnoreCase("ip")||node.value.equalsIgnoreCase("root")) {
+				if (node.value.equalsIgnoreCase("ip")
+						|| node.value.equalsIgnoreCase("root")) {
 					entityIP = node;
 					break;
 				}
 			}
-			for(int k=eventAncestors.size()-1;k>=0;k--) {
+			for (int k = eventAncestors.size() - 1; k >= 0; k--) {
 				MyTreeNode node = eventAncestors.get(k);
-				if(node.value.equalsIgnoreCase("ip")||node.value.equalsIgnoreCase("root")) {
+				if (node.value.equalsIgnoreCase("ip")
+						|| node.value.equalsIgnoreCase("root")) {
 					eventIP = node;
 					break;
 				}
 			}
 
-			if(!Util.roles.get(Integer.parseInt(label)-1).equalsIgnoreCase("null")) {
-				if(entityIP==eventIP) {
+			if (!Util.roles.get(Integer.parseInt(label) - 1).equalsIgnoreCase(
+					"null")) {
+				if (entityIP == eventIP) {
 					near++;
 				} else {
 					far++;
 				}
 			}
-			
+
 			int common = 0;
 			MyTreeNode commonNode = null;
-			for (int i = 0; i < entityAncestors.size() && i < eventAncestors.size(); i++) {
+			for (int i = 0; i < entityAncestors.size()
+					&& i < eventAncestors.size(); i++) {
 				if (entityAncestors.get(i) == eventAncestors.get(i)) {
 					common = i;
 					commonNode = eventAncestors.get(i);
@@ -430,18 +502,22 @@ public class EngArg {
 				distance++;
 			}
 			path = sb.toString();
-			while (!pr.dependTree.vertexMap.containsKey(entityID) && entityID!=0) {
+			while (!pr.dependTree.vertexMapTree.containsKey(entityID)
+					&& entityID != 0) {
 				entityID--;
 			}
 			if (entityID != eventID) {
-				MyTreeNode entityDepNode = pr.dependTree.vertexMap.get(entityID);
-				MyTreeNode eventDepNode = pr.dependTree.vertexMap.get(eventID);
-				if(entityDepNode!=null && eventDepNode!=null) {
+				MyTreeNode entityDepNode = pr.dependTree.vertexMapTree
+						.get(entityID);
+				MyTreeNode eventDepNode = pr.dependTree.vertexMapTree
+						.get(eventID);
+				if (entityDepNode != null && eventDepNode != null) {
 					entityAncestors = entityDepNode.getAncestors();
 					eventAncestors = eventDepNode.getAncestors();
 					common = 0;
 					commonNode = null;
-					for (int i = 0; i < entityAncestors.size() && i < eventAncestors.size(); i++) {
+					for (int i = 0; i < entityAncestors.size()
+							&& i < eventAncestors.size(); i++) {
 						if (entityAncestors.get(i) == eventAncestors.get(i)) {
 							common = i;
 							commonNode = eventAncestors.get(i);
@@ -493,91 +569,97 @@ public class EngArg {
 
 		ArrayList<String> features = new ArrayList<String>();
 
-//		features.add("Tr_" + trigger);
-//		features.add("Tr_POS" + triggerPOS);
-//		
-//		for(EntityMention m : entityMention.entity.mentions) {
-//			features.add("Head_" + m.head);
-//		}
-//		
-//		features.add("TrSubType_" + eventMention.getSubType());
-//
-//		features.add("ArgType_" + entityMention.getType());
-//		features.add("ArgSemType_" + entityMention.entity.type);
-//		features.add("ArgSemSubType" + entityMention.entity.subType);
-//		features.add("ArgType2_" + eventMention.subType + "_" + entityMention.head);
-//		features.add("ArgSemType2_" + eventMention.subType + "_" + entityMention.entity.type);
-//		features.add(eventMention.subType + "_" + entityMention.entity.subType);
+		// features.add("Tr_" + trigger);
+		// features.add("Tr_POS" + triggerPOS);
+		//
+		// for(EntityMention m : entityMention.entity.mentions) {
+		// features.add("Head_" + m.head);
+		// }
+		//
+		// features.add("TrSubType_" + eventMention.getSubType());
+		//
+		// features.add("ArgType_" + entityMention.getType());
+		// features.add("ArgSemType_" + entityMention.entity.type);
+		// features.add("ArgSemSubType" + entityMention.entity.subType);
+		// features.add("ArgType2_" + eventMention.subType + "_" +
+		// entityMention.head);
+		// features.add("ArgSemType2_" + eventMention.subType + "_" +
+		// entityMention.entity.type);
+		// features.add(eventMention.subType + "_" +
+		// entityMention.entity.subType);
 
 		for (int i = -2; i <= 2; i++) {
 			int k1, k2;
-			if(i>=0) {
+			if (i >= 0) {
 				k1 = rightIndex + i;
 				k2 = rightIndex + i + 1;
 			} else {
 				k1 = leftIndex + i;
 				k2 = leftIndex + i + 1;
 			}
-		
 
 			String pos1 = "null";
 			String pos2 = "null";
 			String word1 = "null";
 			String word2 = "null";
-			
+
 			String type1 = "null";
 			String type2 = "null";
 
 			if (k1 >= 1 && k1 < pr.words.size()) {
 				word1 = pr.words.get(k1);
 				pos1 = pr.posTags.get(k1);
-				
+
 				type1 = word1;
-				if(document.allGoldNPEndMap.containsKey(pr.positions.get(k1)[1])) {
-					type1 = document.allGoldNPEndMap.get(pr.positions.get(k1)[1]).entity.type;
+				if (document.allGoldNPEndMap
+						.containsKey(pr.positions.get(k1)[1])) {
+					type1 = document.allGoldNPEndMap
+							.get(pr.positions.get(k1)[1]).entity.type;
 				}
 			}
-//			features.add("Uni_" + i + "_" + word1);
-//			features.add("UniPOS_" + i + "_" + pos1);
-//			features.add("UniType_" + i + "_" + type1);
+			// features.add("Uni_" + i + "_" + word1);
+			// features.add("UniPOS_" + i + "_" + pos1);
+			// features.add("UniType_" + i + "_" + type1);
 
 			if (k2 >= 1 && k2 < pr.words.size()) {
 				word2 = pr.words.get(k2);
 				pos2 = pr.posTags.get(k2);
-				
+
 				type2 = word2;
-				if(document.allGoldNPEndMap.containsKey(pr.positions.get(k2)[1])) {
-					type2 = document.allGoldNPEndMap.get(pr.positions.get(k2)[1]).entity.type;
+				if (document.allGoldNPEndMap
+						.containsKey(pr.positions.get(k2)[1])) {
+					type2 = document.allGoldNPEndMap
+							.get(pr.positions.get(k2)[1]).entity.type;
 				}
 			}
-//			features.add("Bi_" + i + "_" + word1 + "#" + word2);
-//			features.add("BiPOS_" + i + "_" + pos1 + "#" + pos2);
-//			features.add("BiType_" + i + "_" + type1 + "#" + type2);
+			// features.add("Bi_" + i + "_" + word1 + "#" + word2);
+			// features.add("BiPOS_" + i + "_" + pos1 + "#" + pos2);
+			// features.add("BiType_" + i + "_" + type1 + "#" + type2);
 		}
-		
-//		features.add(leftWord2);
-//		features.add(rightWord2);
-//		features.add(leftWord2 + "_" + leftPOS2);
-//		features.add(rightWord2 + "-" + rightPOS2);
-//
-//		features.add(leftWord);
-//		features.add(rightWord);
-//		features.add(leftWord + "_" + leftPOS);
-//		features.add(rightWord + "-" + rightPOS);
-//
-//		features.add(eventNode.parent.parent.value);
-//		features.add(eventNode.parent.parent.productionRule());
+
+		// features.add(leftWord2);
+		// features.add(rightWord2);
+		// features.add(leftWord2 + "_" + leftPOS2);
+		// features.add(rightWord2 + "-" + rightPOS2);
+		//
+		// features.add(leftWord);
+		// features.add(rightWord);
+		// features.add(leftWord + "_" + leftPOS);
+		// features.add(rightWord + "-" + rightPOS);
+		//
+		// features.add(eventNode.parent.parent.value);
+		// features.add(eventNode.parent.parent.productionRule());
 
 		if (entityMention.end < eventMention.start) {
 			features.add("left");
 		} else {
 			features.add("right");
 		}
-		
+
 		features.add(path);
 		features.add(Integer.toString(distance));
 		features.add(depPath);
-		
+
 		return this.convert(features, label);
 	}
 
@@ -585,9 +667,9 @@ public class EngArg {
 		ArrayList<Feature> feas = new ArrayList<Feature>();
 		StringBuilder sb = new StringBuilder();
 		sb.append(label);
-		
+
 		HashSet<Integer> set = new HashSet<Integer>();
-		
+
 		for (int i = 0; i < feaStrs.size(); i++) {
 			String feaStr = feaStrs.get(i);
 			String extendFeaStr = feaStr.trim();
@@ -595,7 +677,7 @@ public class EngArg {
 			if (idx == -1) {
 				continue;
 			}
-			if(!set.contains(idx)) {
+			if (!set.contains(idx)) {
 				feas.add(new Feature(idx, 1));
 				set.add(idx);
 			}
