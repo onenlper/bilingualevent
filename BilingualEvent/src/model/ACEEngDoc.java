@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import model.stanford.StanfordResult;
 import model.stanford.StanfordSentence;
@@ -17,11 +18,14 @@ public class ACEEngDoc extends ACEDoc {
 
 	@Override
 	public void readStanfordParseFile() {
+		this.positionMap = new HashMap<Integer, int[]>();
+		
 		this.parseReults = new ArrayList<ParseResult>();
 		String stdFn = this.fileID + ".source.xml";
 		StanfordResult sr = StanfordXMLReader.read(stdFn);
 		int index = 0;
-		for(StanfordSentence ss : sr.sentences) {
+		for(int i=0;i<sr.sentences.size();i++) {
+			StanfordSentence ss = sr.sentences.get(i);
 			ParseResult pr = new ParseResult();
 			
 			pr.words.add("ROOT");
@@ -32,7 +36,8 @@ public class ACEEngDoc extends ACEDoc {
 			
 			pr.tree = ss.parseTree;
 			StringBuilder sb = new StringBuilder();
-			for(StanfordToken tk : ss.tokens) {
+			for(int j=0;j<ss.tokens.size();j++) {
+				StanfordToken tk = ss.tokens.get(j);
 				int start = this.content.indexOf(tk.word, index);
 				
 				if(start==-1 || (start-index>5) && index!=0) {
@@ -69,10 +74,27 @@ public class ACEEngDoc extends ACEDoc {
 				positions[0] = start;
 				positions[1] = end;
 				pr.positions.add(positions);
+				
+//				if(start!=tk.CharacterOffsetBegin || end!=tk.CharacterOffsetEnd) {
+//					System.out.println(tk.word);
+//					System.out.println(start + "," + end + ":" + tk.CharacterOffsetBegin + "," + (tk.CharacterOffsetEnd));
+////					Common.bangErrorPOS("");
+////					Common.pause("");
+//				}
+				
+				int p[] = new int[2];
+				p[0] = i;
+				p[1] = j;
+				for(int k=start;k<=end;k++) {
+					this.positionMap.put(k, p);
+				}
+				for(int k=tk.CharacterOffsetBegin;k<=tk.CharacterOffsetEnd;k++) {
+					this.positionMap.put(k, p);
+				}
 			}
 			pr.sentence = sb.toString().trim();
 			
-			for(StanfordDep dep : ss.basicDependencies) {
+			for(StanfordDep dep : ss.collapsedCcprocessedDependencies) {
 				int first = dep.getGovernorId();
 				int second = dep.getDependentId();
 				String type = dep.getType();
@@ -103,14 +125,13 @@ public class ACEEngDoc extends ACEDoc {
 		for(String file : files) {
 			ACEDoc doc = new ACEEngDoc(file);
 			
-			for(ParseResult pr : doc.parseReults) {
-				StringBuilder sb = new StringBuilder();
-				for(String word : pr.words) {
-					sb.append(word).append(" ");
-				}
-				lines.add(sb.toString().trim());
-			}
-			
+//			for(ParseResult pr : doc.parseReults) {
+//				StringBuilder sb = new StringBuilder();
+//				for(String word : pr.words) {
+//					sb.append(word).append(" ");
+//				}
+//				lines.add(sb.toString().trim());
+//			}
 //			Common.outputLine(doc.content, file + ".source");
 //			for(EventMention em : doc.goldEventMentions) {
 //				if(em.anchor.trim().split("\\s+").length==1) {
@@ -129,7 +150,7 @@ public class ACEEngDoc extends ACEDoc {
 		}
 //		System.out.println(single/all);
 //		System.out.println(ss);
-		Common.outputLines(lines, "brown_input");
+//		Common.outputLines(lines, "brown_input");
 	}
 
 	private static void check() {

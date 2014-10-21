@@ -47,11 +47,35 @@ public class Common {
 		return s;
 	}
 	
+	public static ArrayList<String> get1234Ngram(ArrayList<String> tokens,
+			String prefix) {
+		ArrayList<String> feas = new ArrayList<String>();
+		for (int i = 0; i < tokens.size(); i++) {
+			feas.add(prefix + "uni#" + tokens.get(i));
+			if (i < tokens.size() - 1) {
+				feas.add(prefix + "bi#" + tokens.get(i) + " "
+						+ tokens.get(i + 1));
+			}
+
+			if (i < tokens.size() - 2) {
+				feas.add(prefix + "tri#" + tokens.get(i) + " "
+						+ tokens.get(i + 1) + " " + tokens.get(i + 2));
+			}
+
+			if (i < tokens.size() - 3) {
+				// feas.add(prefix + "qua#" + tokens.get(i) + " "
+				// + tokens.get(i + 1) + " " + tokens.get(i + 2) + " "
+				// + tokens.get(i + 3));
+			}
+		}
+		return feas;
+	}
+	
 	public static String getBrownCluster(String str) {
 		if(brownCluster==null) {
 			int maxLen = 0;
 			brownCluster = new HashMap<String, String>();
-			ArrayList<String> lines = Common.getLines("/users/yzcchen/tool/brownCluster/brown-cluster-master/brown_input-c2000-p1.out/paths");
+			ArrayList<String> lines = Common.getLines("/users/yzcchen/tool/brownCluster/brown-cluster-master/brown_input-c5000-p1.out/paths");
 			for(String line : lines) {
 				String tks[] = line.split("\\s+");
 				brownCluster.put(tks[1], tks[0]);
