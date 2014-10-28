@@ -609,7 +609,7 @@ public class EngArg {
 		 features.add("ArgSemSubType" + entityMention.entity.subType);
 		 features.add("ArgType2_" + eventMention.subType + "_" + entityMention.head);
 		 features.add("ArgSemType2_" + eventMention.subType + "_" + entityMention.entity.type);
-		 features.add(eventMention.subType + "_" + entityMention.entity.subType);
+		 features.add("ArgSubtype_" + eventMention.subType + "_" + entityMention.entity.subType);
 
 		for (int i = -2; i <= 2; i++) {
 			int k1, k2;
@@ -670,8 +670,8 @@ public class EngArg {
 		 features.add("l1Pos_" + leftWord + "_" + leftPOS);
 		 features.add("r1Pos_" + rightWord + "-" + rightPOS);
 		
-		 features.add(eventNode.parent.parent.value);
-		 features.add(eventNode.parent.parent.productionRule());
+		 features.add("category_" + eventNode.parent.parent.value);
+		 features.add("production_rule" + eventNode.parent.parent.productionRule());
 
 		if (entityMention.end < eventMention.getAnchorStart()) {
 			features.add("left");
@@ -681,10 +681,10 @@ public class EngArg {
 			features.add("overlap");
 		}
 
-		features.add(path);
+		features.add("path" + path);
 		features.add("distance2_"+ Integer.toString(rightIndex2 - rightIndex));
-		features.add(Integer.toString(distance));
-		features.add(depPath);
+		features.add("distance_" + Integer.toString(distance));
+		features.add("depPath" + depPath);
 		return this.convert(features, label);
 	}
 
