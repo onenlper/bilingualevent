@@ -464,8 +464,6 @@ public class EngArg {
 		ArrayList<String> words2 = pr2.lemmas;
 		ArrayList<String> posTags2 = pr2.posTags;
 
-		String triggerPOS = posTags2.get(trPosition[3]);
-
 		String path = "-";
 		String depPath = "-";
 		int distance = -1;
@@ -684,7 +682,7 @@ public class EngArg {
 		}
 
 		features.add(path);
-//		features.add("distance2_"+ Integer.toString(rightIndex2 - rightIndex));
+		features.add("distance2_"+ Integer.toString(rightIndex2 - rightIndex));
 		features.add(Integer.toString(distance));
 		features.add(depPath);
 		return this.convert(features, label);
