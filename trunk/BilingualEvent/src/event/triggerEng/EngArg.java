@@ -111,6 +111,24 @@ public class EngArg {
 			Common.outputHashMap(argumentFeature.featureSpace, "engArgSpace"
 					+ Util.part);
 		}
+		
+//		int k = 0;
+//		double allPer = 0;
+//		for(String key : labelDistri.keySet()) {
+//			if(key.equals("null")) {
+//				continue;
+//			}
+//			double percent = labelDistri.get(key)*100./8720.0;
+//			System.out.println(key + ":" + labelDistri.get(key) + " \t " + percent);
+//			allPer += percent;
+//			System.out.println(allPer);
+//			k += labelDistri.get(key);
+//		}
+//
+//		System.out.println("All Trs: " + allTrs);
+//		System.out.println("All Args: " + allArgs);
+//		System.out.println("All TrueArgs: " + allTrueArgs);
+//		System.out.println("K: " + k);
 	}
 
 	public ArrayList<EntityMention> getArgumentCandidates(EventMention em,
@@ -141,13 +159,11 @@ public class EngArg {
 		return candidates;
 	}
 
-	static boolean sw = false;
-
 	public ArrayList<String> buildTrainRoleFeatures(EventMention eventMention,
 			ACEDoc document) {
 		ArrayList<EventMentionArgument> arguments = eventMention
 				.getEventMentionArguments();
-
+		
 		HashMap<String, EventMentionArgument> goldArgHash = new HashMap<String, EventMentionArgument>();
 
 		for (EventMentionArgument arg : arguments) {
@@ -156,7 +172,6 @@ public class EngArg {
 
 		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(
 				eventMention, document);
-		sw = true;
 		ArrayList<String> features = new ArrayList<String>();
 		for (EntityMention mention : entityMentions) {
 			String start = Integer.toString(mention.getStart());
@@ -166,12 +181,12 @@ public class EngArg {
 			if (arg != null) {
 				role = arg.getRole();
 			}
+			
 			String feature = this.buildFeature(mention, eventMention, document,
 					Integer.toString(Util.roles.indexOf(role) + 1),
 					entityMentions);
 			features.add(feature);
 		}
-		sw = false;
 		return features;
 	}
 
@@ -229,7 +244,7 @@ public class EngArg {
 		}
 	}
 
-	public String buildFeature(EntityMention arg, EventMention tr,
+	public String buildFeature2(EntityMention arg, EventMention tr,
 			ACEDoc document, String label, ArrayList<EntityMention> allArgs) {
 		ArrayList<String> features = new ArrayList<String>();
 		ParseResult pr = document.parseReults.get(document.positionMap
@@ -239,6 +254,12 @@ public class EngArg {
 		int arg_end = document.positionMap.get(arg.end)[1];
 		int arg_head = document.positionMap.get(arg.headEnd)[1];
 
+		String head = arg.head.split("\\s+")[arg.head.split("\\s+").length-1];
+		if(!head.contains(pr.words.get(arg_head)) && !pr.words.get(arg_head).contains(head)) {
+			System.out.println(arg.head + "$$$" + pr.words.get(arg_head));
+//			Common.pause("");
+		}
+		
 		int tr_start = document.positionMap.get(tr.getAnchorStart())[1];
 		int tr_end = document.positionMap.get(tr.getAnchorEnd())[1];
 		int tr_head = document.positionMap.get(tr.getAnchorStart())[1];
@@ -246,15 +267,15 @@ public class EngArg {
 		ArrayList<String> aroundTr = new ArrayList<String>();
 		for (int i = tr_head - 2; i <= tr_head + 2; i++) {
 			if (i >= 1 && i < pr.words.size()) {
-				aroundTr.add(pr.lemmas.get(i) + (i - tr_head));
+				aroundTr.add(pr.lemmas.get(i) + "#" + (i - tr_head));
 			}
 		}
-		features.addAll(Common.get1234Ngram(aroundTr, "aroundTr_"));
+//		features.addAll(Common.get1234Ngram(aroundTr, "aroundTr_"));
 
 		ArrayList<String> aroundArg = new ArrayList<String>();
 		for (int i = arg_head - 2; i <= arg_head + 2; i++) {
 			if (i >= 1 && i < pr.words.size()) {
-				aroundArg.add(pr.lemmas.get(i) + (i - arg_head));
+				aroundArg.add(pr.lemmas.get(i) + "#" + (i - arg_head));
 			}
 		}
 		features.addAll(Common.get1234Ngram(aroundArg, "aroundArg_"));
@@ -372,17 +393,17 @@ public class EngArg {
 			features.add("lexicalDiss_0");
 		}
 
-//		GraphNode trDep = pr.dependTree.vertexMap.get(tr_head + 1);
-//		GraphNode argDep = pr.dependTree.vertexMap.get(arg_head + 1);
-//
-//		ArrayList<GraphNode> path = Util.findPath(trDep, argDep);
-//		features.addAll(Util.getPathFeature("edge_", path, pr));
-//
-//		// unigram along path
-//		StringBuilder sb = new StringBuilder();
-//		StringBuilder sb22 = new StringBuilder();
-//
-//		for (int i = 0; i < path.size() - 1; i++) {
+		GraphNode trDep = pr.dependTree.vertexMap.get(tr_head + 1);
+		GraphNode argDep = pr.dependTree.vertexMap.get(arg_head + 1);
+
+		ArrayList<GraphNode> path = Util.findPath(trDep, argDep);
+		features.addAll(Util.getPathFeature("edge_", path, pr));
+
+		// unigram along path
+		StringBuilder sb = new StringBuilder();
+		StringBuilder sb22 = new StringBuilder();
+
+//		for (int i = 1; i < path.size() - 1; i++) {
 //			GraphNode node = path.get(i);
 //			String tk = pr.words.get(node.value);
 //			String edge = node.getEdgeName(path.get(i + 1));
@@ -395,59 +416,66 @@ public class EngArg {
 //		}
 //
 //		if (path.size() != 0) {
-//			sb22.append(pr.words.get((path.get(path.size() - 1).value)));
+////			sb22.append(pr.words.get((path.get(path.size() - 1).value)));
 //		} else {
 //			sb22.append("null");
 //		}
 //
+//		
+//		
 //		// System.out.println(sb22.toString());
 //		features.add("dePath22#" + sb22.toString());
-//		
 //		features.add("dePath#"+ sb.toString());
+//		features.add("dePathLength_"+ path.size());
 //
-//		System.out.println(arg.extent + "#" + tr.getAnchor());
-//		System.out.println(sb.toString());
-//		System.out.println(sb22.toString());
-//		System.out.println("===============================");
+//		MyTreeNode trNode = pr.tree.leaves.get(tr_head);
+//		MyTreeNode argNode = pr.tree.leaves.get(arg_head);
+//		
+//		ArrayList<MyTreeNode> trAns = trNode.getAncestors();
+//		ArrayList<MyTreeNode> arAns = argNode.getAncestors();
+//		MyTreeNode common = null;
+//		for(int i=0;i<trAns.size()&&i<arAns.size();i++) {
+//			if(trAns.get(i)==arAns.get(i)) {
+//				common = trAns.get(i);
+//			} else {
+//				break;
+//			}
+//		}
+//		features.add("common_" + common.value);
+		
 		return this.convert(features, label);
 	}
 
-	public String buildFeature2(EntityMention entityMention,
-			EventMention eventMention, ACEDoc document, String label) {
-		String trigger = eventMention.getAnchor();
-		int position[] = ChineseUtil.findParseFilePosition2(
-				entityMention.start, entityMention.end, document);
-		int position2[] = ChineseUtil.findParseFilePosition2(
-				eventMention.getAnchorStart(), eventMention.getAnchorEnd(),
-				document);
+	public String buildFeature(EntityMention entityMention,
+			EventMention eventMention, ACEDoc document, String label, ArrayList<EntityMention> allArgs) {
+		int argPosition[] = ChineseUtil.findParseFilePosition2(entityMention.headStart, entityMention.headEnd, document);
+		int trPosition[] = ChineseUtil.findParseFilePosition2(eventMention.getAnchorStart(), eventMention.getAnchorEnd(), document);
 
-		int leftIndex2 = position2[1];
-		int rightIndex2 = position2[3];
+		int leftIndex2 = trPosition[1];
+		int rightIndex2 = trPosition[3];
 
-		ParseResult pr = document.parseReults.get(position[0]);
-		ParseResult pr2 = document.parseReults.get(position2[0]);
-		int index = position[0];
-		int leftIndex = position[1];
-		int rightIndex = position[3];
-		ArrayList<String> words = pr.words;
+		ParseResult pr = document.parseReults.get(argPosition[0]);
+		ParseResult pr2 = document.parseReults.get(trPosition[0]);
+		int leftIndex = argPosition[1];
+		int rightIndex = argPosition[3];
+		ArrayList<String> words = pr.lemmas;
 		ArrayList<String> posTags = pr.posTags;
-		ArrayList<int[]> positions = pr.positions;
 
-		ArrayList<String> words2 = pr2.words;
+		ArrayList<String> words2 = pr2.lemmas;
 		ArrayList<String> posTags2 = pr2.posTags;
 
-		String triggerPOS = posTags2.get(position2[3]);
+		String triggerPOS = posTags2.get(trPosition[3]);
 
 		String path = "-";
 		String depPath = "-";
 		int distance = -1;
-		MyTreeNode entityNode = pr.tree.leaves.get(position[3]);
-		MyTreeNode eventNode = pr2.tree.leaves.get(position2[3]);
+		MyTreeNode entityNode = pr.tree.leaves.get(argPosition[3]);
+		MyTreeNode eventNode = pr2.tree.leaves.get(trPosition[3]);
 
-		int entityID = position[3];
-		int eventID = position2[3];
+		int entityID = argPosition[3];
+		int eventID = trPosition[3];
 
-		if (position[0] == position2[0]) {
+		if (argPosition[0] == trPosition[0]) {
 			ArrayList<MyTreeNode> entityAncestors = entityNode.getAncestors();
 			ArrayList<MyTreeNode> eventAncestors = eventNode.getAncestors();
 
@@ -455,7 +483,7 @@ public class EngArg {
 			MyTreeNode eventIP = null;
 			for (int k = entityAncestors.size() - 1; k >= 0; k--) {
 				MyTreeNode node = entityAncestors.get(k);
-				if (node.value.equalsIgnoreCase("ip")
+				if (node.value.equalsIgnoreCase("s")
 						|| node.value.equalsIgnoreCase("root")) {
 					entityIP = node;
 					break;
@@ -463,7 +491,7 @@ public class EngArg {
 			}
 			for (int k = eventAncestors.size() - 1; k >= 0; k--) {
 				MyTreeNode node = eventAncestors.get(k);
-				if (node.value.equalsIgnoreCase("ip")
+				if (node.value.equalsIgnoreCase("s")
 						|| node.value.equalsIgnoreCase("root")) {
 					eventIP = node;
 					break;
@@ -569,24 +597,21 @@ public class EngArg {
 
 		ArrayList<String> features = new ArrayList<String>();
 
-		// features.add("Tr_" + trigger);
-		// features.add("Tr_POS" + triggerPOS);
-		//
-		// for(EntityMention m : entityMention.entity.mentions) {
-		// features.add("Head_" + m.head);
-		// }
-		//
-		// features.add("TrSubType_" + eventMention.getSubType());
-		//
-		// features.add("ArgType_" + entityMention.getType());
-		// features.add("ArgSemType_" + entityMention.entity.type);
-		// features.add("ArgSemSubType" + entityMention.entity.subType);
-		// features.add("ArgType2_" + eventMention.subType + "_" +
-		// entityMention.head);
-		// features.add("ArgSemType2_" + eventMention.subType + "_" +
-		// entityMention.entity.type);
-		// features.add(eventMention.subType + "_" +
-		// entityMention.entity.subType);
+//		 features.add("Tr_" + trigger);
+//		 features.add("Tr_POS" + triggerPOS);
+		
+		 for(EntityMention m : entityMention.entity.mentions) {
+			 features.add("Head_" + m.head);
+		 }
+		
+		 features.add("TrSubType_" + eventMention.getSubType());
+		
+		 features.add("ArgType_" + entityMention.getType());
+		 features.add("ArgSemType_" + entityMention.entity.type);
+		 features.add("ArgSemSubType" + entityMention.entity.subType);
+		 features.add("ArgType2_" + eventMention.subType + "_" + entityMention.head);
+		 features.add("ArgSemType2_" + eventMention.subType + "_" + entityMention.entity.type);
+		 features.add(eventMention.subType + "_" + entityMention.entity.subType);
 
 		for (int i = -2; i <= 2; i++) {
 			int k1, k2;
@@ -607,7 +632,7 @@ public class EngArg {
 			String type2 = "null";
 
 			if (k1 >= 1 && k1 < pr.words.size()) {
-				word1 = pr.words.get(k1);
+				word1 = pr.lemmas.get(k1);
 				pos1 = pr.posTags.get(k1);
 
 				type1 = word1;
@@ -622,7 +647,7 @@ public class EngArg {
 			// features.add("UniType_" + i + "_" + type1);
 
 			if (k2 >= 1 && k2 < pr.words.size()) {
-				word2 = pr.words.get(k2);
+				word2 = pr.lemmas.get(k2);
 				pos2 = pr.posTags.get(k2);
 
 				type2 = word2;
@@ -637,29 +662,29 @@ public class EngArg {
 			// features.add("BiType_" + i + "_" + type1 + "#" + type2);
 		}
 
-		// features.add(leftWord2);
-		// features.add(rightWord2);
-		// features.add(leftWord2 + "_" + leftPOS2);
-		// features.add(rightWord2 + "-" + rightPOS2);
-		//
-		// features.add(leftWord);
-		// features.add(rightWord);
-		// features.add(leftWord + "_" + leftPOS);
-		// features.add(rightWord + "-" + rightPOS);
-		//
-		// features.add(eventNode.parent.parent.value);
-		// features.add(eventNode.parent.parent.productionRule());
+		 features.add(leftWord2);
+		 features.add(rightWord2);
+		 features.add(leftWord2 + "_" + leftPOS2);
+		 features.add(rightWord2 + "-" + rightPOS2);
+		
+		 features.add(leftWord);
+		 features.add(rightWord);
+		 features.add(leftWord + "_" + leftPOS);
+		 features.add(rightWord + "-" + rightPOS);
+		
+		 features.add(eventNode.parent.parent.value);
+		 features.add(eventNode.parent.parent.productionRule());
 
-		if (entityMention.end < eventMention.start) {
+		if (entityMention.headEnd < eventMention.getAnchorStart()) {
 			features.add("left");
 		} else {
 			features.add("right");
 		}
 
 		features.add(path);
+//		features.add("distance2_"+ Integer.toString(rightIndex2 - rightIndex));
 		features.add(Integer.toString(distance));
 		features.add(depPath);
-
 		return this.convert(features, label);
 	}
 
