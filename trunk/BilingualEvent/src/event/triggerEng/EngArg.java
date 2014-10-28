@@ -675,10 +675,12 @@ public class EngArg {
 		 features.add(eventNode.parent.parent.value);
 		 features.add(eventNode.parent.parent.productionRule());
 
-		if (entityMention.headEnd < eventMention.getAnchorStart()) {
+		if (entityMention.end < eventMention.getAnchorStart()) {
 			features.add("left");
-		} else {
+		} else if(entityMention.start>eventMention.getAnchorEnd()){
 			features.add("right");
+		} else {
+			features.add("overlap");
 		}
 
 		features.add(path);
