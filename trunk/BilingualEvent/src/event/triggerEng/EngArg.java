@@ -660,15 +660,15 @@ public class EngArg {
 			// features.add("BiType_" + i + "_" + type1 + "#" + type2);
 		}
 
-		 features.add(leftWord2);
-		 features.add(rightWord2);
-		 features.add(leftWord2 + "_" + leftPOS2);
-		 features.add(rightWord2 + "-" + rightPOS2);
+		 features.add("l2_" + leftWord2);
+		 features.add("r2_" + rightWord2);
+		 features.add("l2Pos_" + leftWord2 + "_" + leftPOS2);
+		 features.add("r2Pos_" + rightWord2 + "-" + rightPOS2);
 		
-		 features.add(leftWord);
-		 features.add(rightWord);
-		 features.add(leftWord + "_" + leftPOS);
-		 features.add(rightWord + "-" + rightPOS);
+		 features.add("l1_" + leftWord);
+		 features.add("r1_" + rightWord);
+		 features.add("l1Pos_" + leftWord + "_" + leftPOS);
+		 features.add("r1Pos_" + rightWord + "-" + rightPOS);
 		
 		 features.add(eventNode.parent.parent.value);
 		 features.add(eventNode.parent.parent.productionRule());
