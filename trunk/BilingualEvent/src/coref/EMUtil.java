@@ -10,9 +10,9 @@ public class EMUtil {
 	public static double alpha = 1;
 	public static boolean train = false;
 
-	public static ArrayList<EventMention> getEventMentionInOneS(ACEDoc doc, int sid) {
+	public static ArrayList<EventMention> getEventMentionInOneS(ACEDoc doc, ArrayList<EventMention> allEvms, int sid) {
 		ArrayList<EventMention> mentions = new ArrayList<EventMention>();
-		for(EventMention em : doc.eventMentions) {
+		for(EventMention em : allEvms) {
 			if(doc.positionMap.get(em.getAnchorStart())[0]==sid) {
 				mentions.add(em);
 			}

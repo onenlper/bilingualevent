@@ -75,7 +75,7 @@ public class EMLearn {
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
 		for (int i = 0; i < doc.parseReults.size(); i++) {
 			ParseResult pr = doc.parseReults.get(i);
-			pr.evms = EMUtil.getEventMentionInOneS(doc, i);
+			pr.evms = EMUtil.getEventMentionInOneS(doc, doc.goldEventMentions, i);
 
 			ArrayList<EventMention> precedMs = new ArrayList<EventMention>();
 			for (int j = maxDistance; j >= 1; j--) {
@@ -190,10 +190,7 @@ public class EMLearn {
 	static int percent = 10;
 
 	private static void extractCoNLL(ArrayList<ResolveGroup> groups) {
-		// CoNLLDocument d = new CoNLLDocument("train_auto_conll");
-		ArrayList<String> lines = Common.getLines("chinese_list_all_train");
-		lines.addAll(Common.getLines("chinese_list_all_development"));
-
+		ArrayList<String> lines = Common.getLines("ACE_English_train0");
 		int docNo = 0;
 		for (String line : lines) {
 			if (docNo % 10 < percent) {
@@ -355,11 +352,7 @@ public class EMLearn {
 	}
 
 	public static void main(String args[]) throws Exception {
-		// EMUtil.loadAlign();
 		run();
-		// System.out.println(match/XallX);
-		// Common.outputLines(svmRanks, "svmRank.train");
-		// System.out.println("Qid: " + qid);
 	}
 
 	private static void run() throws IOException, FileNotFoundException {
@@ -370,10 +363,6 @@ public class EMLearn {
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
 
 		extractCoNLL(groups);
-		// extractGigaword(groups);
-		// Common.pause("count:  " + count);
-		// Common.pause(groups.size());
-
 		int it = 0;
 		while (it < 20) {
 			System.out.println("Iteration: " + it);
@@ -415,14 +404,13 @@ public class EMLearn {
 
 		// System.out.println(EMUtil.missed);
 
-		ApplyEM.run("all");
-
-		ApplyEM.run("nw");
-		ApplyEM.run("mz");
-		ApplyEM.run("wb");
-		ApplyEM.run("bn");
-		ApplyEM.run("bc");
-		ApplyEM.run("tc");
+//		ApplyEM.run("all");
+//		ApplyEM.run("nw");
+//		ApplyEM.run("mz");
+//		ApplyEM.run("wb");
+//		ApplyEM.run("bn");
+//		ApplyEM.run("bc");
+//		ApplyEM.run("tc");
 	}
 
 }
