@@ -12,6 +12,7 @@ import java.util.HashSet;
 import javax.naming.Context;
 
 import model.ACEDoc;
+import model.ParseResult;
 import util.Common;
 import coref.ResolveGroup.Entry;
 
@@ -20,10 +21,10 @@ public class EMLearn {
 	// static HashMap<Context, Double> p_context_ = new HashMap<Context,
 	// Double>();
 
-	static Parameter numberP;
-	static Parameter genderP;
-	static Parameter semanticP;
-	static Parameter grammaticP;
+//	static Parameter numberP;
+//	static Parameter genderP;
+//	static Parameter semanticP;
+//	static Parameter grammaticP;
 
 	static Parameter animacyP;
 	static Parameter cilin;
@@ -46,41 +47,35 @@ public class EMLearn {
 //	static int count = 0;
 
 	public static void init() {
-		// static HashMap<Context, Double> p_context_ = new HashMap<Context,
-		// Double>();
-		numberP = new Parameter(1.0 / ((double) EMUtil.Number.values().length));
-		genderP = new Parameter(1.0 / ((double) EMUtil.Gender.values().length));
-		semanticP = new Parameter(1.0 / 25318.0);
+//		numberP = new Parameter(1.0 / ((double) EMUtil.Number.values().length));
+//		genderP = new Parameter(1.0 / ((double) EMUtil.Gender.values().length));
+//		semanticP = new Parameter(1.0 / 25318.0);
 
 		// semanticP = new Parameter(1.0/5254.0);
 
 		cilin = new Parameter(1.0 / 7089.0);
 
-		grammaticP = new Parameter(1.0 / 4.0);
+//		grammaticP = new Parameter(1.0 / 4.0);
 
-		animacyP = new Parameter(
-				1.0 / ((double) EMUtil.Animacy.values().length));
+//		animacyP = new Parameter(
+//				1.0 / ((double) EMUtil.Animacy.values().length));
 
 		contextPrior = new HashMap<String, Double>();
 		contextOverall = new HashMap<String, Double>();
 		fracContextCount = new HashMap<String, Double>();
 		contextVals = new HashMap<String, Double>();
 		qid = 0;
-		Context.contextCache.clear();
+//		Context.contextCache.clear();
 	}
 
 
 	@SuppressWarnings("unused")
 	public static ArrayList<ResolveGroup> extractGroups(ACEDoc doc, String docName) {
 
-		// CoNLLPart goldPart = EMUtil.getGoldPart(part, "train");
-		CoNLLPart goldPart = part;
-		HashSet<String> goldNEs = EMUtil.getGoldNEs(goldPart);
-		HashSet<String> goldPNs = EMUtil.getGoldPNs(goldPart);
-
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
-		for (int i = 0; i < part.getCoNLLSentences().size(); i++) {
-			CoNLLSentence s = part.getCoNLLSentences().get(i);
+		for (int i = 0; i < doc.parseReults.size(); i++) {
+			ParseResult pr = doc.parseReults.get(i);
+			
 			s.mentions = EMUtil.extractMention(s);
 			
 //			EMUtil.alignMentions(s, s.mentions, docName);
