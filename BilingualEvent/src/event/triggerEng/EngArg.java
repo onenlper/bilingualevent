@@ -26,9 +26,6 @@ public class EngArg {
 
 	public HashMap<String, Integer> featureSpace;
 
-	int near = 0;
-	int far = 0;
-
 	public static void main(String args[]) {
 		if (args.length < 3) {
 			System.out
@@ -446,16 +443,17 @@ public class EngArg {
 		return this.convert(features, label);
 	}
 
-	public String buildFeature(EntityMention entityMention,
-			EventMention eventMention, ACEDoc document, String label, ArrayList<EntityMention> allArgs) {
-		int argPosition[] = ChineseUtil.findParseFilePosition2(entityMention.headStart, entityMention.headEnd, document);
-		int trPosition[] = ChineseUtil.findParseFilePosition2(eventMention.getAnchorStart(), eventMention.getAnchorEnd(), document);
+	public String buildFeature(EntityMention arg,
+			EventMention tr, ACEDoc document, String label, ArrayList<EntityMention> allArgs) {
+		int argPosition[] = ChineseUtil.findParseFilePosition2(arg.headStart, arg.headEnd, document);
+		int trPosition[] = ChineseUtil.findParseFilePosition2(tr.getAnchorStart(), tr.getAnchorEnd(), document);
 
 		int leftIndex2 = trPosition[1];
 		int rightIndex2 = trPosition[3];
 
 		ParseResult pr = document.parseReults.get(argPosition[0]);
 		ParseResult pr2 = document.parseReults.get(trPosition[0]);
+		
 		int leftIndex = argPosition[1];
 		int rightIndex = argPosition[3];
 		ArrayList<String> words = pr.lemmas;
@@ -496,14 +494,6 @@ public class EngArg {
 				}
 			}
 
-			if (!Util.roles.get(Integer.parseInt(label) - 1).equalsIgnoreCase(
-					"null")) {
-				if (entityIP == eventIP) {
-					near++;
-				} else {
-					far++;
-				}
-			}
 
 			int common = 0;
 			MyTreeNode commonNode = null;
@@ -595,70 +585,20 @@ public class EngArg {
 
 		ArrayList<String> features = new ArrayList<String>();
 
-//		 features.add("Tr_" + trigger);
 //		 features.add("Tr_POS" + triggerPOS);
 		
-		 for(EntityMention m : entityMention.entity.mentions) {
+		 for(EntityMention m : arg.entity.mentions) {
 			 features.add("Head_" + m.head);
 		 }
 		
-		 features.add("TrSubType_" + eventMention.getSubType());
+		 features.add("TrSubType_" + tr.getSubType());
 		
-		 features.add("ArgType_" + entityMention.getType());
-		 features.add("ArgSemType_" + entityMention.entity.type);
-		 features.add("ArgSemSubType" + entityMention.entity.subType);
-		 features.add("ArgType2_" + eventMention.subType + "_" + entityMention.head);
-		 features.add("ArgSemType2_" + eventMention.subType + "_" + entityMention.entity.type);
-		 features.add("ArgSubtype_" + eventMention.subType + "_" + entityMention.entity.subType);
-
-		for (int i = -2; i <= 2; i++) {
-			int k1, k2;
-			if (i >= 0) {
-				k1 = rightIndex + i;
-				k2 = rightIndex + i + 1;
-			} else {
-				k1 = leftIndex + i;
-				k2 = leftIndex + i + 1;
-			}
-
-			String pos1 = "null";
-			String pos2 = "null";
-			String word1 = "null";
-			String word2 = "null";
-
-			String type1 = "null";
-			String type2 = "null";
-
-			if (k1 >= 1 && k1 < pr.words.size()) {
-				word1 = pr.lemmas.get(k1);
-				pos1 = pr.posTags.get(k1);
-
-				type1 = word1;
-				if (document.allGoldNPEndMap
-						.containsKey(pr.positions.get(k1)[1])) {
-					type1 = document.allGoldNPEndMap
-							.get(pr.positions.get(k1)[1]).entity.type;
-				}
-			}
-			// features.add("Uni_" + i + "_" + word1);
-			// features.add("UniPOS_" + i + "_" + pos1);
-			// features.add("UniType_" + i + "_" + type1);
-
-			if (k2 >= 1 && k2 < pr.words.size()) {
-				word2 = pr.lemmas.get(k2);
-				pos2 = pr.posTags.get(k2);
-
-				type2 = word2;
-				if (document.allGoldNPEndMap
-						.containsKey(pr.positions.get(k2)[1])) {
-					type2 = document.allGoldNPEndMap
-							.get(pr.positions.get(k2)[1]).entity.type;
-				}
-			}
-			// features.add("Bi_" + i + "_" + word1 + "#" + word2);
-			// features.add("BiPOS_" + i + "_" + pos1 + "#" + pos2);
-			// features.add("BiType_" + i + "_" + type1 + "#" + type2);
-		}
+		 features.add("ArgType_" + arg.getType());
+		 features.add("ArgSemType_" + arg.entity.type);
+		 features.add("ArgSemSubType" + arg.entity.subType);
+		 features.add("ArgType2_" + tr.subType + "_" + arg.head);
+		 features.add("ArgSemType2_" + tr.subType + "_" + arg.entity.type);
+		 features.add("ArgSubtype_" + tr.subType + "_" + arg.entity.subType);
 
 		 features.add("l2_" + leftWord2);
 		 features.add("r2_" + rightWord2);
@@ -673,9 +613,9 @@ public class EngArg {
 		 features.add("category_" + eventNode.parent.parent.value);
 		 features.add("production_rule" + eventNode.parent.parent.productionRule());
 
-		if (entityMention.end < eventMention.getAnchorStart()) {
+		if (arg.end < tr.getAnchorStart()) {
 			features.add("left");
-		} else if(entityMention.start>eventMention.getAnchorEnd()){
+		} else if(arg.start>tr.getAnchorEnd()){
 			features.add("right");
 		} else {
 			features.add("overlap");
@@ -685,6 +625,83 @@ public class EngArg {
 		features.add("distance2_"+ Integer.toString(rightIndex2 - rightIndex));
 		features.add("distance_" + Integer.toString(distance));
 		features.add("depPath" + depPath);
+		
+		
+		
+		int arg_head = document.positionMap.get(arg.headEnd)[1];
+
+		String head = arg.head.split("\\s+")[arg.head.split("\\s+").length-1];
+		if(!head.contains(pr.words.get(arg_head)) && !pr.words.get(arg_head).contains(head)) {
+			System.out.println(arg.head + "$$$" + pr.words.get(arg_head));
+//			Common.pause("");
+		}
+		
+		int tr_start = document.positionMap.get(tr.getAnchorStart())[1];
+		int tr_end = document.positionMap.get(tr.getAnchorEnd())[1];
+		int tr_head = document.positionMap.get(tr.getAnchorStart())[1];
+		
+		
+		HashMap<String, Integer> minSubTypeDis = new HashMap<String, Integer>();
+		HashMap<String, Integer> subtypeMs = new HashMap<String, Integer>();
+
+		HashMap<String, Integer> minTypeDis = new HashMap<String, Integer>();
+		HashMap<String, Integer> typeMs = new HashMap<String, Integer>();
+		int minDis = Integer.MAX_VALUE;
+		for (EntityMention m : allArgs) {
+			String subType = m.entity.subType;
+			int arg_head2 = document.positionMap.get(m.headStart)[1];
+			int diss = Math.abs(arg_head2 - tr_head);
+			minDis = Math.min(minDis, diss);
+			Integer minD = minSubTypeDis.get(subType);
+			if (minD != null) {
+				minSubTypeDis.put(subType, Math.min(minD.intValue(), diss));
+			} else {
+				minSubTypeDis.put(subType, diss);
+			}
+			if (subtypeMs.containsKey(subType)) {
+				subtypeMs.put(subType, subtypeMs.get(subType) + 1);
+			} else {
+				subtypeMs.put(subType, 1);
+			}
+
+			String type = m.entity.type;
+			minD = minTypeDis.get(type);
+			if (minD != null) {
+				minTypeDis.put(type, Math.min(minD.intValue(), diss));
+			} else {
+				minTypeDis.put(type, diss);
+			}
+			if (typeMs.containsKey(type)) {
+				typeMs.put(type, typeMs.get(type) + 1);
+			} else {
+				typeMs.put(type, 1);
+			}
+		}
+//		int diss = Math.abs(arg_head - tr_head);
+//		if (diss == minSubTypeDis.get(arg.entity.subType)) {
+//			features.add("closeSubType_" + "yes");
+//		} else {
+//			features.add("closeSubType_" + "no");
+//		}
+//		if (subtypeMs.get(arg.entity.subType) == 1) {
+//			features.add("onlySubType_" + "yes");
+//		} else {
+//			features.add("onlySubType_" + "no");
+//		}
+
+//		if (diss == minTypeDis.get(arg.entity.type)) {
+//			features.add("closeType_" + "yes" + arg.entity.type);
+//		} else {
+//			features.add("closeType_" + "no" + arg.entity.type);
+//		}
+//		if (typeMs.get(arg.entity.type) == 1) {
+//			features.add("closeType_" + "yes" + arg.entity.type);
+//		} else {
+//			features.add("closeType_" + "no" + arg.entity.type);
+//		}
+//		
+		
+		
 		return this.convert(features, label);
 	}
 

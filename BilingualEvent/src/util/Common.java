@@ -56,17 +56,6 @@ public class Common {
 				feas.add(prefix + "bi#" + tokens.get(i) + " "
 						+ tokens.get(i + 1));
 			}
-
-			if (i < tokens.size() - 2) {
-				feas.add(prefix + "tri#" + tokens.get(i) + " "
-						+ tokens.get(i + 1) + " " + tokens.get(i + 2));
-			}
-
-			if (i < tokens.size() - 3) {
-				// feas.add(prefix + "qua#" + tokens.get(i) + " "
-				// + tokens.get(i + 1) + " " + tokens.get(i + 2) + " "
-				// + tokens.get(i + 3));
-			}
 		}
 		return feas;
 	}

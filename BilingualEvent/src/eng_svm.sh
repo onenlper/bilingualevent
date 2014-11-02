@@ -22,7 +22,7 @@ java -cp $cp event/triggerEng/EngArg test svm $1
 cd /users/yzcchen/tool/svm_multiclass
 echo train argument role labeling
 
-./svm_multiclass_learn -c 300000 /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/engArgFea_train$1 engArgModel$1
+./svm_multiclass_learn -c 400000 /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/engArgFea_train$1 engArgModel$1
 echo test argumetn identify
 ./svm_multiclass_classify /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/engArgFea_test$1 engArgModel$1 engArOutput_test$1 1>&-
 
