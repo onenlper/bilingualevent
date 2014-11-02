@@ -64,25 +64,8 @@ public class Context implements Serializable {
 
 	static short[] feas = new short[18];
 
-	public static HashMap<String, Double> simiCache = Common.readFile2Map5("simiCache");
-	
 	public static HashSet<String> todo = new HashSet<String>();
 	
-	public static double getSimi(String h1, String h2) {
-		String key = "";
-		if(h1.compareTo(h2)>0) {
-			key = h2 + " " + h1;
-		} else {
-			key = h1 + " " + h2;
-		}
-		if(simiCache.containsKey(key)) {
-			return simiCache.get(key);
-		} else {
-			todo.add(key);
-			return -1;
-		}
-	}
-
 	public static Context buildContext(EventMention ant, EventMention anaphor,
 			ACEDoc doc, ArrayList<EventMention> allCands, int mentionDis) {
 		int id = 0;
@@ -92,9 +75,7 @@ public class Context implements Serializable {
 //			feas[id++] = -anaphor.head.hashCode();
 //			return getContext(feas);
 		}
-
 		feas[id++] = isExactMatch(ant, anaphor, doc);
-		feas[id++] = getIsFake(ant, anaphor, doc);
 		return getContext(feas);
 	}
 	

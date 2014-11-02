@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 import model.ACEDoc;
 import model.ACEEngDoc;
-import model.Entity;
+import model.EventChain;
 import model.EventMention;
 import util.Common;
 import coref.ResolveGroup.Entry;
@@ -90,59 +90,97 @@ public class ApplyEM {
 	double good = 0;
 	double bad = 0;
 
+	public HashMap<String, HashSet<String>> getKeys(ArrayList<EventChain> ecs) {
+		HashMap<String, HashSet<String>> key = new HashMap<String, HashSet<String>>();
+		for(EventChain ec : ecs) {
+			ArrayList<EventMention> ems = ec.getEventMentions();
+			Collections.sort(ems);
+			for(int i=1;i<ems.size();i++) {
+				EventMention em2 = ems.get(i);
+				HashSet<String> set = new HashSet<String>();
+				for(int j=0;j<i;j++) {
+					EventMention em1 = ems.get(j);
+					set.add(em1.toName());
+				}
+				key.put(em2.toName(), set);
+			}
+		}
+		return key;
+	}
+	
 	public void test() {
 		String dataset = "test";
 		ArrayList<String> files = Common.getLines("ACE_English_test0");
 		HashMap<String, ArrayList<EventMention>> corefResults = new HashMap<String, ArrayList<EventMention>>();
 
+		HashMap<String, HashMap<String, HashSet<String>>> goldKeyses = new HashMap<String, HashMap<String, HashSet<String>>>();
+		
+		ArrayList<Integer> lengths = new ArrayList<Integer>();
+		ArrayList<String> fileNames = new ArrayList<String>();
+		ArrayList<ArrayList<EventChain>> goldEventChains = new ArrayList<ArrayList<EventChain>>();
+		ArrayList<ArrayList<EventChain>> systemEventChains = new ArrayList<ArrayList<EventChain>>();
+		
 		for (int g = 0; g < files.size(); g++) {
 			String file = files.get(g);
 			// System.out.println(file);
 			ACEDoc doc = new ACEEngDoc(file);
-
-			int a = file.indexOf("annotations");
-			a += "annotations/".length();
-			int b = file.lastIndexOf(".");
-
-			ArrayList<Entity> goldChains = doc.getChains();
+			goldKeyses.put(doc.fileID, this.getKeys(doc.goldEventChains));
+			
+			fileNames.add(doc.fileID);
+			goldEventChains.add(doc.goldEventChains);
+			lengths.add(doc.content.length());
+			
+			ArrayList<EventChain> goldChains = doc.goldEventChains;
 
 			HashMap<String, Integer> chainMap = EMUtil.formChainMap(goldChains);
 
 			ArrayList<EventMention> corefResult = new ArrayList<EventMention>();
-			corefResults.put(part.getPartName(), corefResult);
+			corefResults.put(doc.fileID, corefResult);
 
-			ArrayList<EventMention> goldBoundaryNPMentions = EMUtil
-					.extractMention(part);
+			ArrayList<EventMention> goldEvents = doc.goldEventMentions;
 
-			for (EventMention m : goldBoundaryNPMentions) {
+			for (EventMention m : goldEvents) {
 				ArrayList<EventMention> ms = new ArrayList<EventMention>();
 				ms.add(m);
-				// EMUtil.alignMentions(m.s, ms, docName);
 			}
 
-			Collections.sort(goldBoundaryNPMentions);
+			Collections.sort(goldEvents);
 
 			ArrayList<EventMention> candidates = new ArrayList<EventMention>();
-			for (EventMention m : goldBoundaryNPMentions) {
+			for (EventMention m : goldEvents) {
 				candidates.add(m);
 			}
 
 			Collections.sort(candidates);
 
-			HashMap<String, HashSet<String>> goldAnaNouns = EMUtil
-					.getGoldAnaphorKeys(goldChains, goldPart);
-
 			ArrayList<EventMention> anaphors = new ArrayList<EventMention>();
-			for (EventMention m : goldBoundaryNPMentions) {
+			for (EventMention m : goldEvents) {
 				anaphors.add(m);
 			}
 
-			findAntecedent(file, doc, chainMap, anaphors, candidates,
-					goldAnaNouns, goldKeyses);
+			findAntecedent(doc, chainMap, anaphors, candidates, goldKeyses);
 
 			for (EventMention m : anaphors) {
-				corefResult.add(m);
+				if(m.antecedent!=null) {
+					corefResult.add(m);
+				}
 			}
+			
+			ArrayList<EventChain> systemChain = new ArrayList<EventChain>();
+			HashMap<String, EventChain> eventChainMap = new HashMap<String, EventChain>();
+			Collections.sort(candidates);
+			for(EventMention m : candidates) {
+				EventChain ec = null;
+				if(m.antecedent==null) {
+					ec = new EventChain();
+					systemChain.add(ec);
+				} else {
+					ec = eventChainMap.get(m.antecedent.toName());
+				}
+				ec.addEventMention(m);
+				eventChainMap.put(m.toName(), ec);
+			}
+			systemEventChains.add(systemChain);
 		}
 		System.out.println("Good: " + good);
 		System.out.println("Bad: " + bad);
@@ -153,6 +191,19 @@ public class ApplyEM {
 		System.out.println(ApplyEM.allL);
 		System.out.println(zeroAnt + "/" + allAnt + ":" + zeroAnt / allAnt);
 		System.out.println("Bad_P_C:" + badP_C);
+		
+		
+		// output keys
+		try {
+			ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys", goldEventChains);
+			ToSemEval.outputSemFormat(fileNames, lengths, "sys.keys", systemEventChains);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// output goldKeys
+		
 	}
 
 	static double min_amongMax = 1;
@@ -166,16 +217,14 @@ public class ApplyEM {
 
 	static HashMap<String, HashSet<String>> chainMaps = new HashMap<String, HashSet<String>>();
 
-	private void findAntecedent(String file, ACEDoc doc,
+	private void findAntecedent(ACEDoc doc,
 			HashMap<String, Integer> chainMap,
 			ArrayList<EventMention> anaphors,
-			ArrayList<EventMention> allCandidates, HashSet<String> goldNEs,
-			HashMap<String, HashSet<String>> goldAnaNouns,
+			ArrayList<EventMention> allCandidates, 
 			HashMap<String, HashMap<String, HashSet<String>>> goldKeys) {
 		for (EventMention anaphor : anaphors) {
-			anaphor.sentenceID = part.getWord(anaphor.start).sentence
-					.getSentenceIdx();
-			anaphor.s = part.getWord(anaphor.start).sentence;
+			anaphor.sentenceID = doc.positionMap.get(anaphor.getAnchorStart())[0];
+			anaphor.pr = doc.parseReults.get(doc.positionMap.get(anaphor.getAnchorStart())[0]);
 
 			EventMention antecedent = null;
 			double maxP = 0;
@@ -185,11 +234,10 @@ public class ApplyEM {
 
 			for (int h = allCandidates.size() - 1; h >= 0; h--) {
 				EventMention cand = allCandidates.get(h);
-				cand.sentenceID = part.getWord(cand.start).sentence
-						.getSentenceIdx();
-				cand.pr = part.getWord(cand.start).sentence;
+				cand.sentenceID = doc.positionMap.get(cand.getAnchorStart())[0];
+				cand.pr = doc.parseReults.get(doc.positionMap.get(cand.getAnchorStart())[0]);
 
-				if (cand.start < anaphor.start
+				if (cand.getAnchorStart() < anaphor.getAnchorEnd()
 						&& anaphor.sentenceID - cand.sentenceID <= EMLearn.maxDistance
 						&& cand.end != anaphor.end
 				// && !predictBadOnes.contains(part.getPartName() + ":" +
@@ -204,12 +252,12 @@ public class ApplyEM {
 			fake.isFake = true;
 			cands.add(fake);
 
-			ResolveGroup rg = new ResolveGroup(anaphor, part, cands);
+			ResolveGroup rg = new ResolveGroup(anaphor, doc, cands);
 			int seq = 0;
 			for (EventMention cand : cands) {
-				Entry entry = new Entry(cand, null, part);
+				Entry entry = new Entry(cand, null, doc);
 				rg.entries.add(entry);
-				entry.p_c = EMUtil.getP_C(cand, anaphor, part);
+				entry.p_c = EMUtil.getP_C(cand, anaphor, doc);
 				if (entry.p_c != 0) {
 					seq += 1;
 				}
@@ -266,7 +314,7 @@ public class ApplyEM {
 				Context.coref = coref;
 				Context.gM1 = chainMap.containsKey(cand.toName());
 				Context.gM2 = chainMap.containsKey(anaphor.toName());
-				entry.context = Context.buildContext(cand, anaphor, part,
+				entry.context = Context.buildContext(cand, anaphor, doc,
 						cands, entry.seq);
 
 				allAnt++;
@@ -381,12 +429,11 @@ public class ApplyEM {
 
 				if (!coref && goldCorefs.size() != 0) {
 					// anaphor.antecedent= goldCorefs.get(0);
-					System.out.println("Anaphor: " + anaphor.extent + " "
-							+ anaphor.ACEType + " # " + anaphor.ACESubtype
+					System.out.println("Anaphor: " + anaphor.getAnchor() + " "
+							+ anaphor.getType() + " # "
 							+ " # " + chainMap.containsKey(anaphor.toName()));
 					System.out.println("Selected: " + antecedent.extent + " "
-							+ antecedent.ACEType + " # "
-							+ antecedent.ACESubtype + " # "
+							+ antecedent.getType() + " # "
 							+ chainMap.containsKey(antecedent.toName()));
 					System.out.println("True Ante: ");
 					for (EventMention m : goldCorefs) {
@@ -397,12 +444,11 @@ public class ApplyEM {
 
 				if (!coref && goldCorefs.size() == 0) {
 					// anaphor.antecedent= null;
-					System.out.println("Anaphor: " + anaphor.extent + " "
-							+ anaphor.ACEType + " # " + anaphor.ACESubtype
+					System.out.println("Anaphor: " + anaphor.getAnchor() + " "
+							+ anaphor.getType()
 							+ " # " + chainMap.containsKey(anaphor.toName()));
-					System.out.println("Selected: " + antecedent.extent + " "
-							+ antecedent.ACEType + " # "
-							+ antecedent.ACESubtype + " # "
+					System.out.println("Selected: " + antecedent.getAnchor() + " "
+							+ antecedent.getType() + " # "
 							+ chainMap.containsKey(antecedent.toName()));
 					System.out.println("True Ante: EMPTY");
 					System.out.println("---------------------------");
@@ -489,6 +535,9 @@ public class ApplyEM {
 		double hit = 0;
 
 		for (String key : anaphorses.keySet()) {
+			System.out.println(key);
+			System.out.println(goldKeyses.keySet().iterator().next());
+			
 			ArrayList<EventMention> anaphors = anaphorses.get(key);
 			HashMap<String, HashSet<String>> keys = goldKeyses.get(key);
 			gold += keys.size();
@@ -515,26 +564,12 @@ public class ApplyEM {
 		System.out.println("F-score: " + f * 100);
 	}
 
-	static ArrayList<String> corrects = new ArrayList<String>();
-	static HashSet<String> predictBadOnes;
-
 	public static void main(String args[]) {
 		if (args.length != 1) {
 			System.err.println("java ~ folder");
 			System.exit(1);
 		}
 		// EMUtil.loadAlign();
-		ArrayList<String> allMs = Common.getLines("allMs");
-		ArrayList<String> preds = Common
-				.getLines("/users/yzcchen/tool/svmlight/svm.anaphor.pred");
-		predictBadOnes = new HashSet<String>();
-		for (int i = 0; i < allMs.size(); i++) {
-			String m = allMs.get(i);
-			String pred = preds.get(i);
-			if (Double.parseDouble(pred) < 0) {
-				predictBadOnes.add(m);
-			}
-		}
 		run(args[0]);
 		run("nw");
 		run("mz");
@@ -547,18 +582,8 @@ public class ApplyEM {
 	public static void run(String folder) {
 		EMUtil.train = false;
 		ApplyEM test = new ApplyEM(folder);
-
+		test.test();
 		System.out.println("RUNN: " + folder);
-		Common.outputHashSet(Context.todo, "todo.word2vec");
-		if (Context.todo.size() != 0) {
-			System.out.println("!!!!! TODO WORD2VEC!!!!");
-			System.out.println("check file: todo.word2vec "
-					+ Context.todo.size());
-		}
-		// Common.outputLines(goodAnas, "goodAnaphors");
-
-		// Common.outputHashSet(EMUtil.semanticInstances, "semanticInstance");
-
 		Common.pause("!!#");
 	}
 }
