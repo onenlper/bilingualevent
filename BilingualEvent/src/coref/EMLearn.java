@@ -26,7 +26,6 @@ public class EMLearn {
 	// static Parameter semanticP;
 	// static Parameter grammaticP;
 //	static Parameter animacyP;
-	static Parameter cilin;
 
 	static double word2vecSimi = .9;
 
@@ -54,8 +53,6 @@ public class EMLearn {
 
 		// semanticP = new Parameter(1.0/5254.0);
 
-		cilin = new Parameter(1.0 / 7089.0);
-
 		// grammaticP = new Parameter(1.0 / 4.0);
 
 		// animacyP = new Parameter(
@@ -71,12 +68,10 @@ public class EMLearn {
 
 	@SuppressWarnings("unused")
 	public static ArrayList<ResolveGroup> extractGroups(ACEDoc doc) {
-
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
 		for (int i = 0; i < doc.parseReults.size(); i++) {
 			ParseResult pr = doc.parseReults.get(i);
 			pr.evms = EMUtil.getEventMentionInOneS(doc, doc.goldEventMentions, i);
-
 			ArrayList<EventMention> precedMs = new ArrayList<EventMention>();
 			for (int j = maxDistance; j >= 1; j--) {
 				if (i - j >= 0) {
@@ -199,6 +194,7 @@ public class EMLearn {
 			}
 			docNo++;
 		}
+		System.out.println(groups.size());
 	}
 
 	public static HashMap<String, HashSet<String>> chainMaps = new HashMap<String, HashSet<String>>();
@@ -245,7 +241,6 @@ public class EMLearn {
 //						rg.gram.name());
 //
 //				double p_semetic = semanticP.getVal(entry.sem, rg.sem);
-				double p_cilin = cilin.getVal(entry.cilin, rg.cilin);
 
 				double p_context = .5;
 				Double d = contextVals.get(context.toString());
@@ -272,7 +267,6 @@ public class EMLearn {
 			}
 
 			double max = 0;
-			double maxP = -1;
 			int maxIdx = -1;
 
 			String antName = "";
@@ -289,7 +283,7 @@ public class EMLearn {
 				// Common.bangErrorPOS("!");
 			}
 
-			if (!antName.equals("fake") && !antName.isEmpty()) {
+			if (!antName.equals("fake")) {
 				HashSet<String> corefs = chainMaps.get(antName);
 				corefs.add(rg.anaphorName);
 				chainMaps.put(rg.anaphorName, corefs);
@@ -307,7 +301,6 @@ public class EMLearn {
 		contextVals.clear();
 //		semanticP.resetCounts();
 //		grammaticP.resetCounts();
-		cilin.resetCounts();
 		fracContextCount.clear();
 		for (ResolveGroup group : groups) {
 			for (Entry entry : group.entries) {
@@ -325,8 +318,6 @@ public class EMLearn {
 //
 //				grammaticP
 //						.addFracCount(entry.gram.name(), group.gram.name(), p);
-
-				cilin.addFracCount(entry.cilin, group.cilin, p);
 
 				Double d = fracContextCount.get(context.toString());
 				if (d == null) {
@@ -376,7 +367,6 @@ public class EMLearn {
 //		animacyP.printParameter("animacyP");
 //		semanticP.printParameter("semanticP");
 //		grammaticP.printParameter("grammaticP");
-		cilin.printParameter("cilinP");
 
 		ObjectOutputStream modelOut = new ObjectOutputStream(
 				new FileOutputStream("EMModel"));
@@ -385,7 +375,6 @@ public class EMLearn {
 //		modelOut.writeObject(animacyP);
 //		modelOut.writeObject(semanticP);
 //		modelOut.writeObject(grammaticP);
-		modelOut.writeObject(cilin);
 		modelOut.writeObject(fracContextCount);
 		modelOut.writeObject(contextPrior);
 
@@ -404,7 +393,7 @@ public class EMLearn {
 
 		// System.out.println(EMUtil.missed);
 
-//		ApplyEM.run("all");
+		ApplyEM.run("all");
 //		ApplyEM.run("nw");
 //		ApplyEM.run("mz");
 //		ApplyEM.run("wb");
