@@ -195,8 +195,8 @@ public class ApplyEM {
 		
 		// output keys
 		try {
-			ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys", goldEventChains);
-			ToSemEval.outputSemFormat(fileNames, lengths, "sys.keys", systemEventChains);
+			ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys." + this.folder, goldEventChains);
+			ToSemEval.outputSemFormat(fileNames, lengths, "sys.keys." + this.folder, systemEventChains);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -584,6 +584,6 @@ public class ApplyEM {
 		ApplyEM test = new ApplyEM(folder);
 		test.test();
 		System.out.println("RUNN: " + folder);
-		Common.pause("!!#");
+//		Common.pause("!!#");
 	}
 }
