@@ -5,11 +5,15 @@ import java.util.HashMap;
 
 public class EventMention implements Comparable {
 
+	public boolean isFake;
+	
 	public int sentenceID = 0;
 	
 	public int indexInSentence = 0;
 	
 	public int sequenceID = -1;
+	
+	public ParseResult pr;
 	
 	public ArrayList<Double> typeConfidences = new ArrayList<Double>();
 	
@@ -20,6 +24,10 @@ public class EventMention implements Comparable {
 	public HashMap<String, Integer> typeHash = new HashMap<String, Integer>();
 
 	public String goldSubtype;
+	
+	public String toName() {
+		return this.getAnchorStart() + "," + this.getAnchorEnd();
+	}
 	
 	public void increaseType(String type) {
 		if (typeHash.containsKey(type)) {

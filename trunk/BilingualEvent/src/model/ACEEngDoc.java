@@ -84,7 +84,7 @@ public class ACEEngDoc extends ACEDoc {
 				
 				int p[] = new int[2];
 				p[0] = i;
-				p[1] = j;
+				p[1] = j+1;
 				for(int k=start;k<=end;k++) {
 					this.positionMap.put(k, p);
 				}

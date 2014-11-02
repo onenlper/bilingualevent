@@ -8,6 +8,8 @@ public class ParseResult {
 	
 	public String sentence="";
 	
+	public ArrayList<EventMention> evms; 
+	
 	public ArrayList<String> words;
 	
 	public ArrayList<String> posTags;
