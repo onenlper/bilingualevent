@@ -89,8 +89,6 @@ public class EventCorefFea extends YYFeature {
 		feas.add("type_subtype#" + this.ana.getType() + "-"
 				+ this.ana.getSubType());
 
-		int position[] = this.doc.positionMap.get(this.ana.getAnchorStart());
-
 		String anaPOS = doc.getPostag(this.ana.getAnchorStart());
 		String anaToken = doc.getWord(this.ana.getAnchorStart());
 		String anaLemma = doc.getLemma(this.ana.getAnchorStart());

@@ -1098,4 +1098,33 @@ public class Common {
 		}
 		return mi;
 	}
+	
+	public static class Feature {
+		int idx;
+		int value;
+		int space;
+
+		public Feature(int idx, int value, int space) {
+			this.idx = idx;
+			this.value = value;
+			this.space = space;
+			
+			if(this.idx>=this.space) {
+				bangErrorPOS("feature idx cannot equal or larger than feature space.");
+			}
+		}
+	}
+	
+	public static String feasToSVMString(ArrayList<Feature> feas) {
+		StringBuilder sb = new StringBuilder();
+		int offset = 1;
+		for (Feature fea : feas) {
+			if (fea.value != 0) {
+				sb.append(fea.idx + offset).append(":").append(fea.value).append(" ");
+			}
+			offset += fea.space;
+		}
+		return sb.toString().trim();
+	}
+
 }

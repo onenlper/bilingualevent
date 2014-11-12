@@ -109,7 +109,21 @@ public class Context implements Serializable {
 
 	private static short isExactMatch(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
-		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) {
+		if(ant.isFake) {
+			return 0;
+		}
+		int p1[] = doc.positionMap.get(ant.getAnchorStart());
+		int p2[] = doc.positionMap.get(anaphor.getAnchorStart());
+		
+		String lemma1 = doc.parseReults.get(p1[0]).lemmas.get(p1[1]);
+		String lemma2 = doc.parseReults.get(p2[0]).lemmas.get(p2[1]);
+		
+		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) != lemma1.equalsIgnoreCase(lemma2)) {
+//			Common.pause(":!!!");
+		}
+		
+//		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) {
+		if(lemma1.equalsIgnoreCase(lemma2)) {
 			return 1;
 		} else {
 			return 0;

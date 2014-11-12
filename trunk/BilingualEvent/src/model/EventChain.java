@@ -121,4 +121,12 @@ public class EventChain {
 		}
 		return sb.toString();
 	}
+	
+	public ArrayList<EventMentionArgument> getAllEventMentionArgument() {
+		ArrayList<EventMentionArgument> args = new ArrayList<EventMentionArgument>();
+		for(EventMention em : this.eventMentions) {
+			args.addAll(em.getEventMentionArguments());
+		}
+		return args;
+	}
 }
