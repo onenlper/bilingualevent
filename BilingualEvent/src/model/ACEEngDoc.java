@@ -19,10 +19,14 @@ public class ACEEngDoc extends ACEDoc {
 	@Override
 	public void readStanfordParseFile() {
 		this.positionMap = new HashMap<Integer, int[]>();
-		
-		this.parseReults = new ArrayList<ParseResult>();
 		String stdFn = this.fileID + ".source.xml";
 		StanfordResult sr = StanfordXMLReader.read(stdFn);
+		this.parseReults = standford2ParseResult(sr);
+	}
+
+	private ArrayList<ParseResult> standford2ParseResult(StanfordResult sr) {
+		ArrayList<ParseResult> parseReults = new ArrayList<ParseResult>();
+		
 		int index = 0;
 		for(int i=0;i<sr.sentences.size();i++) {
 			StanfordSentence ss = sr.sentences.get(i);
@@ -102,8 +106,9 @@ public class ACEEngDoc extends ACEDoc {
 			}
 			pr.dependTree = new DependTree(pr.depends);
 			
-			this.parseReults.add(pr);
+			parseReults.add(pr);
 		}
+		return parseReults;
 	}
 
 	@Override
@@ -121,10 +126,33 @@ public class ACEEngDoc extends ACEDoc {
 		int ss = 0;
 		
 		ArrayList<String> lines = new ArrayList<String>();
+		double eventAmount = 0;
+		double chainAmount = 0;
+		double allChainLength = 0;
+		
+		double nonSingletonChains = 0;
+		double nonSingletonMentions = 0;
 		
 		for(String file : files) {
 			ACEDoc doc = new ACEEngDoc(file);
+			ArrayList<EventChain> chains = doc.goldEventChains;
 			
+			for(EventChain c : chains) {
+				allChainLength += c.eventMentions.size();
+				eventAmount += c.getEventMentions().size();
+				
+				if(c.getEventMentions().size()!=1) {
+					nonSingletonChains += 1;
+					nonSingletonMentions += c.eventMentions.size();
+				}
+				StringBuilder sb = new StringBuilder();
+				
+				for(EventMention em : c.getEventMentions()) {
+					sb.append(em.getAnchor()).append("      #########      ");
+				}
+				System.out.println(sb.toString().trim());
+			}
+			chainAmount += chains.size();
 //			for(ParseResult pr : doc.parseReults) {
 //				StringBuilder sb = new StringBuilder();
 //				for(String word : pr.words) {
@@ -148,6 +176,17 @@ public class ACEEngDoc extends ACEDoc {
 //				}
 //			}
 		}
+		System.out.println("All Events: " + eventAmount);
+		System.out.println("Events per Doc: " + eventAmount/files.size());
+		
+		System.out.println("All Chains: " + chainAmount);
+		System.out.println("Chains per Doc: " + chainAmount/files.size());
+		System.out.println("Mentions per Chain: " + eventAmount/chainAmount);
+		
+		System.out.println("Non Singleton Mentions: " + nonSingletonMentions);
+		System.out.println("Non Singleton Chains: " + nonSingletonChains);
+		System.out.println("Non Singleton Mentions per chain: " + nonSingletonMentions/nonSingletonChains);
+		
 //		System.out.println(single/all);
 //		System.out.println(ss);
 //		Common.outputLines(lines, "brown_input");

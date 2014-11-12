@@ -32,7 +32,7 @@ public abstract class ACEDoc {
 	public String content;
 
 	public int end;
-	
+
 	public HashMap<Integer, int[]> positionMap;
 
 	public ArrayList<EventMention> eventMentions;
@@ -74,20 +74,24 @@ public abstract class ACEDoc {
 
 	public HashMap<String, Entity> id2EntityMap = new HashMap<String, Entity>();
 
+	public HashMap<String, Entity> entityCorefMap = new HashMap<String, Entity>();
+	public HashMap<String, Integer> eventCorefMap = new HashMap<String, Integer>();
+
 	protected String apfLine;
 	protected String sgmLine;
-	
+
 	public ACEDoc(String fileID, String sep) {
 		this.content = "";
 		this.fileID = fileID;
-		
-		this.sgmLine = Common.getLine(fileID + ".sgm").replace("&", "&amp;").replaceAll("\\<QUOTE[^\\>]*\\>", "");
+
+		this.sgmLine = Common.getLine(fileID + ".sgm").replace("&", "&amp;")
+				.replaceAll("\\<QUOTE[^\\>]*\\>", "");
 		this.apfLine = Common.getLine(fileID + ".apf.xml");
-		
+
 		this.readGoldContent();
-		
+
 		this.readStanfordParseFile();
-		
+
 		this.readTimeExpressions(sep);
 		this.readValues(sep);
 		this.readGoldEntityChain(sep);
@@ -95,25 +99,47 @@ public abstract class ACEDoc {
 		this.allGoldNPMentions.addAll(this.goldTimeMentions);
 		this.allGoldNPMentions.addAll(this.goldValueMentions);
 		Collections.sort(this.allGoldNPMentions);
-		
+
 		this.goldNPMentionMap = new HashMap<String, EntityMention>();
 		for (EntityMention mention : this.allGoldNPMentions) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(mention.start).append(",").append(mention.end);
 			this.goldNPMentionMap.put(sb.toString(), mention);
 		}
-		
+
 		this.readGoldEventChain();
 		this.readGoldArguments();
 		this.calSalienceEntity();
 		this.readSemanticRole();
-		
+
 		this.allGoldNPEndMap = new HashMap<Integer, EntityMention>();
 		for (EntityMention mention : this.allGoldNPMentions) {
 			this.allGoldNPEndMap.put(mention.end, mention);
 		}
+		
+		this.setEntityCorefMap(this.goldEntities);
+		this.setEventCorefMap(this.goldEventChains);
+	}
+
+	public void setEntityCorefMap(ArrayList<Entity> entities) {
+		entityCorefMap.clear();
+		for (Entity e : entities) {
+			for (EntityMention m : e.mentions) {
+				entityCorefMap.put(m.start + "," + m.end, e);
+			}
+		}
 	}
 	
+	public void setEventCorefMap(ArrayList<EventChain> chains) {
+		this.eventCorefMap.clear();
+		for(int i=0;i<chains.size();i++) {
+			EventChain ec = chains.get(i);
+			for(EventMention m : ec.getEventMentions()) {
+				this.eventCorefMap.put(m.getAnchorStart() + "," + m.getAnchorEnd(), i);
+			}
+		}
+	}
+
 	public void calSalienceEntity() {
 		goldSalienceChain = new HashMap<String, Entity>();
 		for (Entity entity : goldEntities) {
@@ -130,7 +156,7 @@ public abstract class ACEDoc {
 	}
 
 	public void readGoldContent() {
-		if(this.sgmLine.charAt(0)=='\n') {
+		if (this.sgmLine.charAt(0) == '\n') {
 			this.content += "\n";
 		}
 		InputStream inputStream;
@@ -154,7 +180,8 @@ public abstract class ACEDoc {
 	public void readTimeExpressions(String sep) {
 		this.goldTimeChains = new ArrayList<Entity>();
 		try {
-			InputStream inputStream = new ByteArrayInputStream(this.apfLine.getBytes());
+			InputStream inputStream = new ByteArrayInputStream(
+					this.apfLine.getBytes());
 			SAXParserFactory sf = SAXParserFactory.newInstance();
 			SAXParser sp = sf.newSAXParser();
 			TimeReader reader = new TimeReader(goldTimeChains);
@@ -179,7 +206,8 @@ public abstract class ACEDoc {
 	public void readValues(String sep) {
 		this.goldValueChains = new ArrayList<Entity>();
 		try {
-			InputStream inputStream = new ByteArrayInputStream(this.apfLine.getBytes());
+			InputStream inputStream = new ByteArrayInputStream(
+					this.apfLine.getBytes());
 			SAXParserFactory sf = SAXParserFactory.newInstance();
 			SAXParser sp = sf.newSAXParser();
 			ValueReader reader = new ValueReader(goldValueChains);
@@ -231,7 +259,7 @@ public abstract class ACEDoc {
 		this.goldEventMentions = new ArrayList<EventMention>();
 		this.goldEventChains = new ArrayList<EventChain>();
 		this.goldEventCorefMaps = new HashMap<EventMention, HashSet<EventMention>>();
-		
+
 		InputStream inputStream;
 		try {
 			inputStream = new ByteArrayInputStream(this.apfLine.getBytes());
@@ -239,8 +267,7 @@ public abstract class ACEDoc {
 			SAXParser sp = sf.newSAXParser();
 			EventChainReader reader = new EventChainReader(goldEventChains);
 			sp.parse(new InputSource(inputStream), reader);
-			
-			
+
 			for (EventChain eventChain : goldEventChains) {
 				goldEventMentions.addAll(eventChain.getEventMentions());
 			}
@@ -272,7 +299,7 @@ public abstract class ACEDoc {
 					}
 				}
 			}
-			
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (ParserConfigurationException e) {
@@ -285,7 +312,7 @@ public abstract class ACEDoc {
 	}
 
 	public void readGoldEventMention() {
-		
+
 		InputStream inputStream;
 		try {
 			inputStream = new ByteArrayInputStream(this.apfLine.getBytes());
@@ -317,4 +344,24 @@ public abstract class ACEDoc {
 	public abstract void readStanfordParseFile();
 
 	public abstract void readSemanticRole();
+
+	public String getWord(int idx) {
+		int position[] = this.positionMap.get(idx);
+		return this.parseReults.get(position[0]).words.get(position[1]);
+	}
+
+	public String getLemma(int idx) {
+		int position[] = this.positionMap.get(idx);
+		return this.parseReults.get(position[0]).lemmas.get(position[1]);
+	}
+
+	public String getPostag(int idx) {
+		int position[] = this.positionMap.get(idx);
+		return this.parseReults.get(position[0]).posTags.get(position[1]);
+	}
+
+	public ParseResult getParseResult(int idx) {
+		int position[] = this.positionMap.get(idx);
+		return this.parseReults.get(position[0]);
+	}
 }
