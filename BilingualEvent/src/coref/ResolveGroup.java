@@ -63,13 +63,13 @@ public class ResolveGroup implements Serializable {
 		
 		public Entry(EventMention ant, Context context, ACEDoc doc) {
 			this.ant = ant;
-			if(ant.isFake) {
+			if(ant.isFake()) {
 				this.antName = "fake";
 			} else {
 				this.antName = doc.fileID + ":" + ant.toName();
 			}
 			this.context = context;
-			this.isFake = ant.isFake;
+			this.isFake = ant.isFake();
 		}
 	}
 }

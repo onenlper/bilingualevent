@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import model.ACEDoc;
+import model.Entity;
 import model.EventMention;
-import util.Common;
+import model.EventMentionArgument;
+import event.supercoref.EventCorefFea;
 
 public class Context implements Serializable {
 
@@ -71,15 +73,184 @@ public class Context implements Serializable {
 		int id = 0;
 		int[] feas = new int[10];
 		feas[id++] = getMentionDiss(mentionDis);
-		if(ant.isFake) {
-//			feas[id++] = -anaphor.head.hashCode();
-//			return getContext(feas);
-		}
 		feas[id++] = isExactMatch(ant, anaphor, doc);
+		
+		feas[id++] = getDistance(ant, anaphor, doc);
+		
+		feas[id++] = conflictArg(ant, anaphor, doc);
+		
+//		feas[id++] = getSimi(ant, anaphor, doc);
+		feas[id++] = conflictPlaceTime(ant, anaphor, doc);
+//		feas[id++] = conflictCorefArg(ant, anaphor, doc);
+		
+		
+		feas[id++] = corefArg(ant, anaphor, doc);
 		return getContext(feas);
 	}
 	
+	private static short corefArg(EventMention ant, EventMention anaphor, ACEDoc doc) {
+		if(ant.isFake()) {
+			return 0;
+		}
+		int overlap_num = 0;
+		for (EventMentionArgument arg1 : anaphor.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
 
+			for (EventMentionArgument arg2 : ant
+					.getEventMentionArguments()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						overlap_num += 1;
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						overlap_num += 1;
+					}
+				}
+			}
+		}
+		if(overlap_num==0) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+	
+	private static short getSimi(EventMention ant, EventMention anaphor, ACEDoc doc) {
+		if(ant.isFake()) {
+			return 0;
+		}
+		String eToken = doc.getWord(ant.getAnchorStart());
+		String anaToken = doc.getWord(anaphor.getAnchorStart());
+		double sim = EventCorefFea.getSimi(eToken.toLowerCase(), anaToken.toLowerCase());
+		return (short) (sim/1.0);
+	}
+	
+	private static short conflictArg(EventMention ant, EventMention anaphor, ACEDoc doc) {
+		int coref_num = 0;
+		if(ant.isFake()) {
+			return 0;
+		}
+		for (EventMentionArgument arg1 : anaphor.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : ant
+					.getEventMentionArguments()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (!role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						coref_num += 1;
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						coref_num += 1;
+					}
+				}
+			}
+		}
+		if(coref_num==0) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+	
+	private static short conflictCorefArg(EventMention ant, EventMention anaphor, ACEDoc doc) {
+		if(ant.isFake()) {
+			return 0;
+		}
+		short coref_num = 0;
+		for (EventMentionArgument arg1 : anaphor.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : ant
+					.getEventMentionArguments()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (!role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						coref_num += 1;
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						coref_num += 1;
+					}
+				}
+			}
+		}
+		if(coref_num!=0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	
+	private static short conflictPlaceTime(EventMention ant, EventMention anaphor, ACEDoc doc) {
+		if(ant.isFake()) {
+			return 1;
+		}
+		boolean time_conflict = false;
+		boolean place_conflict = false;
+		
+		for (EventMentionArgument arg1 : anaphor.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : ant
+					.getEventMentionArguments()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (role1.equals(role2) && role1.equals("Time-Within")) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						
+					} else {
+						time_conflict = true;
+					}
+				}
+				
+				if (role1.equals(role2) && role1.equals("Place")) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						
+					} else {
+						place_conflict = true;
+					}
+				}
+			}
+		}
+		if(time_conflict || place_conflict) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+	
+	
 	private static short getMentionDiss(int diss) {
 		if(diss==0) {
 			return 0;
@@ -89,7 +260,7 @@ public class Context implements Serializable {
 	}
 
 	private static short getIsFake(EventMention ant, EventMention anaphor, ACEDoc doc) {
-		if (ant.isFake) {
+		if (ant.isFake()) {
 			return 0;
 		} else {
 			return 1;
@@ -99,17 +270,17 @@ public class Context implements Serializable {
 	private static short getDistance(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
 		int diss = 0;
-		if (ant.isFake) {
-			diss = doc.positionMap.get(ant.getAnchorEnd())[0];
+		if (ant.isFake()) {
+			diss = doc.positionMap.get(anaphor.getAnchorStart())[0];
 		} else {
-			diss = doc.positionMap.get(anaphor.getAnchorEnd())[0];
+			diss = doc.positionMap.get(anaphor.getAnchorStart())[0] - doc.positionMap.get(ant.getAnchorStart())[0];
 		}
 		return (short) (Math.log(diss) / Math.log(2));
 	}
 
 	private static short isExactMatch(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
-		if(ant.isFake) {
+		if(ant.isFake()) {
 			return 0;
 		}
 		int p1[] = doc.positionMap.get(ant.getAnchorStart());

@@ -39,7 +39,7 @@ public class EventCorefFea extends YYFeature {
 	// new Resnik(db), new JiangConrath(db), new Lin(db), new Path(db)
 	};
 
-	private static double getSimi(String word1, String word2) {
+	public static double getSimi(String word1, String word2) {
 		WS4JConfiguration.getInstance().setMFS(true);
 		RelatednessCalculator rc = new WuPalmer(db);
 		return rc.calcRelatednessOfWords(word1, word2);
