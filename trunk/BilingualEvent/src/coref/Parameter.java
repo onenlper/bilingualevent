@@ -27,19 +27,20 @@ public class Parameter implements Serializable {
 
 	double theta = 1;
 
-	public Parameter() {
+	public Parameter(HashSet<String> subKey) {
 		values = new HashMap<String, HashMap<String, Double>>();
 		fracCounts = new HashMap<String, HashMap<String, Double>>();
 		keyCounts = new HashMap<String, Double>();
-		subKeys = new HashSet<String>();
+		subKeys = subKey;
+		this.defaultV = 1.0/subKey.size();
 		this.init = true;
 	}
 
-	public Parameter(double defaultV) {
+	public Parameter(double defaultV, HashSet<String> subKey) {
 		values = new HashMap<String, HashMap<String, Double>>();
 		fracCounts = new HashMap<String, HashMap<String, Double>>();
 		keyCounts = new HashMap<String, Double>();
-		subKeys = new HashSet<String>();
+		subKeys = subKey;
 		this.defaultV = defaultV;
 		this.init = true;
 	}
@@ -67,9 +68,12 @@ public class Parameter implements Serializable {
 			values.put(key, subValMap);
  			double denominator = theta * subKeys.size();
 			denominator += keyCounts.get(key);
-			for (String subKey : subMap.keySet()) {
+			
+			for (String subKey : subKeys) {
 				double numerator = theta;
-				numerator += subMap.get(subKey);
+				if(subMap.containsKey(subKey)) {
+					numerator += subMap.get(subKey);
+				}
 				double val = numerator/denominator;
 				subValMap.put(subKey, val);
 			}
@@ -83,7 +87,12 @@ public class Parameter implements Serializable {
 	}
 
 	public void addFracCount(String key, String subKey, double val) {
-		subKeys.add(subKey);
+//		subKeys.add(subKey);
+		if(!subKeys.contains(subKey)) {
+			System.out.println(subKey + "# " + key);
+			System.out.println(subKeys);
+			Common.bangErrorPOS("!");
+		}
 		HashMap<String, Double> subMap = fracCounts.get(key);
 		if (subMap == null) {
 			subMap = new HashMap<String, Double>();
@@ -116,17 +125,19 @@ public class Parameter implements Serializable {
 		for (String key : this.values.keySet()) {
 			sb = new StringBuilder();
 			sb.append(key);
-
+			double all = 0;
 			for (String subKey : this.subKeys) {
 				if (this.values.get(key).containsKey(subKey)) {
 					sb.append("\t").append(
 							String.format("%.3f",
 									this.values.get(key).get(subKey)));
+					all += this.values.get(key).get(subKey);
 				} else {
 					sb.append("\t").append(0.000);
 				}
 			}
 			output.add(sb.toString());
+			System.out.println(key + ":" + all);
 		}
 		Common.outputLines(output, fn);
 	}

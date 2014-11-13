@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 public class EventMention implements Comparable {
 
-	public boolean isFake;
+	private boolean isFake;
 	
 	public int sentenceID = 0;
 	
@@ -27,6 +27,19 @@ public class EventMention implements Comparable {
 	
 	public String toName() {
 		return this.getAnchorStart() + "," + this.getAnchorEnd();
+	}
+	
+	public void setFake() {
+		this.isFake = true;
+		this.polarity = "fake";
+		this.tense = "fake";
+		this.genericity = "fake";
+		this.modality = "fake";
+		this.setSubType("fake");
+	}
+	
+	public boolean isFake() {
+		return this.isFake;
 	}
 	
 	public void increaseType(String type) {

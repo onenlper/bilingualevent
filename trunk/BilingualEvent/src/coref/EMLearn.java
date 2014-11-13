@@ -21,11 +21,11 @@ public class EMLearn {
 	// static HashMap<Context, Double> p_context_ = new HashMap<Context,
 	// Double>();
 
-	// static Parameter numberP;
-	// static Parameter genderP;
-	// static Parameter semanticP;
-	// static Parameter grammaticP;
-	// static Parameter animacyP;
+	static Parameter tenseP;
+	static Parameter polarityP;
+	static Parameter genericityP;
+	static Parameter modalityP;
+	static Parameter eventSubTypeP;
 
 	static double word2vecSimi = .9;
 
@@ -45,18 +45,11 @@ public class EMLearn {
 	// static int count = 0;
 
 	public static void init() {
-		// numberP = new Parameter(1.0 / ((double)
-		// EMUtil.Number.values().length));
-		// genderP = new Parameter(1.0 / ((double)
-		// EMUtil.Gender.values().length));
-		// semanticP = new Parameter(1.0 / 25318.0);
-
-		// semanticP = new Parameter(1.0/5254.0);
-
-		// grammaticP = new Parameter(1.0 / 4.0);
-
-		// animacyP = new Parameter(
-		// 1.0 / ((double) EMUtil.Animacy.values().length));
+		tenseP = new Parameter(new HashSet<String>(EMUtil.Tense.subList(0, EMUtil.Tense.size()-1)));
+		polarityP = new Parameter(new HashSet<String>(EMUtil.Polarity.subList(0,  EMUtil.Polarity.size()-1)));
+		genericityP = new Parameter(new HashSet<String>(EMUtil.Genericity.subList(0, EMUtil.Genericity.size()-1)));
+		modalityP = new Parameter(new HashSet<String>(EMUtil.Modality.subList(0, EMUtil.Modality.size()-1)));
+		eventSubTypeP = new Parameter(new HashSet<String>(EMUtil.EventSubType.subList(0, EMUtil.EventSubType.size()-1)));
 
 		contextPrior = new HashMap<String, Double>();
 		contextOverall = new HashMap<String, Double>();
@@ -97,7 +90,7 @@ public class EMLearn {
 
 				EventMention fake = new EventMention();
 				fake.extent = "fakkkkke";
-				fake.isFake = true;
+				fake.setFake();
 				ants.add(fake);
 
 				ResolveGroup rg = new ResolveGroup(m, doc, ants);
@@ -173,7 +166,7 @@ public class EMLearn {
 	public static HashMap<String, HashSet<String>> chainMaps = new HashMap<String, HashSet<String>>();
 
 	public static void estep(ArrayList<ResolveGroup> groups) {
-		System.out.println("estep starts:");
+		// System.out.println("estep starts:");
 		long t1 = System.currentTimeMillis();
 		chainMaps.clear();
 		contextPrior.clear();
@@ -203,17 +196,18 @@ public class EMLearn {
 			double norm = 0;
 			for (Entry entry : rg.entries) {
 				Context context = entry.context;
-				//
-				// double p_number = numberP.getVal(entry.number.name(),
-				// rg.number.name());
-				// double p_gender = genderP.getVal(entry.gender.name(),
-				// rg.gender.name());
-				// double p_animacy = animacyP.getVal(entry.animacy.name(),
-				// rg.animacy.name());
-				// double p_grammatic = grammaticP.getVal(entry.gram.name(),
-				// rg.gram.name());
-				//
-				// double p_semetic = semanticP.getVal(entry.sem, rg.sem);
+
+				double p_tense = tenseP.getVal(entry.ant.tense, rg.m.tense);
+				double p_polarity = polarityP.getVal(entry.ant.polarity,
+						rg.m.polarity);
+				double p_modality = modalityP.getVal(entry.ant.modality,
+						rg.m.modality);
+
+				double p_genericity = genericityP.getVal(entry.ant.genericity,
+						rg.m.genericity);
+
+				double p_eventSubType = eventSubTypeP.getVal(
+						entry.ant.getSubType(), rg.m.getSubType());
 
 				double p_context = .5;
 				Double d = contextVals.get(context.toString());
@@ -227,14 +221,10 @@ public class EMLearn {
 				}
 
 				entry.p = p_context * entry.p_c;
-				entry.p *= 1
-				// * p_number
-				// * p_gender
-				// * p_animacy
-				// * p_semetic
-				// * p_cilin
-				// * p_grammatic
-				;
+				entry.p *= 1 * p_tense * p_polarity * p_eventSubType
+						* p_genericity
+						// * p_cilin
+						* p_modality;
 
 				norm += entry.p;
 			}
@@ -253,7 +243,7 @@ public class EMLearn {
 					}
 				}
 			} else {
-				// Common.bangErrorPOS("!");
+				 Common.bangErrorPOS("!");
 			}
 
 			if (!antName.equals("fake")) {
@@ -262,37 +252,33 @@ public class EMLearn {
 				chainMaps.put(rg.anaphorName, corefs);
 			}
 		}
-		System.out.println(System.currentTimeMillis() - t1);
+		// System.out.println(System.currentTimeMillis() - t1);
 	}
 
 	public static void mstep(ArrayList<ResolveGroup> groups) {
-		System.out.println("mstep starts:");
+		// System.out.println("mstep starts:");
 		long t1 = System.currentTimeMillis();
-		// genderP.resetCounts();
-		// numberP.resetCounts();
-		// animacyP.resetCounts();
+		polarityP.resetCounts();
+		tenseP.resetCounts();
+		eventSubTypeP.resetCounts();
 		contextVals.clear();
-		// semanticP.resetCounts();
-		// grammaticP.resetCounts();
+		genericityP.resetCounts();
+		modalityP.resetCounts();
 		fracContextCount.clear();
 		for (ResolveGroup group : groups) {
 			for (Entry entry : group.entries) {
 				double p = entry.p;
 				Context context = entry.context;
 
-				// numberP.addFracCount(entry.number.name(),
-				// group.number.name(),
-				// p);
-				// genderP.addFracCount(entry.gender.name(),
-				// group.gender.name(),
-				// p);
-				// animacyP.addFracCount(entry.animacy.name(),
-				// group.animacy.name(), p);
-				//
-				// semanticP.addFracCount(entry.sem, group.sem, p);
-				//
-				// grammaticP
-				// .addFracCount(entry.gram.name(), group.gram.name(), p);
+				tenseP.addFracCount(entry.ant.tense, group.m.tense, p);
+				polarityP.addFracCount(entry.ant.polarity, group.m.polarity, p);
+				eventSubTypeP.addFracCount(entry.ant.getSubType(),
+						group.m.getSubType(), p);
+				
+				genericityP.addFracCount(entry.ant.genericity,
+						group.m.genericity, p);
+
+				modalityP.addFracCount(entry.ant.modality, group.m.modality, p);
 
 				Double d = fracContextCount.get(context.toString());
 				if (d == null) {
@@ -303,18 +289,18 @@ public class EMLearn {
 				}
 			}
 		}
-		// genderP.setVals();
-		// numberP.setVals();
-		// animacyP.setVals();
-		// semanticP.setVals();
+		polarityP.setVals();
+		tenseP.setVals();
+		eventSubTypeP.setVals();
+		genericityP.setVals();
 		// cilin.setVals();
-		// grammaticP.setVals();
+		modalityP.setVals();
 		for (String key : fracContextCount.keySet()) {
 			double p_context = (EMUtil.alpha + fracContextCount.get(key))
 					/ (2.0 * EMUtil.alpha + contextPrior.get(key));
 			contextVals.put(key, p_context);
 		}
-		System.out.println(System.currentTimeMillis() - t1);
+		// System.out.println(System.currentTimeMillis() - t1);
 	}
 
 	public static void main(String args[]) throws Exception {
@@ -337,19 +323,19 @@ public class EMLearn {
 			it++;
 		}
 
-		// numberP.printParameter("numberP");
-		// genderP.printParameter("genderP");
-		// animacyP.printParameter("animacyP");
-		// semanticP.printParameter("semanticP");
-		// grammaticP.printParameter("grammaticP");
+		tenseP.printParameter("tenseP");
+		polarityP.printParameter("polarityP");
+		eventSubTypeP.printParameter("eventSubTypeP");
+		genericityP.printParameter("genericityP");
+		modalityP.printParameter("modalityP");
 
 		ObjectOutputStream modelOut = new ObjectOutputStream(
 				new FileOutputStream("EMModel"));
-		// modelOut.writeObject(numberP);
-		// modelOut.writeObject(genderP);
-		// modelOut.writeObject(animacyP);
-		// modelOut.writeObject(semanticP);
-		// modelOut.writeObject(grammaticP);
+		modelOut.writeObject(tenseP);
+		modelOut.writeObject(polarityP);
+		modelOut.writeObject(eventSubTypeP);
+		modelOut.writeObject(genericityP);
+		modelOut.writeObject(modalityP);
 		modelOut.writeObject(fracContextCount);
 		modelOut.writeObject(contextPrior);
 

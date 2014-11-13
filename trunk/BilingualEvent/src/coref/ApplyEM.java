@@ -20,11 +20,11 @@ public class ApplyEM {
 
 	String folder;
 
-	// Parameter numberP;
-	// Parameter genderP;
-	// Parameter animacyP;
-	// Parameter semanticP;
-	// Parameter gramP;
+	Parameter tenseP;
+	Parameter polarityP;
+	Parameter eventSubTypeP;
+	Parameter genericityP;
+	Parameter modalityP;
 	// Parameter cilinP;
 
 	double contextOverall;
@@ -46,12 +46,12 @@ public class ApplyEM {
 		try {
 			ObjectInputStream modelInput = new ObjectInputStream(
 					new FileInputStream("EMModel"));
-			// numberP = (Parameter) modelInput.readObject();
-			// genderP = (Parameter) modelInput.readObject();
-			// animacyP = (Parameter) modelInput.readObject();
-			// semanticP = (Parameter) modelInput.readObject();
-			// gramP = (Parameter) modelInput.readObject();
-			// cilinP = (Parameter) modelInput.readObject();
+			tenseP = (Parameter) modelInput.readObject();
+			polarityP = (Parameter) modelInput.readObject();
+			eventSubTypeP = (Parameter) modelInput.readObject();
+			genericityP = (Parameter) modelInput.readObject();
+			modalityP = (Parameter) modelInput.readObject();
+
 			fracContextCount = (HashMap<String, Double>) modelInput
 					.readObject();
 			contextPrior = (HashMap<String, Double>) modelInput.readObject();
@@ -61,9 +61,9 @@ public class ApplyEM {
 
 			// ObjectInputStream modelInput2 = new ObjectInputStream(
 			// new FileInputStream("giga2/EMModel"));
-			// numberP = (Parameter) modelInput2.readObject();
-			// genderP = (Parameter) modelInput2.readObject();
-			// animacyP = (Parameter) modelInput2.readObject();
+			// tenseP = (Parameter) modelInput2.readObject();
+			// polarityP = (Parameter) modelInput2.readObject();
+			// eventSubTypeP = (Parameter) modelInput2.readObject();
 			// personP = (Parameter) modelInput2.readObject();
 			// personQP = (Parameter) modelInput2.readObject();
 			// fracContextCount = (HashMap<String, Double>) modelInput2
@@ -92,13 +92,13 @@ public class ApplyEM {
 
 	public HashMap<String, HashSet<String>> getKeys(ArrayList<EventChain> ecs) {
 		HashMap<String, HashSet<String>> key = new HashMap<String, HashSet<String>>();
-		for(EventChain ec : ecs) {
+		for (EventChain ec : ecs) {
 			ArrayList<EventMention> ems = ec.getEventMentions();
 			Collections.sort(ems);
-			for(int i=1;i<ems.size();i++) {
+			for (int i = 1; i < ems.size(); i++) {
 				EventMention em2 = ems.get(i);
 				HashSet<String> set = new HashSet<String>();
-				for(int j=0;j<i;j++) {
+				for (int j = 0; j < i; j++) {
 					EventMention em1 = ems.get(j);
 					set.add(em1.toName());
 				}
@@ -107,29 +107,29 @@ public class ApplyEM {
 		}
 		return key;
 	}
-	
+
 	public void test() {
 		String dataset = "test";
 		ArrayList<String> files = Common.getLines("ACE_English_test0");
 		HashMap<String, ArrayList<EventMention>> corefResults = new HashMap<String, ArrayList<EventMention>>();
 
 		HashMap<String, HashMap<String, HashSet<String>>> goldKeyses = new HashMap<String, HashMap<String, HashSet<String>>>();
-		
+
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
 		ArrayList<String> fileNames = new ArrayList<String>();
 		ArrayList<ArrayList<EventChain>> goldEventChains = new ArrayList<ArrayList<EventChain>>();
 		ArrayList<ArrayList<EventChain>> systemEventChains = new ArrayList<ArrayList<EventChain>>();
-		
+
 		for (int g = 0; g < files.size(); g++) {
 			String file = files.get(g);
 			// System.out.println(file);
 			ACEDoc doc = new ACEEngDoc(file);
 			goldKeyses.put(doc.fileID, this.getKeys(doc.goldEventChains));
-			
+
 			fileNames.add(doc.fileID);
 			goldEventChains.add(doc.goldEventChains);
 			lengths.add(doc.content.length());
-			
+
 			ArrayList<EventChain> goldChains = doc.goldEventChains;
 
 			HashMap<String, Integer> chainMap = EMUtil.formChainMap(goldChains);
@@ -161,17 +161,17 @@ public class ApplyEM {
 			findAntecedent(doc, chainMap, anaphors, candidates, goldKeyses);
 
 			for (EventMention m : anaphors) {
-				if(m.antecedent!=null) {
+				if (m.antecedent != null) {
 					corefResult.add(m);
 				}
 			}
-			
+
 			ArrayList<EventChain> systemChain = new ArrayList<EventChain>();
 			HashMap<String, EventChain> eventChainMap = new HashMap<String, EventChain>();
 			Collections.sort(candidates);
-			for(EventMention m : candidates) {
+			for (EventMention m : candidates) {
 				EventChain ec = null;
-				if(m.antecedent==null) {
+				if (m.antecedent == null) {
 					ec = new EventChain();
 					systemChain.add(ec);
 				} else {
@@ -182,28 +182,29 @@ public class ApplyEM {
 			}
 			systemEventChains.add(systemChain);
 		}
-		System.out.println("Good: " + good);
-		System.out.println("Bad: " + bad);
-		System.out.println("Precission: " + good / (good + bad) * 100);
+		// System.out.println("Good: " + good);
+		// System.out.println("Bad: " + bad);
+		// System.out.println("Precission: " + good / (good + bad) * 100);
 
 		evaluate(corefResults, goldKeyses);
 
-		System.out.println(ApplyEM.allL);
-		System.out.println(zeroAnt + "/" + allAnt + ":" + zeroAnt / allAnt);
-		System.out.println("Bad_P_C:" + badP_C);
-		
-		
+		// System.out.println(ApplyEM.allL);
+		// System.out.println(zeroAnt + "/" + allAnt + ":" + zeroAnt / allAnt);
+		// System.out.println("Bad_P_C:" + badP_C);
+
 		// output keys
 		try {
-			ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys." + this.folder, goldEventChains);
-			ToSemEval.outputSemFormat(fileNames, lengths, "sys.keys." + this.folder, systemEventChains);
+			ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys."
+					+ this.folder, goldEventChains);
+			ToSemEval.outputSemFormat(fileNames, lengths, "sys.keys."
+					+ this.folder, systemEventChains);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		// output goldKeys
-		
+
 	}
 
 	static double min_amongMax = 1;
@@ -217,14 +218,14 @@ public class ApplyEM {
 
 	static HashMap<String, HashSet<String>> chainMaps = new HashMap<String, HashSet<String>>();
 
-	private void findAntecedent(ACEDoc doc,
-			HashMap<String, Integer> chainMap,
+	private void findAntecedent(ACEDoc doc, HashMap<String, Integer> chainMap,
 			ArrayList<EventMention> anaphors,
-			ArrayList<EventMention> allCandidates, 
+			ArrayList<EventMention> allCandidates,
 			HashMap<String, HashMap<String, HashSet<String>>> goldKeys) {
 		for (EventMention anaphor : anaphors) {
 			anaphor.sentenceID = doc.positionMap.get(anaphor.getAnchorStart())[0];
-			anaphor.pr = doc.parseReults.get(doc.positionMap.get(anaphor.getAnchorStart())[0]);
+			anaphor.pr = doc.parseReults.get(doc.positionMap.get(anaphor
+					.getAnchorStart())[0]);
 
 			EventMention antecedent = null;
 			double maxP = 0;
@@ -235,7 +236,8 @@ public class ApplyEM {
 			for (int h = allCandidates.size() - 1; h >= 0; h--) {
 				EventMention cand = allCandidates.get(h);
 				cand.sentenceID = doc.positionMap.get(cand.getAnchorStart())[0];
-				cand.pr = doc.parseReults.get(doc.positionMap.get(cand.getAnchorStart())[0]);
+				cand.pr = doc.parseReults.get(doc.positionMap.get(cand
+						.getAnchorStart())[0]);
 
 				if (cand.getAnchorStart() < anaphor.getAnchorEnd()
 						&& anaphor.sentenceID - cand.sentenceID <= EMLearn.maxDistance
@@ -249,7 +251,7 @@ public class ApplyEM {
 			}
 			EventMention fake = new EventMention();
 			fake.extent = "fakkkkke";
-			fake.isFake = true;
+			fake.setFake();
 			cands.add(fake);
 
 			ResolveGroup rg = new ResolveGroup(anaphor, doc, cands);
@@ -314,8 +316,8 @@ public class ApplyEM {
 				Context.coref = coref;
 				Context.gM1 = chainMap.containsKey(cand.toName());
 				Context.gM2 = chainMap.containsKey(anaphor.toName());
-				entry.context = Context.buildContext(cand, anaphor, doc,
-						cands, entry.seq);
+				entry.context = Context.buildContext(cand, anaphor, doc, cands,
+						entry.seq);
 
 				allAnt++;
 				if (entry.p_c == 0) {
@@ -352,22 +354,20 @@ public class ApplyEM {
 					// print(cand, anaphor, part, chainMap);
 					// }
 
-					// double p_number = numberP.getVal(entry.number.name(),
-					// EMUtil.getAntNumber(anaphor).name());
-					// double p_animacy = animacyP.getVal(entry.animacy.name(),
-					// EMUtil.getAntAnimacy(anaphor).name());
-					// double p_gender = genderP.getVal(entry.gender.name(),
-					// EMUtil.getAntGender(anaphor).name());
-					// double p_sem = semanticP.getVal(entry.sem,
-					// EMUtil.getSemantic(anaphor));
-					//
-					// double p_cilin = cilinP.getVal(entry.cilin,
-					// EMUtil.getModifiers(anaphor, part));
-					//
-					// double p_gram = semanticP.getVal(entry.gram.name(),
-					// anaphor.gram.name());
+					double p_tense = tenseP.getVal(entry.ant.tense,
+							anaphor.tense);
+					double p_modality = modalityP.getVal(entry.ant.modality,
+							anaphor.modality);
 
-					double p_context = 0.0000000000000000000000000000000000000000000001;
+					double p_eventSubType = eventSubTypeP.getVal(
+							entry.ant.subType, anaphor.subType);
+
+					double p_polarity = polarityP.getVal(entry.ant.modality,
+							anaphor.modality);
+					double p_genericity = genericityP.getVal(
+							entry.ant.genericity, anaphor.genericity);
+
+					double p_context = 0.5;
 					if (fracContextCount.containsKey(context.toString())) {
 						p_context = (1.0 * EMUtil.alpha + fracContextCount
 								.get(context.toString()))
@@ -378,14 +378,8 @@ public class ApplyEM {
 					}
 
 					double p2nd = p_context * entry.p_c;
-					p2nd *= 1
-					// p_number *
-					// p_gender *
-					// p_animacy *
-					// * p_sem
-					// * p_cilin
-					// * p_gram
-					;
+					p2nd *= 1 * p_tense * p_polarity * p_eventSubType
+							* p_genericity * p_modality;
 					double p = p2nd;
 					probs[i] = p;
 					if (p > maxP && p != 0) {
@@ -414,7 +408,7 @@ public class ApplyEM {
 			// }
 			// }
 
-			if (antecedent != null && !antecedent.isFake
+			if (antecedent != null && !antecedent.isFake()
 					&& anaphor.antecedent == null) {
 				HashSet<String> corefs = chainMaps.get(antName);
 				corefs.add(rg.anaphorName);
@@ -429,29 +423,32 @@ public class ApplyEM {
 
 				if (!coref && goldCorefs.size() != 0) {
 					// anaphor.antecedent= goldCorefs.get(0);
-					System.out.println("Anaphor: " + anaphor.getAnchor() + " "
-							+ anaphor.getType() + " # "
-							+ " # " + chainMap.containsKey(anaphor.toName()));
-					System.out.println("Selected: " + antecedent.extent + " "
-							+ antecedent.getType() + " # "
-							+ chainMap.containsKey(antecedent.toName()));
-					System.out.println("True Ante: ");
-					for (EventMention m : goldCorefs) {
-					}
-					System.out.println("---------------------------");
+					// System.out.println("Anaphor: " + anaphor.getAnchor() +
+					// " "
+					// + anaphor.getType() + " # "
+					// + " # " + chainMap.containsKey(anaphor.toName()));
+					// System.out.println("Selected: " + antecedent.extent + " "
+					// + antecedent.getType() + " # "
+					// + chainMap.containsKey(antecedent.toName()));
+					// System.out.println("True Ante: ");
+					// for (EventMention m : goldCorefs) {
+					// }
+					// System.out.println("---------------------------");
 					// print(antecedent, anaphor, part, chainMap);
 				}
 
 				if (!coref && goldCorefs.size() == 0) {
 					// anaphor.antecedent= null;
-					System.out.println("Anaphor: " + anaphor.getAnchor() + " "
-							+ anaphor.getType()
-							+ " # " + chainMap.containsKey(anaphor.toName()));
-					System.out.println("Selected: " + antecedent.getAnchor() + " "
-							+ antecedent.getType() + " # "
-							+ chainMap.containsKey(antecedent.toName()));
-					System.out.println("True Ante: EMPTY");
-					System.out.println("---------------------------");
+					// System.out.println("Anaphor: " + anaphor.getAnchor() +
+					// " "
+					// + anaphor.getType()
+					// + " # " + chainMap.containsKey(anaphor.toName()));
+					// System.out.println("Selected: " + antecedent.getAnchor()
+					// + " "
+					// + antecedent.getType() + " # "
+					// + chainMap.containsKey(antecedent.toName()));
+					// System.out.println("True Ante: EMPTY");
+					// System.out.println("---------------------------");
 					// print(antecedent, anaphor, part, chainMap);
 				}
 
@@ -535,9 +532,9 @@ public class ApplyEM {
 		double hit = 0;
 
 		for (String key : anaphorses.keySet()) {
-			System.out.println(key);
-			System.out.println(goldKeyses.keySet().iterator().next());
-			
+			// System.out.println(key);
+			// System.out.println(goldKeyses.keySet().iterator().next());
+
 			ArrayList<EventMention> anaphors = anaphorses.get(key);
 			HashMap<String, HashSet<String>> keys = goldKeyses.get(key);
 			gold += keys.size();
@@ -584,6 +581,6 @@ public class ApplyEM {
 		ApplyEM test = new ApplyEM(folder);
 		test.test();
 		System.out.println("RUNN: " + folder);
-//		Common.pause("!!#");
+		// Common.pause("!!#");
 	}
 }
