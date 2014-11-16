@@ -1188,4 +1188,27 @@ public class Util {
 		return typeRoleMap;
 	}
 	
+	public static void setSystemAttribute(ArrayList<EventMention> ems, HashMap<String, HashMap<String, String>> polarityMaps,
+			HashMap<String, HashMap<String, String>> modalityMaps, HashMap<String, HashMap<String, String>> genericityMaps,
+			HashMap<String, HashMap<String, String>> tenseMaps, String file) {
+		for(EventMention em : ems) {
+			String key = em.getAnchorStart() + "," + em.getAnchorEnd();
+			em.polarity = polarityMaps.get(file).get(key);
+			em.modality = modalityMaps.get(file).get(key);
+			em.genericity = genericityMaps.get(file).get(key);
+			em.tense = tenseMaps.get(file).get(key);
+		}
+	}
+	
+	public static void setSystemAttributeWithConf(ArrayList<EventMention> ems, HashMap<String, HashMap<String, HashMap<String, Double>>> polarityMaps,
+			HashMap<String, HashMap<String, HashMap<String, Double>>> modalityMaps, HashMap<String, HashMap<String, HashMap<String, Double>>> genericityMaps,
+			HashMap<String, HashMap<String, HashMap<String, Double>>> tenseMaps, String file) {
+		for(EventMention em : ems) {
+			String key = em.getAnchorStart() + "," + em.getAnchorEnd();
+			em.polarityConf = polarityMaps.get(file).get(key);
+			em.modalityConf = modalityMaps.get(file).get(key);
+			em.genericityConf = genericityMaps.get(file).get(key);
+			em.tenseConf = tenseMaps.get(file).get(key);
+		}
+	}
 }

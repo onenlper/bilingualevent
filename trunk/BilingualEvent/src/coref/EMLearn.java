@@ -67,6 +67,11 @@ public class EMLearn {
 	@SuppressWarnings("unused")
 	public static ArrayList<ResolveGroup> extractGroups(ACEDoc doc) {
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
+		
+		for(int i=0;i<doc.goldEventMentions.size();i++) {
+			doc.goldEventMentions.get(i).sequenceID = i;
+		}
+		
 		for (int i = 0; i < doc.parseReults.size(); i++) {
 			ParseResult pr = doc.parseReults.get(i);
 			pr.evms = EMUtil.getEventMentionInOneS(doc, doc.goldEventMentions,
@@ -139,14 +144,14 @@ public class EMLearn {
 			if (entry.isFake) {
 				fakeEntries.add(entry);
 			}
-//			else if (ant.getAnchor().contains(rg.m.getAnchor())) {
-			else if(
-					ant.getSubType().equals(rg.m.getSubType()) 
+			else if (ant.getAnchor().contains(rg.m.getAnchor())) {
+//			else if(
+//					ant.getSubType().equals(rg.m.getSubType()) 
 //					&& 
 //					ant.tense.equals(rg.m.tense) 
 //						&& ant.modality.equals(rg.m.modality) && ant.genericity.equals(rg.m.genericity) 
 //						&& ant.polarity.equals(rg.m.polarity)
-						) {
+//						) {
 //			else if(true) {	
 				goodEntries.add(entry);
 			} else {
@@ -235,7 +240,8 @@ public class EMLearn {
 				}
 
 				entry.p = p_context * entry.p_c;
-				entry.p *= 1 * p_tense * p_polarity * p_eventSubType
+				entry.p *= 1 * p_tense * p_polarity 
+//						* p_eventSubType
 						* p_genericity
 						* p_modality;
 

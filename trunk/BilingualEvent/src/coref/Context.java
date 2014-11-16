@@ -74,6 +74,8 @@ public class Context implements Serializable {
 		int[] feas = new int[10];
 		feas[id++] = getMentionDiss(mentionDis);
 		feas[id++] = isExactMatch(ant, anaphor, doc);
+		
+		feas[id++] = getEvDis(ant, anaphor);
 //		feas[id++] = getDistance(ant, anaphor, doc);
 //		feas[id++] = conflictArg(ant, anaphor, doc);
 //		feas[id++] = getSimi(ant, anaphor, doc);
@@ -262,6 +264,10 @@ public class Context implements Serializable {
 		}
 	}
 
+	private static short getEvDis(EventMention ant, EventMention anaphor) {
+		return (short) (anaphor.sequenceID-ant.sequenceID);
+	}
+	
 	private static short getDistance(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
 		int diss = 0;

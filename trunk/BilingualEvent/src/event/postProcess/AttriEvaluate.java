@@ -148,7 +148,43 @@ public class AttriEvaluate {
 		return systemEMses;
 	}
 	
-	public static HashMap<String, HashMap<String, String>> loadSystemAttri(String attribute, String part) throws IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
+	public static HashMap<String, HashMap<String, HashMap<String, Double>>> loadSystemAttriWithConf(String attribute, String part){
+		HashMap<String, HashMap<String, HashMap<String, Double>>> systemEMsMap = new HashMap<String, HashMap<String, HashMap<String, Double>>>();
+		
+		ArrayList<String> emLines = Common.getLines("data/English_" + attribute + "_test_em" + part);
+		ArrayList<String> predictLines = Common.getLines("/users/yzcchen/tool/maxent/bin/test_" + attribute + ".txt" + part);
+		for (int i = 0; i < emLines.size(); i++) {
+			String predictLine = predictLines.get(i);
+			String emLine = emLines.get(i);
+
+			String tokens[] = emLine.split("\\s+");
+			String file = tokens[0];
+			int start = Integer.valueOf(tokens[1]);
+			int end = Integer.valueOf(tokens[2]);
+			
+			String key = start + "," + end;
+
+			tokens = predictLine.split("\\s+");
+
+			HashMap<String, Double> conf = new HashMap<String, Double>();
+			
+			for (int k = 0; k < tokens.length / 2; k++) {
+				String l = tokens[k * 2];
+				double val = Double.valueOf(tokens[k*2+1]);
+				conf.put(l, val);
+			}
+			if (systemEMsMap.containsKey(file)) {
+				systemEMsMap.get(file).put(key, conf);
+			} else {
+				HashMap<String, HashMap<String, Double>> ems = new HashMap<String, HashMap<String, Double>>();
+				ems.put(key, conf);
+				systemEMsMap.put(file, ems);
+			}
+		}
+		return systemEMsMap;
+	}
+	
+	public static HashMap<String, HashMap<String, String>> loadSystemAttri(String attribute, String part){
 		HashMap<String, HashMap<String, String>> systemEMsMap = new HashMap<String, HashMap<String, String>>();
 		
 		ArrayList<String> emLines = Common.getLines("data/English_" + attribute + "_test_em" + part);

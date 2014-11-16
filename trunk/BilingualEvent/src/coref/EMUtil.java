@@ -5,8 +5,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import model.ACEDoc;
+import model.Entity;
 import model.EventChain;
 import model.EventMention;
+import model.EventMentionArgument;
 
 public class EMUtil {
 	
@@ -51,9 +53,61 @@ public class EMUtil {
 //		if(!ant.polarity.equals(m.polarity)) {
 //			return 0;
 //		}
-//		if(!ant.subType.equals(m.subType)) {
-//			return 0;
-//		}
+		
+		boolean time_conflict = false;
+		boolean place_conflict = false;
+		
+		for (EventMentionArgument arg1 : m.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : ant
+					.getEventMentionArguments()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (role1.equals(role2) && role1.equals("Time-Within")) {
+					if (entity1 == null && entity2 == null
+							&&
+							(arg1.getExtent().contains(arg2.getExtent()) || arg2.getExtent().contains(arg1.getExtent())) 
+									) {
+						
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						
+					} else {
+						time_conflict = true;
+					}
+				}
+				
+				if (role1.equals(role2) && role1.equals("Place")) {
+					if (entity1 == null && entity2 == null
+							&&
+							(arg1.getExtent().contains(arg2.getExtent()) || arg2.getExtent().contains(arg1.getExtent())) 
+							) {
+						
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						
+					} else {
+						place_conflict = true;
+					}
+				}
+			}
+		}
+		
+		if(time_conflict || place_conflict) {
+			return 0;
+		}
+		
+		
+		
+		
+		if(!ant.subType.equals(m.subType)) {
+			return 0;
+		}
 		return 1;
 	}
 
