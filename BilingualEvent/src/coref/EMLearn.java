@@ -45,11 +45,16 @@ public class EMLearn {
 	// static int count = 0;
 
 	public static void init() {
-		tenseP = new Parameter(new HashSet<String>(EMUtil.Tense.subList(0, EMUtil.Tense.size()-1)));
-		polarityP = new Parameter(new HashSet<String>(EMUtil.Polarity.subList(0,  EMUtil.Polarity.size()-1)));
-		genericityP = new Parameter(new HashSet<String>(EMUtil.Genericity.subList(0, EMUtil.Genericity.size()-1)));
-		modalityP = new Parameter(new HashSet<String>(EMUtil.Modality.subList(0, EMUtil.Modality.size()-1)));
-		eventSubTypeP = new Parameter(new HashSet<String>(EMUtil.EventSubType.subList(0, EMUtil.EventSubType.size()-1)));
+		tenseP = new Parameter(new HashSet<String>(EMUtil.Tense.subList(0,
+				EMUtil.Tense.size() - 1)));
+		polarityP = new Parameter(new HashSet<String>(EMUtil.Polarity.subList(
+				0, EMUtil.Polarity.size() - 1)));
+		genericityP = new Parameter(new HashSet<String>(
+				EMUtil.Genericity.subList(0, EMUtil.Genericity.size() - 1)));
+		modalityP = new Parameter(new HashSet<String>(EMUtil.Modality.subList(
+				0, EMUtil.Modality.size() - 1)));
+		eventSubTypeP = new Parameter(new HashSet<String>(
+				EMUtil.EventSubType.subList(0, EMUtil.EventSubType.size() - 1)));
 
 		contextPrior = new HashMap<String, Double>();
 		contextOverall = new HashMap<String, Double>();
@@ -133,7 +138,16 @@ public class EMLearn {
 			// TODO
 			if (entry.isFake) {
 				fakeEntries.add(entry);
-			} else if (ant.getAnchor().contains(rg.m.getAnchor())) {
+			}
+//			else if (ant.getAnchor().contains(rg.m.getAnchor())) {
+			else if(
+					ant.getSubType().equals(rg.m.getSubType()) 
+//					&& 
+//					ant.tense.equals(rg.m.tense) 
+//						&& ant.modality.equals(rg.m.modality) && ant.genericity.equals(rg.m.genericity) 
+//						&& ant.polarity.equals(rg.m.polarity)
+						) {
+//			else if(true) {	
 				goodEntries.add(entry);
 			} else {
 				badEntries.add(entry);
@@ -223,7 +237,6 @@ public class EMLearn {
 				entry.p = p_context * entry.p_c;
 				entry.p *= 1 * p_tense * p_polarity * p_eventSubType
 						* p_genericity
-						// * p_cilin
 						* p_modality;
 
 				norm += entry.p;
@@ -243,7 +256,7 @@ public class EMLearn {
 					}
 				}
 			} else {
-				 Common.bangErrorPOS("!");
+				Common.bangErrorPOS("!");
 			}
 
 			if (!antName.equals("fake")) {
@@ -274,7 +287,7 @@ public class EMLearn {
 				polarityP.addFracCount(entry.ant.polarity, group.m.polarity, p);
 				eventSubTypeP.addFracCount(entry.ant.getSubType(),
 						group.m.getSubType(), p);
-				
+
 				genericityP.addFracCount(entry.ant.genericity,
 						group.m.genericity, p);
 
