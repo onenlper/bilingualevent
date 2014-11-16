@@ -21,7 +21,7 @@ public class EngArgEval {
 		System.out.println("Output final result:\n==========");
 		ArrayList<String> files = Common.getLines("ACE_English_test" + args[2]);
 		HashMap<String, HashMap<String, EventMention>> allMentions = null;
-		allMentions = jointSVMLine("");
+		allMentions = jointSVMLine();
 		System.out.println("Overall performance:");
 		CrossValidation.evaluate(model, allMentions, files, "eng");
 		
@@ -29,8 +29,7 @@ public class EngArgEval {
 				+ Util.part);
 	}
 
-	public static HashMap<String, HashMap<String, EventMention>> jointSVMLine(
-			String control) {
+	public static HashMap<String, HashMap<String, EventMention>> jointSVMLine() {
 		HashMap<String, HashMap<String, EventMention>> eventMentionses = new HashMap<String, HashMap<String, EventMention>>();
 
 		ArrayList<String> argumentLines = Common

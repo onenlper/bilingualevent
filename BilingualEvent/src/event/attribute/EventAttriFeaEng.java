@@ -1,6 +1,10 @@
 package event.attribute;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+
+import event.triggerEng.EngArgEval;
 
 import model.ACEDoc;
 import model.ACEEngDoc;
@@ -9,6 +13,7 @@ import model.EventMentionArgument;
 import model.ParseResult;
 import model.syntaxTree.MyTreeNode;
 import util.Common;
+import util.Util;
 
 public class EventAttriFeaEng {
 
@@ -191,16 +196,23 @@ public class EventAttriFeaEng {
 			System.out.println("java ~ [train|test|development] [polarity|modality|genericity|tense] folder");
 		}
 		classifier = args[1];
+		Util.part = args[2];
 		ArrayList<String> eventAttributeFeature = new ArrayList<String>();
 		ArrayList<String> files = Common.getLines("ACE_English_" + args[0] + args[2]);
 		
 		EventAttriFeaEng eventAttriFeature = new EventAttriFeaEng();
 
+		HashMap<String, HashMap<String, EventMention>> jointSVMLines = EngArgEval.jointSVMLine();
+		
 		ArrayList<String> emLines = new ArrayList<String>();
 		for (String file : files) {
 			ACEDoc document = new ACEEngDoc(file);
+			
 			if (args[0].equalsIgnoreCase("train")) {
 				ArrayList<EventMention> ems = document.goldEventMentions;
+				
+				
+				
 				for (EventMention em : ems) {
 					String label = "";
 					if (args[1].equalsIgnoreCase("polarity")) {
@@ -218,7 +230,16 @@ public class EventAttriFeaEng {
 					emLines.add(sb.toString());
 				}
 			} else {
+				HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
+				
+				if(evmMaps==null) {
+					evmMaps = new HashMap<String, EventMention>();
+				}
+				
 				ArrayList<EventMention> ems = document.goldEventMentions;
+//				ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
+				
+				Collections.sort(ems);
 				for (EventMention em : ems) {
 					StringBuilder sb = new StringBuilder();
 					sb.append(file).append(" ").append(em.getAnchorStart()).append(" ").append(em.getAnchorEnd())

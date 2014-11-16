@@ -14,7 +14,9 @@ import model.ACEEngDoc;
 import model.EventChain;
 import model.EventMention;
 import util.Common;
+import util.Util;
 import coref.ResolveGroup.Entry;
+import event.postProcess.AttriEvaluate;
 
 public class ApplyEM {
 
@@ -120,6 +122,16 @@ public class ApplyEM {
 		ArrayList<ArrayList<EventChain>> goldEventChains = new ArrayList<ArrayList<EventChain>>();
 		ArrayList<ArrayList<EventChain>> systemEventChains = new ArrayList<ArrayList<EventChain>>();
 
+		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", "0");
+		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", "0");
+		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", "0");
+		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", "0");
+		
+		HashMap<String, HashMap<String, HashMap<String, Double>>> polarityConfMaps = AttriEvaluate.loadSystemAttriWithConf("polarity", "0");
+		HashMap<String, HashMap<String, HashMap<String, Double>>> modalityConfMaps = AttriEvaluate.loadSystemAttriWithConf("modality", "0");
+		HashMap<String, HashMap<String, HashMap<String, Double>>> genericityConfMaps = AttriEvaluate.loadSystemAttriWithConf("genericity", "0");
+		HashMap<String, HashMap<String, HashMap<String, Double>>> tenseConfMaps = AttriEvaluate.loadSystemAttriWithConf("tense", "0");
+		
 		for (int g = 0; g < files.size(); g++) {
 			String file = files.get(g);
 			// System.out.println(file);
@@ -143,8 +155,14 @@ public class ApplyEM {
 				ArrayList<EventMention> ms = new ArrayList<EventMention>();
 				ms.add(m);
 			}
-
+			
+			Util.setSystemAttribute(goldEvents, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
+			Util.setSystemAttributeWithConf(goldEvents, polarityConfMaps, modalityConfMaps, genericityConfMaps, tenseConfMaps, file);
+			
 			Collections.sort(goldEvents);
+			for(int i=0;i<goldEvents.size();i++) {
+				goldEvents.get(i).sequenceID = i;
+			}
 
 			ArrayList<EventMention> candidates = new ArrayList<EventMention>();
 			for (EventMention m : goldEvents) {
@@ -356,17 +374,21 @@ public class ApplyEM {
 
 					double p_tense = tenseP.getVal(entry.ant.tense,
 							anaphor.tense);
+					
 					double p_modality = modalityP.getVal(entry.ant.modality,
 							anaphor.modality);
+
+					double p_polarity = polarityP.getVal(entry.ant.modality,
+							anaphor.modality);
+					
+					
+					double p_genericity = genericityP.getVal(
+							entry.ant.genericity, anaphor.genericity);
 
 					double p_eventSubType = eventSubTypeP.getVal(
 							entry.ant.subType, anaphor.subType);
 
-					double p_polarity = polarityP.getVal(entry.ant.modality,
-							anaphor.modality);
-					double p_genericity = genericityP.getVal(
-							entry.ant.genericity, anaphor.genericity);
-
+					
 					double p_context = 0.5;
 					if (fracContextCount.containsKey(context.toString())) {
 						p_context = (1.0 * EMUtil.alpha + fracContextCount
@@ -378,7 +400,8 @@ public class ApplyEM {
 					}
 
 					double p2nd = p_context * entry.p_c;
-					p2nd *= 1 * p_tense * p_polarity * p_eventSubType
+					p2nd *= 1 * p_tense * p_polarity 
+//							* p_eventSubType
 							* p_genericity * p_modality;
 					double p = p2nd;
 					probs[i] = p;
@@ -568,12 +591,6 @@ public class ApplyEM {
 		}
 		// EMUtil.loadAlign();
 		run(args[0]);
-		run("nw");
-		run("mz");
-		run("wb");
-		run("bn");
-		run("bc");
-		run("tc");
 	}
 
 	public static void run(String folder) {

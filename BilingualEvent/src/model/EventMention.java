@@ -101,10 +101,18 @@ public class EventMention implements Comparable {
 	public boolean maxent = false;
 
 	public String polarity = "-";
+	
+	public HashMap<String, Double> polarityConf;
+	
 	public String modality = "-";
+	public HashMap<String, Double> modalityConf;
+	
 	public String genericity = "-";
+	public HashMap<String, Double> genericityConf;
+	
 	public String tense = "-";
-
+	public HashMap<String, Double> tenseConf;
+	
 	public String fileID;
 
 	public ACEDoc document;
