@@ -3,21 +3,55 @@ package event.postProcess;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import model.ACEChiDoc;
+import model.ACEDoc;
+import model.ACEEngDoc;
 import model.EventMention;
 import util.Common;
 
 public class AttriEvaluate {
+	
+	static String part = "";
+	
 	public static void main(String args[]) throws Exception {
+		if(args.length!=3) {
+			System.out.println("java ~ mode attribute part");
+			System.exit(1);
+		}
 		String mode = args[0];
 		String attribute = args[1];
-		loadSystem(mode, attribute);
-		ArrayList<String> files = Common.getLines("ACE_Chinese_" + args[0]);
+		part = args[2];
+		systemEMses = loadSystem(mode, attribute);
+		eva(args, mode, attribute);
+		System.out.println("Baseline: ");
+		
+		for(String key : systemEMses.keySet()) {
+			ArrayList<EventMention> ems = systemEMses.get(key);
+			for(EventMention em : ems) {
+				if(attribute.equals("polarity")) {
+					em.polarity = "Positive";
+				} else if(attribute.equals("modality")) {
+					em.modality = "Asserted";
+				} else if(attribute.equals("genericity")) {
+					em.genericity = "Specific";
+				} else if(attribute.equals("tense")) {
+					em.tense = "Past";
+				}
+			}
+		}
+		eva(args, mode, attribute);
+		System.out.println("========================================================");
+		
+	}
+
+	private static void eva(String[] args, String mode, String attribute)
+			throws IllegalAccessException, NoSuchFieldException {
+		ArrayList<String> files = Common.getLines("ACE_English_" + args[0] + args[2]);
 		HashMap<String, double[]> stats = new HashMap<String, double[]>();
 		for (String file : files) {
-			ACEChiDoc document = new ACEChiDoc(file);
+			ACEDoc document = new ACEEngDoc(file);
 			ArrayList<EventMention> goldEMs = document.goldEventMentions;
 			ArrayList<EventMention> systemEMs = getSystemEMs(file);
+			
 			for (EventMention em : goldEMs) {
 				String attri = (String) em.getClass().getField(attribute).get(em);
 				if (stats.containsKey(attri)) {
@@ -76,8 +110,8 @@ public class AttriEvaluate {
 	static HashMap<String, ArrayList<EventMention>> systemEMses = new HashMap<String, ArrayList<EventMention>>();
 
 	public static HashMap<String, ArrayList<EventMention>> loadSystem(String mode, String attribute) throws IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
-		ArrayList<String> emLines = Common.getLines("data/chinese_" + attribute + "_" + mode + "_em");
-		ArrayList<String> predictLines = Common.getLines("/users/yzcchen/tool/maxent/bin/" + mode + "_" + attribute + ".txt");
+		ArrayList<String> emLines = Common.getLines("data/English_" + attribute + "_" + mode + "_em" + part);
+		ArrayList<String> predictLines = Common.getLines("/users/yzcchen/tool/maxent/bin/" + mode + "_" + attribute + ".txt" + part);
 		for (int i = 0; i < emLines.size(); i++) {
 			String predictLine = predictLines.get(i);
 			String emLine = emLines.get(i);
@@ -112,5 +146,43 @@ public class AttriEvaluate {
 
 		}
 		return systemEMses;
+	}
+	
+	public static HashMap<String, HashMap<String, String>> loadSystemAttri(String attribute, String part) throws IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
+		HashMap<String, HashMap<String, String>> systemEMsMap = new HashMap<String, HashMap<String, String>>();
+		
+		ArrayList<String> emLines = Common.getLines("data/English_" + attribute + "_test_em" + part);
+		ArrayList<String> predictLines = Common.getLines("/users/yzcchen/tool/maxent/bin/test_" + attribute + ".txt" + part);
+		for (int i = 0; i < emLines.size(); i++) {
+			String predictLine = predictLines.get(i);
+			String emLine = emLines.get(i);
+
+			String tokens[] = emLine.split("\\s+");
+			String file = tokens[0];
+			int start = Integer.valueOf(tokens[1]);
+			int end = Integer.valueOf(tokens[2]);
+			
+			String key = start + "," + end;
+
+			tokens = predictLine.split("\\s+");
+			String label = "";
+			double maxVal = -1;
+			for (int k = 0; k < tokens.length / 2; k++) {
+				String l = tokens[k * 2];
+				double val = Double.valueOf(tokens[k*2+1]);
+				if (val > maxVal) {
+					label = l;
+					maxVal = val;
+				}
+			}
+			if (systemEMsMap.containsKey(file)) {
+				systemEMsMap.get(file).put(key, label);
+			} else {
+				HashMap<String, String> ems = new HashMap<String, String>();
+				ems.put(key, label);
+				systemEMsMap.put(file, ems);
+			}
+		}
+		return systemEMsMap;
 	}
 }
