@@ -39,21 +39,21 @@ public class EMUtil {
 
 	public static double getP_C(EventMention ant, EventMention m, ACEDoc doc) {
 		// TODO Auto-generated method stub
-		if(!ant.tense.equals(m.tense)) {
-			return 0;
-		}
-		if(!ant.genericity.equals(m.genericity)) {
-			return 0;
-		}
-		if(!ant.modality.equals(m.modality)) {
-			return 0;
-		}
-		if(!ant.polarity.equals(m.polarity)) {
-			return 0;
-		}
-		if(!ant.subType.equals(m.subType)) {
-			return 0;
-		}
+//		if(!ant.tense.equals(m.tense)) {
+//			return 0;
+//		}
+//		if(!ant.genericity.equals(m.genericity)) {
+//			return 0;
+//		}
+//		if(!ant.modality.equals(m.modality)) {
+//			return 0;
+//		}
+//		if(!ant.polarity.equals(m.polarity)) {
+//			return 0;
+//		}
+//		if(!ant.subType.equals(m.subType)) {
+//			return 0;
+//		}
 		return 1;
 	}
 

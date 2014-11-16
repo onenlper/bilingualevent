@@ -74,17 +74,12 @@ public class Context implements Serializable {
 		int[] feas = new int[10];
 		feas[id++] = getMentionDiss(mentionDis);
 		feas[id++] = isExactMatch(ant, anaphor, doc);
-		
-		feas[id++] = getDistance(ant, anaphor, doc);
-		
-		feas[id++] = conflictArg(ant, anaphor, doc);
-		
+//		feas[id++] = getDistance(ant, anaphor, doc);
+//		feas[id++] = conflictArg(ant, anaphor, doc);
 //		feas[id++] = getSimi(ant, anaphor, doc);
-		feas[id++] = conflictPlaceTime(ant, anaphor, doc);
+//		feas[id++] = conflictPlaceTime(ant, anaphor, doc);
 //		feas[id++] = conflictCorefArg(ant, anaphor, doc);
-		
-		
-		feas[id++] = corefArg(ant, anaphor, doc);
+//		feas[id++] = corefArg(ant, anaphor, doc);
 		return getContext(feas);
 	}
 	
@@ -283,22 +278,27 @@ public class Context implements Serializable {
 		if(ant.isFake()) {
 			return 0;
 		}
-		int p1[] = doc.positionMap.get(ant.getAnchorStart());
-		int p2[] = doc.positionMap.get(anaphor.getAnchorStart());
-		
-		String lemma1 = doc.parseReults.get(p1[0]).lemmas.get(p1[1]);
-		String lemma2 = doc.parseReults.get(p2[0]).lemmas.get(p2[1]);
-		
-		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) != lemma1.equalsIgnoreCase(lemma2)) {
-//			Common.pause(":!!!");
-		}
-		
-//		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) {
-		if(lemma1.equalsIgnoreCase(lemma2)) {
+		if(ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) {
 			return 1;
 		} else {
 			return 0;
 		}
+//		int p1[] = doc.positionMap.get(ant.getAnchorStart());
+//		int p2[] = doc.positionMap.get(anaphor.getAnchorStart());
+//		
+//		String lemma1 = doc.parseReults.get(p1[0]).lemmas.get(p1[1]);
+//		String lemma2 = doc.parseReults.get(p2[0]).lemmas.get(p2[1]);
+//		
+//		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) != lemma1.equalsIgnoreCase(lemma2)) {
+////			Common.pause(":!!!");
+//		}
+//		
+////		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) {
+//		if(lemma1.equalsIgnoreCase(lemma2)) {
+//			return 1;
+//		} else {
+//			return 0;
+//		}
 	}
 
 	public static String message;
