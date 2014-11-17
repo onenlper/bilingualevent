@@ -140,6 +140,7 @@ public class EMLearn {
 		for (int k = 0; k < rg.entries.size(); k++) {
 			Entry entry = rg.entries.get(k);
 			EventMention ant = rg.entries.get(k).ant;
+			
 			// TODO
 			if (entry.isFake) {
 				fakeEntries.add(entry);

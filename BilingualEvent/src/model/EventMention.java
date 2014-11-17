@@ -263,8 +263,8 @@ public class EventMention implements Comparable {
 
 	public EventMention() {
 		this.eventMentionArguments = new ArrayList<EventMentionArgument>();
-		this.setAnchor("");
-		this.setExtent("");
+//		this.setAnchor("");
+//		this.setExtent("");
 		this.setID("");
 		this.setLdcScope("");
 		for(int i=0;i<34;i++) {
