@@ -236,8 +236,8 @@ public class EventAttriFeaEng {
 					evmMaps = new HashMap<String, EventMention>();
 				}
 				
-				ArrayList<EventMention> ems = document.goldEventMentions;
-//				ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
+//				ArrayList<EventMention> ems = document.goldEventMentions;
+				ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
 				
 				Collections.sort(ems);
 				for (EventMention em : ems) {

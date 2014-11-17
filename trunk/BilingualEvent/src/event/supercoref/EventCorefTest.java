@@ -52,14 +52,17 @@ public class EventCorefTest {
 				evmMaps = new HashMap<String, EventMention>();
 			}
 			
-			ArrayList<EventMention> ems = doc.goldEventMentions;
-//			ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
+//			ArrayList<EventMention> ems = doc.goldEventMentions;
+			ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
+			for(EventMention m : ems) {
+				m.setAnchor(doc.content.substring(m.getAnchorStart(), m.getAnchorEnd() + 1));
+			}
 			
 			Collections.sort(ems);
 			
 			ArrayList<EventChain> activeChains = new ArrayList<EventChain>();
 
-//			Util.setSystemAttribute(ems, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
+			Util.setSystemAttribute(ems, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
 			
 			for (int i = 0; i < ems.size(); i++) {
 				EventMention ana = ems.get(i);
