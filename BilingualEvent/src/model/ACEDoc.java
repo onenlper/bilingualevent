@@ -26,59 +26,39 @@ import ace.ValueReader;
 public abstract class ACEDoc {
 
 	public String fileID;
-
+	public int docID;
 	public int start;
-
 	public String content;
-
 	public int end;
-
 	public HashMap<Integer, int[]> positionMap;
-
-	public ArrayList<EventMention> eventMentions;
-	public ArrayList<EventMention> goldEventMentions;
-
-	public ArrayList<EventChain> eventChains;
-	public ArrayList<EventChain> goldEventChains;
-
-	public ArrayList<EntityMention> goldEntityMentions;
-	public ArrayList<Entity> goldEntities;
-
-	public HashMap<EventMention, HashSet<EventMention>> goldEventCorefMaps;
-
 	public ArrayList<ParseResult> parseReults;
-
-	public ArrayList<Entity> goldTimeChains;
-
-	public ArrayList<EntityMention> goldTimeMentions;
-
-	public ArrayList<Entity> goldValueChains;
-
-	public ArrayList<EntityMention> goldValueMentions;
-
-	public ArrayList<EventMentionArgument> goldArguments;
-
 	public String headline;
-
-	public HashMap<String, Entity> goldSalienceChain;
-
-	public HashMap<String, EntityMention> goldNPMentionMap;
-
-	public HashMap<String, EventMention> goldEventMentionMap;
-
 	public ArrayList<SemanticRole> semanticRoles;
-
-	public ArrayList<EntityMention> allGoldNPMentions = new ArrayList<EntityMention>();
-
-	public HashMap<Integer, EntityMention> allGoldNPEndMap;
-
-	public HashMap<String, Entity> id2EntityMap = new HashMap<String, Entity>();
-
-	public HashMap<String, Entity> entityCorefMap = new HashMap<String, Entity>();
-	public HashMap<String, Integer> eventCorefMap = new HashMap<String, Integer>();
-
 	protected String apfLine;
 	protected String sgmLine;
+	
+	public ArrayList<EventMention> goldEventMentions;
+	public ArrayList<EventChain> goldEventChains;
+	public ArrayList<EntityMention> goldEntityMentions;
+	public ArrayList<Entity> goldEntities;
+	public HashMap<EventMention, HashSet<EventMention>> goldEventCorefMaps;
+	public ArrayList<Entity> goldTimeChains;
+	public ArrayList<EntityMention> goldTimeMentions;
+	public ArrayList<Entity> goldValueChains;
+	public ArrayList<EntityMention> goldValueMentions;
+	public ArrayList<EventMentionArgument> goldArguments;
+	public HashMap<String, Entity> goldSalienceChain;
+	public HashMap<String, EntityMention> goldNPMentionMap;
+	public HashMap<String, EventMention> goldEventMentionMap;
+	public ArrayList<EntityMention> allGoldNPMentions = new ArrayList<EntityMention>();
+	public HashMap<Integer, EntityMention> allGoldNPEndMap;
+
+	
+	public HashMap<String, Entity> id2EntityMap = new HashMap<String, Entity>();
+	public HashMap<String, Entity> entityCorefMap = new HashMap<String, Entity>();
+	public HashMap<String, Integer> eventCorefMap = new HashMap<String, Integer>();
+	public ArrayList<EventMention> eventMentions;
+	public ArrayList<EventChain> eventChains;
 
 	public ACEDoc(String fileID, String sep) {
 		this.content = "";

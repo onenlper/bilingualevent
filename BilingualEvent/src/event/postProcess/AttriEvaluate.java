@@ -40,7 +40,6 @@ public class AttriEvaluate {
 		}
 		eva(args, mode, attribute);
 		System.out.println("========================================================");
-		
 	}
 
 	private static void eva(String[] args, String mode, String attribute)

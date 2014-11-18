@@ -9,6 +9,7 @@ def getFscore(str):
     pass
 
 scorer = '/users/yzcchen/tool/Scorer8.01/reference-coreference-scorers/v8.01/scorer.pl'
+#scorer = '/users/yzcchen/tool/ScorerST/scorer.pl'
 goldFile = sys.argv[1]
 sysFile = sys.argv[2]
 
@@ -21,6 +22,11 @@ cmd3 = 'perl ' + scorer + ' ceafe ' + goldFile + ' ' + sysFile
 mucLines = os.popen(cmd1).readlines()
 bcubLines = os.popen(cmd2).readlines()
 ceafeLines = os.popen(cmd3).readlines()
+"""
+print mucLines[-2]
+print bcubLines[-2]
+print ceafeLines[-2]
+"""
 print ''
 print "MUC:\t" + re.sub('\([^\)]*\)', '', mucLines[-2].strip('\n'))
 muc = getFscore(mucLines[-2])
@@ -30,4 +36,3 @@ print "CEAFE:\t" + re.sub('\([^\)]*\)', '', ceafeLines[-2].strip('\n'))
 ceafe = getFscore(ceafeLines[-2])
 avg = (muc + bcubed + ceafe)/3.0
 print "AVG-F: ", str(avg) + '%'
-

@@ -31,11 +31,20 @@ public class EventMention implements Comparable {
 	
 	public void setFake() {
 		this.isFake = true;
-		this.polarity = "fake";
-		this.tense = "fake";
-		this.genericity = "fake";
-		this.modality = "fake";
-		this.setSubType("fake");
+		this.polarity = "Fake";
+		this.tense = "Fake";
+		this.genericity = "Fake";
+		this.modality = "Fake";
+		this.setSubType("Fake");
+		this.polarityConf = new HashMap<String, Double>();
+		this.genericityConf = new HashMap<String, Double>();
+		this.modalityConf = new HashMap<String, Double>();
+		this.tenseConf = new HashMap<String, Double>();
+		
+		this.polarityConf.put("Fake", 1.0);
+		this.genericityConf.put("Fake", 1.0);
+		this.modalityConf.put("Fake", 1.0);
+		this.tenseConf.put("Fake", 1.0);
 	}
 	
 	public boolean isFake() {
@@ -102,16 +111,16 @@ public class EventMention implements Comparable {
 
 	public String polarity = "-";
 	
-	public HashMap<String, Double> polarityConf;
+	public HashMap<String, Double> polarityConf = new HashMap<String, Double>();
 	
 	public String modality = "-";
-	public HashMap<String, Double> modalityConf;
+	public HashMap<String, Double> modalityConf  = new HashMap<String, Double>();
 	
 	public String genericity = "-";
-	public HashMap<String, Double> genericityConf;
+	public HashMap<String, Double> genericityConf = new HashMap<String, Double>();
 	
 	public String tense = "-";
-	public HashMap<String, Double> tenseConf;
+	public HashMap<String, Double> tenseConf = new HashMap<String, Double>();
 	
 	public String fileID;
 

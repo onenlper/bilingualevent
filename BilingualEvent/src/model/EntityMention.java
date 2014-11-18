@@ -43,6 +43,8 @@ public class EntityMention implements Comparable<EntityMention> {
 	public String source = "";
 	public String buckUnWalter = "";
 
+	public String semClass;
+	
 	public int hashCode() {
 		String str = this.getS() + "," + this.getE();
 		return str.hashCode();
