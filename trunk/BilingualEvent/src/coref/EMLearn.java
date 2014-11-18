@@ -27,6 +27,11 @@ public class EMLearn {
 	static Parameter modalityP;
 	static Parameter eventSubTypeP;
 
+	static HashMap<String, Double> tensePrior = new HashMap<String, Double>();
+	static HashMap<String, Double> polarityPrior = new HashMap<String, Double>();
+	static HashMap<String, Double> genericityPrior = new HashMap<String, Double>();
+	static HashMap<String, Double> modalityPrior = new HashMap<String, Double>();
+
 	static double word2vecSimi = .9;
 
 	static HashMap<String, Double> contextPrior;
@@ -67,11 +72,11 @@ public class EMLearn {
 	@SuppressWarnings("unused")
 	public static ArrayList<ResolveGroup> extractGroups(ACEDoc doc) {
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
-		
-		for(int i=0;i<doc.goldEventMentions.size();i++) {
+
+		for (int i = 0; i < doc.goldEventMentions.size(); i++) {
 			doc.goldEventMentions.get(i).sequenceID = i;
 		}
-		
+
 		for (int i = 0; i < doc.parseReults.size(); i++) {
 			ParseResult pr = doc.parseReults.get(i);
 			pr.evms = EMUtil.getEventMentionInOneS(doc, doc.goldEventMentions,
@@ -140,20 +145,20 @@ public class EMLearn {
 		for (int k = 0; k < rg.entries.size(); k++) {
 			Entry entry = rg.entries.get(k);
 			EventMention ant = rg.entries.get(k).ant;
-			
+
 			// TODO
 			if (entry.isFake) {
 				fakeEntries.add(entry);
-			}
-			else if (ant.getAnchor().contains(rg.m.getAnchor())) {
-//			else if(
-//					ant.getSubType().equals(rg.m.getSubType()) 
-//					&& 
-//					ant.tense.equals(rg.m.tense) 
-//						&& ant.modality.equals(rg.m.modality) && ant.genericity.equals(rg.m.genericity) 
-//						&& ant.polarity.equals(rg.m.polarity)
-//						) {
-//			else if(true) {	
+			} else if (ant.getAnchor().equalsIgnoreCase(rg.m.getAnchor())) {
+				// else if(
+				// ant.getSubType().equals(rg.m.getSubType())
+				// &&
+				// ant.tense.equals(rg.m.tense)
+				// && ant.modality.equals(rg.m.modality) &&
+				// ant.genericity.equals(rg.m.genericity)
+				// && ant.polarity.equals(rg.m.polarity)
+				// ) {
+				// else if(true) {
 				goodEntries.add(entry);
 			} else {
 				badEntries.add(entry);
@@ -173,14 +178,55 @@ public class EMLearn {
 	private static void extractCoNLL(ArrayList<ResolveGroup> groups) {
 		ArrayList<String> lines = Common.getLines("ACE_English_train0");
 		int docNo = 0;
+
+		HashMap<String, Double> tenseCounts = new HashMap<String, Double>();
+		HashMap<String, Double> polarityCounts = new HashMap<String, Double>();
+		HashMap<String, Double> genericityCounts = new HashMap<String, Double>();
+		HashMap<String, Double> modalityCounts = new HashMap<String, Double>();
+
+		double all = 0;
+
 		for (String line : lines) {
 			if (docNo % 10 < percent) {
 				ACEDoc d = new ACEEngDoc(line);
 				groups.addAll(extractGroups(d));
+
+				for (EventMention m : d.goldEventMentions) {
+					addOne(m.tense, tenseCounts);
+					addOne(m.polarity, polarityCounts);
+					addOne(m.genericity, genericityCounts);
+					addOne(m.modality, modalityCounts);
+				}
+				all += d.goldEventMentions.size();
 			}
 			docNo++;
 		}
+
+		double fakeCount = 222;
+
+		buildPrior(tenseCounts, tensePrior, all, fakeCount);
+		buildPrior(polarityCounts, polarityPrior, all, fakeCount);
+		buildPrior(genericityCounts, genericityPrior, all, fakeCount);
+		buildPrior(modalityCounts, modalityPrior, all, fakeCount);
+
 		System.out.println(groups.size());
+	}
+
+	private static void buildPrior(HashMap<String, Double> countMap,
+			HashMap<String, Double> priorMap, double all, double fake) {
+		for (String key : countMap.keySet()) {
+			double count = countMap.get(key);
+			priorMap.put(key, count / (all + fake));
+		}
+		priorMap.put("Fake", fake / (all + fake));
+	}
+
+	private static void addOne(String key, HashMap<String, Double> map) {
+		if (map.containsKey(key)) {
+			map.put(key, map.get(key) + 1.0);
+		} else {
+			map.put(key, 1.0);
+		}
 	}
 
 	public static HashMap<String, HashSet<String>> chainMaps = new HashMap<String, HashSet<String>>();
@@ -241,10 +287,11 @@ public class EMLearn {
 				}
 
 				entry.p = p_context * entry.p_c;
-				entry.p *= 1 * p_tense * p_polarity 
-//						* p_eventSubType
-						* p_genericity
-						* p_modality;
+				entry.p *= 1 * p_tense
+						* p_polarity
+				// * p_eventSubType
+						* p_genericity * p_modality
+				;
 
 				norm += entry.p;
 			}
@@ -356,6 +403,12 @@ public class EMLearn {
 		modelOut.writeObject(eventSubTypeP);
 		modelOut.writeObject(genericityP);
 		modelOut.writeObject(modalityP);
+
+		modelOut.writeObject(tensePrior);
+		modelOut.writeObject(polarityPrior);
+		modelOut.writeObject(genericityPrior);
+		modelOut.writeObject(modalityPrior);
+
 		modelOut.writeObject(fracContextCount);
 		modelOut.writeObject(contextPrior);
 

@@ -43,6 +43,11 @@ public class ApplyEM {
 
 	HashMap<String, Double> fracContextCount;
 
+	HashMap<String, Double> tensePrior;
+	HashMap<String, Double> polarityPrior;
+	HashMap<String, Double> genericityPrior;
+	HashMap<String, Double> modalityPrior;
+	
 	@SuppressWarnings("unchecked")
 	public ApplyEM(String folder) {
 		this.folder = folder;
@@ -54,6 +59,11 @@ public class ApplyEM {
 			eventSubTypeP = (Parameter) modelInput.readObject();
 			genericityP = (Parameter) modelInput.readObject();
 			modalityP = (Parameter) modelInput.readObject();
+			
+			tensePrior = (HashMap<String, Double>) modelInput.readObject();
+			polarityPrior = (HashMap<String, Double>) modelInput.readObject();
+			genericityPrior = (HashMap<String, Double>) modelInput.readObject();
+			modalityPrior = (HashMap<String, Double>) modelInput.readObject();
 
 			fracContextCount = (HashMap<String, Double>) modelInput
 					.readObject();
@@ -159,31 +169,31 @@ public class ApplyEM {
 				evmMaps = new HashMap<String, EventMention>();
 			}
 			
-//			ArrayList<EventMention> goldEvents = doc.goldEventMentions;
-			ArrayList<EventMention> goldEvents = new ArrayList<EventMention>(evmMaps.values());
-			for (EventMention m : goldEvents) {
-				m.setAnchor(doc.content.substring(m.getAnchorStart(), m.getAnchorEnd() + 1));
-			}
+			ArrayList<EventMention> events = doc.goldEventMentions;
+//			ArrayList<EventMention> goldEvents = new ArrayList<EventMention>(evmMaps.values());
+//			for (EventMention m : goldEvents) {
+//				m.setAnchor(doc.content.substring(m.getAnchorStart(), m.getAnchorEnd() + 1));
+//			}
 			
-			Collections.sort(goldEvents);
+			Collections.sort(events);
 			
-			Util.setSystemAttribute(goldEvents, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
-			Util.setSystemAttributeWithConf(goldEvents, polarityConfMaps, modalityConfMaps, genericityConfMaps, tenseConfMaps, file);
+//			Util.setSystemAttribute(goldEvents, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
+			Util.setSystemAttributeWithConf(events, polarityConfMaps, modalityConfMaps, genericityConfMaps, tenseConfMaps, file);
 			
-			Collections.sort(goldEvents);
-			for(int i=0;i<goldEvents.size();i++) {
-				goldEvents.get(i).sequenceID = i;
+			Collections.sort(events);
+			for(int i=0;i<events.size();i++) {
+				events.get(i).sequenceID = i;
 			}
 
 			ArrayList<EventMention> candidates = new ArrayList<EventMention>();
-			for (EventMention m : goldEvents) {
+			for (EventMention m : events) {
 				candidates.add(m);
 			}
 
 			Collections.sort(candidates);
 
 			ArrayList<EventMention> anaphors = new ArrayList<EventMention>();
-			for (EventMention m : goldEvents) {
+			for (EventMention m : events) {
 				anaphors.add(m);
 			}
 
@@ -382,23 +392,33 @@ public class ApplyEM {
 					// print(cand, anaphor, part, chainMap);
 					// }
 
-					double p_tense = tenseP.getVal(entry.ant.tense,
-							anaphor.tense);
+					double p_tense = tenseP.getVal(entry.ant.tense, anaphor.tense);
+					double p_modality = modalityP.getVal(entry.ant.modality, anaphor.modality);
+					double p_polarity = polarityP.getVal(entry.ant.polarity, anaphor.polarity);
+					double p_genericity = genericityP.getVal(entry.ant.genericity, anaphor.genericity);
 					
+//					double p_tense = this.getProb(EMUtil.Tense, cand.tenseConf, anaphor.tenseConf, tenseP, tensePrior);
+//					double p_modality = this.getProb(EMUtil.Modality, cand.modalityConf, anaphor.modalityConf, modalityP, modalityPrior);
+//					double p_polarity = this.getProb(EMUtil.Polarity, cand.polarityConf, anaphor.polarityConf, polarityP, polarityPrior);
+//					double p_genericity = this.getProb(EMUtil.Genericity, cand.genericityConf, anaphor.genericityConf, genericityP, genericityPrior);
 					
-					
-					
-					double p_modality = modalityP.getVal(entry.ant.modality,
-							anaphor.modality);
-
-					
-					double p_polarity = polarityP.getVal(entry.ant.modality,
-							anaphor.modality);
-					
-					
-					double p_genericity = genericityP.getVal(
-							entry.ant.genericity, anaphor.genericity);
-
+//					if(p_tense!=p_tense2) {
+//						System.out.println(cand.isFake() + "tense: " + p_tense + "\t" + p_tense2);
+//					}
+//					if(p_modality!=p_modality2) {
+//						System.out.println(cand.isFake() + "modality: " + p_modality + "\t" + p_modality2);	
+//					}
+//					if(p_polarity!=p_polarity2) {
+//						System.out.println(cand.isFake() + "polarity: " + p_polarity + "\t" + p_polarity2);	
+//					}
+//					if(p_genericity!=p_genericity2) {
+//						System.out.println(cand.isFake() + "genericity: " + p_genericity + "\t" + p_genericity2);	
+//					}
+//					System.out.println(cand.isFake() + "tense: " + p_tense + "\t" + p_tense2);
+//					System.out.println(cand.isFake() + "modality: " + p_modality + "\t" + p_modality2);
+//					System.out.println(cand.isFake() + "polarity: " + p_polarity + "\t" + p_polarity2);	
+//					System.out.println(cand.isFake() + "genericity: " + p_genericity + "\t" + p_genericity2);
+//					System.out.println("===========");
 					
 					double p_eventSubType = eventSubTypeP.getVal(
 							entry.ant.subType, anaphor.subType);
@@ -415,9 +435,11 @@ public class ApplyEM {
 					}
 
 					double p2nd = p_context * entry.p_c;
-					p2nd *= 1 * p_tense * p_polarity 
+					p2nd *= 1 * p_tense 
+							* p_polarity 
 //							* p_eventSubType
-							* p_genericity * p_modality;
+							* p_genericity * p_modality
+							;
 					double p = p2nd;
 					probs[i] = p;
 					if (p > maxP && p != 0) {
@@ -492,6 +514,53 @@ public class ApplyEM {
 
 			}
 		}
+	}
+	
+	private double getProb(ArrayList<String> attris, HashMap<String, Double> candConf, HashMap<String, Double> anaConf, 
+			Parameter parameter, HashMap<String, Double> prior) {
+		System.out.println(candConf);
+		
+		double p_cand_tense = 0;
+		for(String tc : attris) {
+			double p1 = 0;
+			double p2 = 0;
+			if(candConf.containsKey(tc)) {
+				p1 = candConf.get(tc);
+			}
+			if(prior.containsKey(tc)) {
+				p2 = prior.get(tc);
+			}
+			p_cand_tense += p1 * p2;
+		}
+		
+		double p = 0;
+		for(String ta : attris.subList(0, attris.size()-1)) {
+			double p_ana_tense = 0;
+			if(anaConf.containsKey(ta)) {
+				p_ana_tense = anaConf.get(ta);
+			}
+			
+			double p_ta_cand = 0;
+			
+			for(String tc : attris) {
+				double p1 = 0;
+				double p2 = 0;
+				double p3 = 0;
+				
+				if(candConf.containsKey(tc)) {
+					p1 = candConf.get(tc);
+				}
+				p2 = parameter.getVal(tc, ta);
+				
+				if(prior.containsKey(tc)) {
+					p3 = prior.get(tc);
+				}
+				p_ta_cand += p1 * p2 * p3;
+			}
+			
+			p += p_ana_tense*p_ta_cand/p_cand_tense;
+		}
+		return p;
 	}
 
 	public static void print(EventMention antecedent, EventMention anaphor,

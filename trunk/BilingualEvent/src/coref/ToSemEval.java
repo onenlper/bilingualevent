@@ -32,6 +32,9 @@ public class ToSemEval {
 
 			for (int i = 0; i < chains.size(); i++) {
 				EventChain en = chains.get(i);
+				if(en.getEventMentions().size()==1) {
+//					continue;
+				}
 				for (EventMention em : en.getEventMentions()) {
 					int start = em.getAnchorStart();
 					int end = em.getAnchorEnd();
