@@ -19,7 +19,7 @@ public class Baseline {
 			System.out.println("java ~ part");
 			System.exit(1);
 		}
-//		long t1 = System.currentTimeMillis();
+		long t1 = System.currentTimeMillis();
 		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + args[0]);
 		ArrayList<ArrayList<EventChain>> systemEventChains = new ArrayList<ArrayList<EventChain>>();
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
@@ -80,8 +80,8 @@ public class Baseline {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-//		long t2 = System.currentTimeMillis();
-//		System.out.println(t2 - t1);
+		long t2 = System.currentTimeMillis();
+		System.out.println(t2 - t1);
 	}
 
 	private static void findAntecedent(ACEDoc doc,
