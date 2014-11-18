@@ -1322,9 +1322,9 @@ public class Util {
 		// event mentions
 		ArrayList<EventMention> allEvents = getSystemEventMention(doc.fileID);
 		
-//		for(EventMention em : allEvents) {
-//			System.out.println(em.getAnchor() + "#" + em.getSubType());
-//		}
+		for(EventMention em : allEvents) {
+			em.setAnchor(doc.content.substring(em.getAnchorStart(), em.getAnchorEnd() + 1).replace("\n", "").replace(" ", ""));
+		}
 		
 		// assign semantic roles;
 //		ACECommon.assignSemanticRole(allEvents, argumentCandidate,
@@ -1402,11 +1402,11 @@ public class Util {
 
 				String fileID = tokens[0];
 
-				ACEDoc document = documentCache.get(fileID);
-				if (document == null) {
-					document = new ACEChiDoc(fileID);
-					documentCache.put(fileID, document);
-				}
+//				ACEDoc document = documentCache.get(fileID);
+//				if (document == null) {
+//					document = new ACEChiDoc(fileID);
+//					documentCache.put(fileID, document);
+//				}
 
 				HashMap<String, EventMention> eventMentions = eventMentionsMap.get(fileID);
 				if (eventMentions == null) {
@@ -1426,7 +1426,7 @@ public class Util {
 				EventMention temp = new EventMention();
 				temp.setAnchorStart(emStart);
 				temp.setAnchorEnd(emEnd);
-				temp.setAnchor(document.content.substring(emStart, emEnd + 1).replace("\n", "").replace(" ", ""));
+//				temp.setAnchor(document.content.substring(emStart, emEnd + 1).replace("\n", "").replace(" ", ""));
 				temp.confidence = emConfidence;
 				temp.type = type;
 				temp.typeConfidence = typeConfidence;
