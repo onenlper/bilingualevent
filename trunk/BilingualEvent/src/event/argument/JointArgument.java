@@ -425,7 +425,7 @@ public class JointArgument {
 		features.add(Integer.toString(distance));
 		features.add(depPath);
 		
-		ArrayList<SemanticRole> semanticRoles = document.semanticRoles;
+		ArrayList<SemanticRole> semanticRoles = new ArrayList<SemanticRole>(document.semanticRoles.values());
 		boolean arg0 = false;
 		boolean arg1 = false;
 		boolean tmpArg = false;

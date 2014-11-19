@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import model.ACEChiDoc;
 import model.ACEDoc;
-import model.ACEEngDoc;
 import model.EventChain;
 import model.EventMention;
 import util.Common;
@@ -22,57 +22,61 @@ import event.triggerEng.EngArgEval;
 public class EventCorefTest {
 
 	public static void main(String args[]) throws Exception {
-		
-		Util.part = "0";
+		if(args.length!=1) {
+			System.out.println("java ~ part");
+			Common.bangErrorPOS("");
+		}
+		Util.part = args[0];
 		LinearClassifier<String, String> classifier = LinearClassifier
-				.readClassifier("stanfordClassifier.gz");
+				.readClassifier("stanfordClassifier" + args[0] + ".gz");
 
-		ArrayList<String> files = Common.getLines("ACE_English_test0");
-		EventCorefFea fea = new EventCorefFea(false, "corefFea");
+		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + args[0]);
+		EventCorefFea fea = new EventCorefFea(false, "corefFea" + args[0]);
 		double thres = .3;
 		ArrayList<ArrayList<EventChain>> answers = new ArrayList<ArrayList<EventChain>>(); 
 		ArrayList<String> fileNames= new ArrayList<String>();
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
 
-		HashMap<String, HashMap<String, EventMention>> jointSVMLines = EngArgEval.jointSVMLine();
+//		HashMap<String, HashMap<String, EventMention>> jointSVMLines = EngArgEval.jointSVMLine();
+//		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", "0");
+//		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", "0");
+//		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", "0");
+//		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", "0");
 		
-		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", "0");
-		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", "0");
-		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", "0");
-		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", "0");
-		
-		for (String file : files) {
-			ACEDoc doc = new ACEEngDoc(file);
+		for (int g=0;g<files.size();g++) {
+			String file = files.get(g);
+			ACEDoc doc = new ACEChiDoc(file);
+			doc.docID = g;
 			fileNames.add(doc.fileID);
 			lengths.add(doc.content.length());
 			
-			HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
+//			ArrayList<EventMention> events = doc.goldEventMentions;
+			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
+//			HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
+//			
+//			if(evmMaps==null) {
+//				evmMaps = new HashMap<String, EventMention>();
+//			}
+//			ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
+//			for(EventMention m : ems) {
+//				m.setAnchor(doc.content.substring(m.getAnchorStart(), m.getAnchorEnd() + 1));
+//			}
 			
-			if(evmMaps==null) {
-				evmMaps = new HashMap<String, EventMention>();
-			}
-			
-//			ArrayList<EventMention> ems = doc.goldEventMentions;
-			ArrayList<EventMention> ems = new ArrayList<EventMention>(evmMaps.values());
-			for(EventMention m : ems) {
-				m.setAnchor(doc.content.substring(m.getAnchorStart(), m.getAnchorEnd() + 1));
-			}
-			
-			Collections.sort(ems);
+			Collections.sort(events);
 			
 			ArrayList<EventChain> activeChains = new ArrayList<EventChain>();
 
-			Util.setSystemAttribute(ems, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
+//			Util.setSystemAttribute(ems, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
 			
-			for (int i = 0; i < ems.size(); i++) {
-				EventMention ana = ems.get(i);
+			for (int i = 0; i < events.size(); i++) {
+				EventMention ana = events.get(i);
 
 				int corefID = -1;
 				double maxVal = 0;
 				for (int j = activeChains.size() - 1; j >= 0; j--) {
 					EventChain ec = activeChains.get(j);
 
-					fea.configure(ec, ana, doc, ems);
+					fea.configure(ec, ana, doc, events);
 					String feaStr = fea.getSVMFormatString();
 
 					double val = test(feaStr, classifier);
@@ -93,7 +97,7 @@ public class EventCorefTest {
 			// process activeChains
 			answers.add(activeChains);
 		}
-		ToSemEval.outputSemFormat(fileNames, lengths, "baseline.keys.all", answers);
+		ToSemEval.outputSemFormat(fileNames, lengths, "baseline.keys." + args[0], answers);
 	}
 	
 	public static double test(String str,

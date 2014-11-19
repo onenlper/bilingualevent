@@ -539,10 +539,7 @@ public class JointYY {
 	}
 
 	public void addSemanticRoleFeature(ArrayList<String> features, ACEChiDoc document, EventMention em) {
-		HashMap<EventMention, SemanticRole> predicates = new HashMap<EventMention, SemanticRole>();
-		for (SemanticRole role : document.semanticRoles) {
-			predicates.put(role.predict, role);
-		}
+		HashMap<EventMention, SemanticRole> predicates = document.semanticRoles;
 		SemanticRole role = predicates.get(em);
 		if (role != null) {
 			features.add("0");
@@ -771,7 +768,7 @@ public class JointYY {
 		features.add(Integer.toString(distance));
 		features.add(depPath);
 		
-		ArrayList<SemanticRole> semanticRoles = document.semanticRoles;
+		ArrayList<SemanticRole> semanticRoles = new ArrayList<SemanticRole>(document.semanticRoles.values());
 		boolean arg0 = false;
 		boolean arg1 = false;
 		boolean tmpArg = false;

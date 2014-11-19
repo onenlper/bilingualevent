@@ -33,7 +33,7 @@ public abstract class ACEDoc {
 	public HashMap<Integer, int[]> positionMap;
 	public ArrayList<ParseResult> parseReults;
 	public String headline;
-	public ArrayList<SemanticRole> semanticRoles;
+	public HashMap<EventMention, SemanticRole> semanticRoles;
 	protected String apfLine;
 	protected String sgmLine;
 	

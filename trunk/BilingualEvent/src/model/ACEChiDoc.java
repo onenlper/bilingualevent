@@ -13,20 +13,9 @@ public class ACEChiDoc extends ACEDoc{
 	}
 
 	public void readSemanticRole() {
-		this.semanticRoles = new ArrayList<SemanticRole>();
+		this.semanticRoles = new HashMap<EventMention, SemanticRole>();
 		ArrayList<String> srlInLines = Common.getLines(this.fileID + ".slrin");
 		ArrayList<String> srlOutLines = Common.getLines(this.fileID + ".slrout");
-
-		HashMap<Integer, EntityMention> entityMap = new HashMap<Integer, EntityMention>();
-		for (EntityMention mention : this.goldEntityMentions) {
-			entityMap.put(mention.end, mention);
-		}
-		for (EntityMention mention : this.goldTimeMentions) {
-			entityMap.put(mention.end, mention);
-		}
-		for (EntityMention mention : this.goldValueMentions) {
-			entityMap.put(mention.end, mention);
-		}
 
 		for (int i = 0; i < srlInLines.size();) {
 			if (srlInLines.get(i).isEmpty()) {
@@ -64,35 +53,26 @@ public class ACEChiDoc extends ACEDoc{
 				}
 				for (int j = 0; j < semanticSize; j++) {
 					String label = tokens[14 + j];
-					if (label.equalsIgnoreCase("A0") || label.equalsIgnoreCase("A1") || label.equalsIgnoreCase("TMP")) {
-						EntityMention entityMention = entityMap.get(end);
-//						if (entityMention == null) {
-//							for (int m=0; m < this.allMentions.size(); m++) {
-//								EntityMention temp = this.allMentions.get(m);
-//								if (temp.end >= end && temp.start <= start) {
-//									entityMention = temp;
-//									break;
-//								}
-//							}
-//						}
-						if (entityMention != null) {
-							if (label.equalsIgnoreCase("A0")) {
-								roles.get(j).arg0.add(entityMention);
-							}
-							if (label.equalsIgnoreCase("A1")) {
-								roles.get(j).arg1.add(entityMention);
-							}
-							if (label.equalsIgnoreCase("TMP")) {
-								roles.get(j).tmp.add(entityMention);
-							}
+					if (!label.equals("_")) {
+						EntityMention entityMention = new EntityMention();
+						entityMention.headStart = start;
+						entityMention.headEnd = end;
+						entityMention.head = tokens[1];
+
+						ArrayList<EntityMention> args = roles.get(j).args.get(label);
+						if (args == null) {
+							args = new ArrayList<EntityMention>();
+							roles.get(j).args.put(label, args);
 						}
+						args.add(entityMention);
 					}
 				}
 				i++;
 			}
-			this.semanticRoles.addAll(roles);
+			for (SemanticRole role : roles) {
+				semanticRoles.put(role.predict, role);
+			}
 		}
-		Collections.sort(this.semanticRoles);
 	}
 
 	public void readGold4Test() {
@@ -120,6 +100,8 @@ public class ACEChiDoc extends ACEDoc{
 	}
 
 	public void readStanfordParseFile() {
+		this.positionMap = new HashMap<Integer, int[]>();
+		
 		this.parseReults = new ArrayList<ParseResult>();
 		ArrayList<String> lines = Common.getLines(fileID + ".parse2");
 		int idx = -1;
@@ -184,6 +166,14 @@ public class ACEChiDoc extends ACEDoc{
 				}
 				p[1] = idx;
 				positions.add(p);
+				
+				for(int l=p[0];l<=p[1];l++) {
+					int[] p2 = new int[2];
+					p2[0] = parseReults.size();
+					p2[1] = n;
+					this.positionMap.put(l, p2);
+				}
+				
 				// System.out.println(p[0] + " " + p[1] + " " + token);
 			}
 			pr.positions = positions;

@@ -45,14 +45,14 @@ public class EventMentionArgument implements Comparable{
 	EventMention eventMention;
 	
 	public EntityMention getEntityMention() {
-		return entityMention;
+		return mention;
 	}
 
 	public void setEntityMention(EntityMention entityMention) {
-		this.entityMention = entityMention;
+		this.mention = entityMention;
 	}
 
-	EntityMention entityMention;
+	public EntityMention mention;
 	
 	public EventMention getEventMention() {
 		return eventMention;

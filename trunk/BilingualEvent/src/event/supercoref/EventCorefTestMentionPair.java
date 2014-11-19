@@ -3,13 +3,13 @@ package event.supercoref;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import coref.ToSemEval;
-
+import model.ACEChiDoc;
 import model.ACEDoc;
-import model.ACEEngDoc;
 import model.EventChain;
 import model.EventMention;
 import util.Common;
+import util.Util;
+import coref.ToSemEval;
 import edu.stanford.nlp.classify.Dataset;
 import edu.stanford.nlp.classify.LinearClassifier;
 import edu.stanford.nlp.ling.Datum;
@@ -19,36 +19,46 @@ import edu.stanford.nlp.stats.Distribution;
 public class EventCorefTestMentionPair {
 
 	public static void main(String args[]) throws Exception {
+		if(args.length!=1) {
+			System.out.println("java ~ part");
+			Common.bangErrorPOS("");
+		}
+		Util.part = args[0];
+		
 		LinearClassifier<String, String> classifier = LinearClassifier
-				.readClassifier("stanfordClassifier.gz");
+				.readClassifier("stanfordClassifier" + args[0] + ".gz");
 
-		ArrayList<String> files = Common.getLines("ACE_English_test0");
-		EventCorefFea fea = new EventCorefFea(false, "corefFea");
-		double thres = .3;
+		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + args[0]);
+		EventCorefFea fea = new EventCorefFea(false, "corefFea" + args[0]);
+		double thres = .2;
 		ArrayList<ArrayList<EventChain>> answers = new ArrayList<ArrayList<EventChain>>(); 
 		ArrayList<String> fileNames= new ArrayList<String>();
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
-		for (String file : files) {
-			ACEDoc doc = new ACEEngDoc(file);
+		for (int t=0;t<files.size();t++) {
+			String file = files.get(t);
+			ACEDoc doc = new ACEChiDoc(file);
+			doc.docID = t;
+			
 			fileNames.add(doc.fileID);
 			lengths.add(doc.content.length());
 			
-			ArrayList<EventMention> ems = doc.goldEventMentions;
+//			ArrayList<EventMention> events = doc.goldEventMentions;
+			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
 
 			ArrayList<EventChain> activeChains = new ArrayList<EventChain>();
-			Collections.sort(ems);
+			Collections.sort(events);
 
 			ArrayList<EventChain> activeChains2 = new ArrayList<EventChain>();
 			
-			for (int i = 0; i < ems.size(); i++) {
-				EventMention ana = ems.get(i);
+			for (int i = 0; i < events.size(); i++) {
+				EventMention ana = events.get(i);
 
 				int corefID = -1;
 				double maxVal = 0;
 				for (int j = activeChains2.size() - 1; j >= 0; j--) {
 					EventChain ec = activeChains2.get(j);
 
-					fea.configure(ec, ana, doc, ems);
+					fea.configure(ec, ana, doc, events);
 					String feaStr = fea.getSVMFormatString();
 
 					double val = test(feaStr, classifier);
@@ -80,7 +90,7 @@ public class EventCorefTestMentionPair {
 			// process activeChains
 			answers.add(activeChains);
 		}
-		ToSemEval.outputSemFormat(fileNames, lengths, "baseline.keys.all", answers);
+		ToSemEval.outputSemFormat(fileNames, lengths, "baselineMP.keys." + args[0], answers);
 	}
 
 	public static double test(String str,
