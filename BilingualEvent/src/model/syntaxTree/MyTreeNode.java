@@ -599,4 +599,12 @@ public class MyTreeNode {
 
 		headRules.put("ADVP", new String[][] { { "right", "NP" } });
 	}
+	
+	public ArrayList<MyTreeNode> getLeftSisters() {
+		ArrayList<MyTreeNode> sisters = new ArrayList<MyTreeNode>();
+		for (int i = 0; i < this.childIndex; i++) {
+			sisters.add(this.parent.children.get(i));
+		}
+		return sisters;
+	}
 }

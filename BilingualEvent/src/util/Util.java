@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
@@ -13,6 +14,7 @@ import model.ACEEngDoc;
 import model.Depend;
 import model.Entity;
 import model.EntityMention;
+import model.EntityMention.Numb;
 import model.EventMention;
 import model.EventMentionArgument;
 import model.ParseResult;
@@ -1139,66 +1141,67 @@ public class Util {
 		return path;
 	}
 
-	public static void addSemanticRoleFeautre(ArrayList<String> features,
-			ACEChiDoc document, EventMention eventMention,
-			EntityMention entityMention) {
-		ArrayList<SemanticRole> semanticRoles = document.semanticRoles;
-		boolean arg0 = false;
-		boolean arg1 = false;
-		boolean tmpArg = false;
-		boolean pred = false;
-		for (SemanticRole role : semanticRoles) {
-			EventMention predicate = role.predict;
-			if (!(predicate.getAnchorEnd() < eventMention.getAnchorStart() || predicate
-					.getAnchorStart() > eventMention.getAnchorEnd())) {
-				pred = true;
-				ArrayList<EntityMention> arg0s = role.arg0;
-				for (EntityMention arg : arg0s) {
-					if (arg.end == entityMention.end) {
-						arg0 = true;
-					}
-				}
-				ArrayList<EntityMention> arg1s = role.arg1;
-				for (EntityMention arg : arg1s) {
-					if (arg.end == entityMention.end) {
-						arg1 = true;
-					}
-				}
-				ArrayList<EntityMention> tempArgs = role.tmp;
-				for (EntityMention arg : tempArgs) {
-					if (arg.end == entityMention.end) {
-						tmpArg = true;
-					}
-				}
-			}
-		}
-
-		if (pred) {
-			features.add("1");
-		} else {
-			features.add("0");
-		}
-
-		if (arg0) {
-			features.add("1");
-		} else {
-			features.add("0");
-		}
-		if (arg1) {
-			features.add("1");
-		} else {
-			features.add("0");
-		}
-		if (tmpArg) {
-			features.add("1");
-		} else {
-			features.add("0");
-		}
-		// features.add(eventMention.geta+"_" + entityMention.head);
-		// features.add(trigger+"_" + entityMention.entity.type);
-		// features.add(trigger+"_" + entityMention.entity.type);
-
-	}
+	// public static void addSemanticRoleFeautre(ArrayList<String> features,
+	// ACEChiDoc document, EventMention eventMention,
+	// EntityMention entityMention) {
+	// ArrayList<SemanticRole> semanticRoles = document.semanticRoles;
+	// boolean arg0 = false;
+	// boolean arg1 = false;
+	// boolean tmpArg = false;
+	// boolean pred = false;
+	// for (SemanticRole role : semanticRoles) {
+	// EventMention predicate = role.predict;
+	// if (!(predicate.getAnchorEnd() < eventMention.getAnchorStart() ||
+	// predicate
+	// .getAnchorStart() > eventMention.getAnchorEnd())) {
+	// pred = true;
+	// ArrayList<EntityMention> arg0s = role.arg0;
+	// for (EntityMention arg : arg0s) {
+	// if (arg.end == entityMention.end) {
+	// arg0 = true;
+	// }
+	// }
+	// ArrayList<EntityMention> arg1s = role.arg1;
+	// for (EntityMention arg : arg1s) {
+	// if (arg.end == entityMention.end) {
+	// arg1 = true;
+	// }
+	// }
+	// ArrayList<EntityMention> tempArgs = role.tmp;
+	// for (EntityMention arg : tempArgs) {
+	// if (arg.end == entityMention.end) {
+	// tmpArg = true;
+	// }
+	// }
+	// }
+	// }
+	//
+	// if (pred) {
+	// features.add("1");
+	// } else {
+	// features.add("0");
+	// }
+	//
+	// if (arg0) {
+	// features.add("1");
+	// } else {
+	// features.add("0");
+	// }
+	// if (arg1) {
+	// features.add("1");
+	// } else {
+	// features.add("0");
+	// }
+	// if (tmpArg) {
+	// features.add("1");
+	// } else {
+	// features.add("0");
+	// }
+	// // features.add(eventMention.geta+"_" + entityMention.head);
+	// // features.add(trigger+"_" + entityMention.entity.type);
+	// // features.add(trigger+"_" + entityMention.entity.type);
+	//
+	// }
 
 	public static HashMap<String, Integer> loadJointLabel() {
 		HashMap<String, Integer> labels = new HashMap<String, Integer>();
@@ -1315,84 +1318,318 @@ public class Util {
 		entityMentions.addAll(getSieveCorefMentions(doc));
 
 		// time mentions
-//		ArrayList<EntityMention> timeExpressions = getTimeExpressions(doc);
-//		// value mentions
-//		ArrayList<EntityMention> valueExpressions = getValueExpression(doc);
+		ArrayList<EntityMention> timeExpressions = getTimeExpressions(doc);
+		// // value mentions
+		ArrayList<EntityMention> valueExpressions = getValueExpression(doc);
 
 		// event mentions
 		ArrayList<EventMention> allEvents = getSystemEventMention(doc.fileID);
-		
-		for(EventMention em : allEvents) {
-			em.setAnchor(doc.content.substring(em.getAnchorStart(), em.getAnchorEnd() + 1).replace("\n", "").replace(" ", ""));
+
+		for (EventMention em : allEvents) {
+			em.setAnchor(doc.content
+					.substring(em.getAnchorStart(), em.getAnchorEnd() + 1)
+					.replace("\n", "").replace(" ", ""));
 		}
-		
-		// assign semantic roles;
-//		ACECommon.assignSemanticRole(allEvents, argumentCandidate,
-//				doc.semanticRoles);
+		ArrayList<EntityMention> argumentCandidate = new ArrayList<EntityMention>();
+		argumentCandidate.addAll(entityMentions);
+		argumentCandidate.addAll(timeExpressions);
+		argumentCandidate.addAll(valueExpressions);
+
+		assignSemanticRole(allEvents, argumentCandidate, doc.semanticRoles);
+
+		for (EventMention event : allEvents) {
+			assignSystemAttribute(doc.fileID, event, false);
+		}
+		assignArgumentWithEntityMentions(allEvents, entityMentions, timeExpressions, valueExpressions, doc);
 		return allEvents;
 	}
 	
+	public static void assignArgumentWithEntityMentions(ArrayList<EventMention> events, ArrayList<EntityMention> entityMentions,
+			ArrayList<EntityMention> valueExpressions, ArrayList<EntityMention> timeExpressions, ACEDoc doc) {
+		ArrayList<EntityMention> arguments = new ArrayList<EntityMention>();
+		arguments.addAll(entityMentions);
+		arguments.addAll(valueExpressions);
+		arguments.addAll(timeExpressions);
+		
+		for(EventMention event : events) {
+			for(EventMentionArgument argument : event.getEventMentionArguments()) {
+				boolean find = false;
+				
+				for(EntityMention mention : arguments) {
+					if((mention.start==argument.getStart() && mention.end==argument.getEnd()) ||
+							(mention.headStart==argument.getStart() && mention.headEnd==argument.getEnd())){
+						argument.mention = mention;
+						find = true;
+						break;
+					}
+				}
+				if(!find) {
+					EntityMention mention = new EntityMention();
+					mention.headStart = argument.getStart();
+					mention.headEnd = argument.getEnd();
+					mention.head = doc.content.substring(argument.getStart(), argument.getEnd() + 1);
+//					System.out.println(mention.head);
+					mention.semClass = "time";
+					mention.subType = "time";
+					argument.mention = mention;
+				}
+			}
+		}
+		
+		for(EventMention event : events) {
+			calEventFeature(event, doc, arguments);
+			calAttribute(event, doc);
+			identBVs(event, doc);
+			
+			if(event.number!=Numb.SINGULAR) {
+				System.out.println(event.getAnchor());
+			}
+		}
+	}
+	
+	static HashMap<String, String> pos2 = Common.readFile2Map2("dict/10POSDIC");
+	
+	public static void identBVs(EventMention em, ACEDoc doc) {
+		String posTag = doc.getPostag(em.getAnchorStart());
+		if (em.getAnchor().length() == 1 && posTag.equalsIgnoreCase("VV")) {
+			em.bvs.put(em.getAnchor(), "BV");
+		} else if (em.getAnchor().length() == 2) {
+			String trigger = em.getAnchor();
+			String str1 = Character.toString(trigger.charAt(0));
+			String str2 = Character.toString(trigger.charAt(1));
+			if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
+				if (str2.equals("了")) {
+					em.bvs.put(str1, "BV_comp");
+				} else if (pos2.containsKey(str2) && pos2.get(str2).startsWith("V")) {
+					em.bvs.put(str1, "BV_verb");
+				} else if (pos2.containsKey(str2) && pos2.get(str2).startsWith("N")) {
+					em.bvs.put(str1, "BV_np");
+				} else {
+					em.bvs.put(str1, "BV_adj");
+				}
+			}
+			if (pos2.containsKey(str2) && pos2.get(str2).startsWith("V")) {
+				if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
+					em.bvs.put(str2, "verb_BV");
+				} else if (pos2.containsKey(str1) && pos2.get(str1).startsWith("N")) {
+					em.bvs.put(str2, "np_BV");
+				} else {
+					em.bvs.put(str2, "adj_BV");
+				}
+			}
+		}
+	}
+	
+
+
+	public static HashMap<String, HashMap<String, EventMention>> polarityMaps;
+	public static HashMap<String, HashMap<String, EventMention>> tenseMaps;
+	public static HashMap<String, HashMap<String, EventMention>> generecityMaps;
+	public static HashMap<String, HashMap<String, EventMention>> modalityMaps;
+
+	public static void assignSystemAttribute(String fileID,
+			EventMention mention, boolean goldEvents) {
+		if (polarityMaps == null) {
+			polarityMaps = getSystemAtrribute("polarity", goldEvents);
+		}
+		if (tenseMaps == null) {
+			tenseMaps = getSystemAtrribute("tense", goldEvents);
+		}
+		if (generecityMaps == null) {
+			generecityMaps = getSystemAtrribute("genericity", goldEvents);
+		}
+		if (modalityMaps == null) {
+			modalityMaps = getSystemAtrribute("modality", goldEvents);
+		}
+		fileID = fileID.replace(
+				"/users/yzcchen/chen3/coling2012/LDC2006T06/data",
+				"/users/yzcchen/ACL12/data/ACE2005")
+				+ ".sgm";
+		mention.polarity = polarityMaps.get(fileID).get(mention.toString()).polarity;
+		mention.tense = tenseMaps.get(fileID).get(mention.toString()).tense;
+		mention.genericity = generecityMaps.get(fileID).get(mention.toString()).genericity;
+		mention.modality = modalityMaps.get(fileID).get(mention.toString()).modality;
+	}
+
+	public static HashMap<String, HashMap<String, EventMention>> getSystemAtrribute(
+			String attribute, boolean goldEvents) {
+		HashMap<String, HashMap<String, EventMention>> systemEMses = new HashMap<String, HashMap<String, EventMention>>();
+		for (int folder = 0; folder < 5; folder++) {
+			String f = Integer.toString(folder);
+
+			String emFn = "/users/yzcchen/workspace/NAACL2013-B/src/data/"
+					+ "joint_svm_systemEventMention_systemArgument_systemEntityMentions_systemSemantic"
+					+ "/chinese_" + attribute + "_test_em" + f;
+
+			String predicFn = "/users/yzcchen/tool/maxent/bin/"
+					+ "joint_svm_systemEventMention_systemArgument_systemEntityMentions_systemSemantic"
+					+ "/test_" + attribute + ".txt" + f;
+			if (goldEvents) {
+				emFn = "/users/yzcchen/workspace/NAACL2013-B/src/data/goldEventMentions/chinese_"
+						+ attribute + "_test_em" + f;
+				predicFn = "/users/yzcchen/tool/maxent/bin/goldEventMentions/test_"
+						+ attribute + ".txt" + f;
+			}
+
+			ArrayList<String> emLines = Common.getLines(emFn);
+			ArrayList<String> predictLines = Common.getLines(predicFn);
+			for (int i = 0; i < emLines.size(); i++) {
+				String predictLine = predictLines.get(i);
+				String emLine = emLines.get(i);
+
+				String tokens[] = emLine.split("\\s+");
+				String file = tokens[0]
+						.replace(
+								"/users/yzcchen/chen3/coling2012/LDC2006T06/data/Chinese",
+								"/users/yzcchen/ACL12/data/ACE2005/Chinese")
+						+ ".sgm";
+				int start = Integer.valueOf(tokens[1]);
+				int end = Integer.valueOf(tokens[2]);
+				EventMention em = new EventMention();
+				em.setAnchorStart(start);
+				em.setAnchorEnd(end);
+
+				tokens = predictLine.split("\\s+");
+				String label = "";
+				double maxVal = -1;
+				for (int k = 0; k < tokens.length / 2; k++) {
+					String l = tokens[k * 2];
+					double val = Double.valueOf(tokens[k * 2 + 1]);
+					if (val > maxVal) {
+						label = l;
+						maxVal = val;
+					}
+				}
+				HashMap<String, EventMention> map = systemEMses.get(file);
+				if (map == null) {
+					map = new HashMap<String, EventMention>();
+					systemEMses.put(file, map);
+				}
+				map.put(em.toString(), em);
+				try {
+					em.getClass().getField(attribute).set(em, label);
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchFieldException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return systemEMses;
+	}
+
+	public static void assignSemanticRole(
+			ArrayList<EventMention> eventMentions,
+			ArrayList<EntityMention> entityMentions,
+			HashMap<EventMention, SemanticRole> roles) {
+		if (eventMentions != null) {
+			HashMap<Integer, EntityMention> entityMap = new HashMap<Integer, EntityMention>();
+
+			for (EntityMention mention : entityMentions) {
+				entityMap.put(mention.headEnd, mention);
+			}
+			for (EventMention mention : eventMentions) {
+				if (roles.containsKey(mention)) {
+					SemanticRole role = roles.get(mention);
+					HashMap<String, ArrayList<EntityMention>> args = role.args;
+					HashMap<String, ArrayList<EntityMention>> newArgs = new HashMap<String, ArrayList<EntityMention>>();
+					for (String key : args.keySet()) {
+						ArrayList<EntityMention> news = new ArrayList<EntityMention>();
+						for (EntityMention old : args.get(key)) {
+							if (entityMap.containsKey(old.headEnd)) {
+								news.add(entityMap.get(old.headEnd));
+							}
+						}
+						if (news.size() != 0) {
+							newArgs.put(key, news);
+						}
+					}
+					mention.srlArgs = newArgs;
+				}
+			}
+		}
+	}
+
 	public static void main(String args[]) {
 		Util.part = args[0];
-		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + Util.part);
+		ArrayList<String> files = Common.getLines("ACE_Chinese_test"
+				+ Util.part);
 		double gold = 0;
 		double sys = 0;
 		double hit = 0;
-		for(int i=0;i<files.size();i++) {
+		for (int i = 0; i < files.size(); i++) {
 			String file = files.get(i);
 			ACEDoc doc = new ACEChiDoc(file);
 			doc.docID = i;
 			ArrayList<EventMention> evms = loadSystemComponents(doc);
-			
+
 			ArrayList<EventMention> goldEvents = doc.goldEventMentions;
 			gold += goldEvents.size();
 			sys += evms.size();
-			for(EventMention m : evms) {
-				for(EventMention g : goldEvents) {
-					if(m.equals(g)) {
-						hit ++;
+			for (EventMention m : evms) {
+				for (EventMention g : goldEvents) {
+					if (m.equals(g)) {
+						hit++;
 					}
 				}
 			}
 		}
-		System.out.println("Prec: " + hit/sys);
-		System.out.println("Reca: " + hit/gold);
+		System.out.println("Prec: " + hit / sys);
+		System.out.println("Reca: " + hit / gold);
 	}
-	
+
 	static HashMap<String, HashMap<String, EventMention>> eventMentionsMap;
-	
+
 	private static ArrayList<EventMention> getSystemEventMention(String fileID) {
-		if(eventMentionsMap==null) {
+		if (eventMentionsMap == null) {
 			eventMentionsMap = readAllSystemEventMention();
 		}
 		ArrayList<EventMention> evms = new ArrayList<EventMention>();
-		if(eventMentionsMap.containsKey(fileID)) {
+		if (eventMentionsMap.containsKey(fileID)) {
 			evms.addAll(eventMentionsMap.get(fileID).values());
 		}
 		return evms;
 	}
-	
+
 	private static HashMap<String, HashMap<String, EventMention>> readAllSystemEventMention() {
-//		if (pipelineResults == null) {
-//			pipelineResults = readSystemPipelineEventMention();
-//		}
+		// if (pipelineResults == null) {
+		// pipelineResults = readSystemPipelineEventMention();
+		// }
 		double svmTh = 0;
 		eventMentionsMap = new HashMap<String, HashMap<String, EventMention>>();
 		for (int folder = 0; folder < 5; folder++) {
 			String inter = "joint_svm_systemEventMention_systemArgument_goldEntityMentions_goldSemantic/";
-//			if(ACECommon.goldEventMention && ACECommon.goldEntityMention && ACECommon.goldSemantic) {
-//				inter = "joint_svm_goldEventMention_systemArgument_goldEntityMentions_goldSemantic/";
-//			} else if(ACECommon.goldEventMention && ACECommon.goldEntityMention && !ACECommon.goldSemantic) {
-//				inter = "joint_svm_goldEventMention_systemArgument_goldEntityMentions_systemSemantic//";
-//			} else if(ACECommon.goldEventArgument && !ACECommon.goldEntityMention && !ACECommon.goldSemantic) {
-//				inter = "joint_svm_goldEventMention_systemArgument_systemEntityMentions_systemSemantic///";
-//			} else if(!ACECommon.goldEventArgument && ACECommon.goldEntityMention && ACECommon.goldSemantic) {
-//				inter = "joint_svm_systemEventMention_systemArgument_goldEntityMentions_goldSemantic/";
-//			} else if(!ACECommon.goldEventArgument && !ACECommon.goldEntityMention && !ACECommon.goldSemantic) {
-				inter = "joint_svm_systemEventMention_systemArgument_systemEntityMentions_systemSemantic/";
-//			}
-			String filename = "/users/yzcchen/workspace/NAACL2013-B/src/" + inter + "/result" + Integer.toString(folder);
-			
+			// if(ACECommon.goldEventMention && ACECommon.goldEntityMention &&
+			// ACECommon.goldSemantic) {
+			// inter =
+			// "joint_svm_goldEventMention_systemArgument_goldEntityMentions_goldSemantic/";
+			// } else if(ACECommon.goldEventMention &&
+			// ACECommon.goldEntityMention && !ACECommon.goldSemantic) {
+			// inter =
+			// "joint_svm_goldEventMention_systemArgument_goldEntityMentions_systemSemantic//";
+			// } else if(ACECommon.goldEventArgument &&
+			// !ACECommon.goldEntityMention && !ACECommon.goldSemantic) {
+			// inter =
+			// "joint_svm_goldEventMention_systemArgument_systemEntityMentions_systemSemantic///";
+			// } else if(!ACECommon.goldEventArgument &&
+			// ACECommon.goldEntityMention && ACECommon.goldSemantic) {
+			// inter =
+			// "joint_svm_systemEventMention_systemArgument_goldEntityMentions_goldSemantic/";
+			// } else if(!ACECommon.goldEventArgument &&
+			// !ACECommon.goldEntityMention && !ACECommon.goldSemantic) {
+			inter = "joint_svm_systemEventMention_systemArgument_systemEntityMentions_systemSemantic/";
+			// }
+			String filename = "/users/yzcchen/workspace/NAACL2013-B/src/"
+					+ inter + "/result" + Integer.toString(folder);
+
 			ArrayList<String> lines = Common.getLines(filename);
 			int size = 0;
 			HashMap<String, ACEDoc> documentCache = new HashMap<String, ACEDoc>();
@@ -1402,13 +1639,14 @@ public class Util {
 
 				String fileID = tokens[0];
 
-//				ACEDoc document = documentCache.get(fileID);
-//				if (document == null) {
-//					document = new ACEChiDoc(fileID);
-//					documentCache.put(fileID, document);
-//				}
+				// ACEDoc document = documentCache.get(fileID);
+				// if (document == null) {
+				// document = new ACEChiDoc(fileID);
+				// documentCache.put(fileID, document);
+				// }
 
-				HashMap<String, EventMention> eventMentions = eventMentionsMap.get(fileID);
+				HashMap<String, EventMention> eventMentions = eventMentionsMap
+						.get(fileID);
 				if (eventMentions == null) {
 					eventMentions = new HashMap<String, EventMention>();
 					eventMentionsMap.put(fileID, eventMentions);
@@ -1426,20 +1664,23 @@ public class Util {
 				EventMention temp = new EventMention();
 				temp.setAnchorStart(emStart);
 				temp.setAnchorEnd(emEnd);
-//				temp.setAnchor(document.content.substring(emStart, emEnd + 1).replace("\n", "").replace(" ", ""));
+				// temp.setAnchor(document.content.substring(emStart, emEnd +
+				// 1).replace("\n", "").replace(" ", ""));
 				temp.confidence = emConfidence;
 				temp.type = type;
 				temp.typeConfidence = typeConfidence;
 				temp.subType = subType;
 
-				if (temp.subType.equalsIgnoreCase("null") || temp.confidence < svmTh) {
+				if (temp.subType.equalsIgnoreCase("null")
+						|| temp.confidence < svmTh) {
 					continue;
 				}
 
-//				if (temp.subType.equalsIgnoreCase("null")) {
-//					temp.subType = pipelineResults.get(fileID).get(temp.toString()).subType;
-//					System.err.println("GE: " + temp.subType);
-//				}
+				// if (temp.subType.equalsIgnoreCase("null")) {
+				// temp.subType =
+				// pipelineResults.get(fileID).get(temp.toString()).subType;
+				// System.err.println("GE: " + temp.subType);
+				// }
 
 				temp.subTypeConfidence = subTypeConfidence;
 
@@ -1516,7 +1757,7 @@ public class Util {
 		int lastIdx = 0;
 		ArrayList<EntityMention> currentArrayList = new ArrayList<EntityMention>();
 		entityMentionses.add(currentArrayList);
-		for (int i = 0; i < lines.size();) {
+		loop: for (int i = 0; i < lines.size();) {
 			String line = lines.get(i);
 			if (line.trim().isEmpty()) {
 				i++;
@@ -1531,14 +1772,13 @@ public class Util {
 				entityMentionses.add(currentArrayList);
 				// System.out.println(files.get(fileIdx));
 				doc = new ACEChiDoc(files.get(fileIdx));
-				idx = doc.start - 1;
+				idx = 0;
 				content = doc.content;
 				continue;
 			}
 			i++;
 			if (line.endsWith("B")) {
 				start = idx;
-				System.out.println("++++++"  + start);
 				while (true) {
 					lastIdx = idx;
 					if (!lines.get(i).endsWith("I") || lines.get(i).isEmpty()) {
@@ -1546,21 +1786,15 @@ public class Util {
 					}
 					idx = content
 							.indexOf(lines.get(i++).charAt(0), lastIdx + 1);
-					if(idx==-1) {
-						idx = lastIdx;
-						System.out.println(lines.get(i-1).charAt(0) + "###");
-					}
-					System.out.println(idx + "#" + lastIdx);
 				}
 				end = lastIdx;
 				EntityMention em = new EntityMention();
 				// using head to do co-reference
-				System.out.println(start + "," + end);
+				// System.out.println(start + "," + end);
 				em.head = content.substring(start, end + 1)
 						.replaceAll("\\s+", "").replace("\n", "")
 						.replace("\r", "");
-				
-				System.out.println(start + "," + end + "$" + em.head);
+				// System.out.println(start + "," + end + "$" + em.head);
 				em.headStart = start;
 				em.headEnd = end;
 				currentArrayList.add(em);
@@ -1583,6 +1817,7 @@ public class Util {
 	}
 
 	private static ArrayList<EntityMention> getSieveCorefMentions(ACEDoc doc) {
+		// /users/yzcchen/chen3/conll12/chinese/goldEntityMentions/
 		String baseFolder = "/users/yzcchen/chen3/conll12/chinese/systemEntityMentions/ACE_test_"
 				+ Util.part + "/";
 		ArrayList<String> lines = Common.getLines(baseFolder + doc.docID
@@ -1608,8 +1843,7 @@ public class Util {
 				mention.head = doc.content.substring(mention.headStart,
 						mention.headEnd + 1);
 
-//				assignSystemSemantic(mention, doc.fileID);
-
+				assignSystemSemantic(mention, doc.fileID);
 				allMentions.add(mention);
 			}
 			entities.add(entity);
@@ -1666,10 +1900,10 @@ public class Util {
 
 	public static HashMap<String, ArrayList<EntityMention>> loadSemanticResult() {
 		HashMap<String, ArrayList<EntityMention>> allSVMResult = new HashMap<String, ArrayList<EntityMention>>();
-		String folder = "/users/yzcchen/ACL12/model/ACE2005/semantic3/";
+		// /users/yzcchen/chen3/conll12/chinese/semantic_gold_mention
+		String folder = "/users/yzcchen/ACL12/model/ACE2005/semantic_system_mention/";
 		ArrayList<String> mentionStrs = Common.getLines(folder + "mention.test"
 				+ Util.part);
-		System.out.println(mentionStrs.size());
 		ArrayList<String> typeResult = Common.getLines(folder
 				+ "multiType.result2" + Util.part);
 		ArrayList<String> subTypeResult = Common.getLines(folder
@@ -1701,5 +1935,236 @@ public class Util {
 			}
 		}
 		return allSVMResult;
+	}
+
+	public static void calAttribute(EventMention em, ACEDoc doc) {
+		em.number = Numb.SINGULAR;
+		em.posTag = doc.getPostag(em.getAnchorStart());
+
+		if (em.posTag.equals("NN")) {
+			em.noun = true;
+			calEventNounAttribute(em, doc);
+			// System.err.println(em.head + "#" + em.modifyList + "#" +
+			// em.number + "#" + em.goldChainID);
+		}
+
+		for (EventMentionArgument arg : em.eventMentionArguments) {
+			ArrayList<EventMentionArgument> args = em.argHash.get(arg.role);
+			if (args == null) {
+				args = new ArrayList<EventMentionArgument>();
+				em.argHash.put(arg.role, args);
+			}
+			args.add(arg);
+		}
+	}
+
+	public static void calEventFeature(EventMention eventMention, ACEDoc doc,
+			ArrayList<EntityMention> argumentCandidate) {
+		if (isZeroPronoun(eventMention, doc, argumentCandidate)) {
+			boolean pasive = false;
+			if (eventMention.getAnchor().startsWith("被")
+					|| (eventMention.getAnchorStart() > 0 && doc.content
+							.charAt(eventMention.getAnchorStart() - 1) == '被')) {
+				pasive = true;
+			}
+			if (pasive) {
+				if (!eventMention.srlArgs.containsKey("A1")) {
+					ArrayList<EntityMention> srlRoles = new ArrayList<EntityMention>();
+					srlRoles.add(eventMention.zeroSubjects.get(0));
+					eventMention.srlArgs.put("A1", srlRoles);
+				}
+			} else {
+				if (!eventMention.srlArgs.containsKey("A0")) {
+					ArrayList<EntityMention> srlRoles = new ArrayList<EntityMention>();
+					srlRoles.add(eventMention.zeroSubjects.get(0));
+					eventMention.srlArgs.put("A0", srlRoles);
+				}
+			}
+		}
+	}
+
+	// identify zero and recognize its antecedent
+	public static boolean isZeroPronoun(EventMention eventMention, ACEDoc doc,
+			ArrayList<EntityMention> candidateMentions) {
+		int position[] = doc.positionMap.get(eventMention.getAnchorStart());
+		int wordPos = position[1];
+		// if (wordPos < 2) {
+		// eventMention.isZeroPronoun = -1;
+		// return false;
+		// }
+		ParseResult pr = doc.parseReults.get(position[0]);
+		MyTreeNode leaf = doc.parseReults.get(position[0]).tree.leaves.get(wordPos);
+		if (leaf.parent.value.equalsIgnoreCase("vv")
+				&& leaf.parent.parent.value.equalsIgnoreCase("vp")) {
+			ArrayList<MyTreeNode> beforeSisters = leaf.parent.parent
+					.getLeftSisters();
+			boolean NP = false;
+			for (MyTreeNode sister : beforeSisters) {
+				if (sister.value.equalsIgnoreCase("np")) {
+					NP = true;
+				}
+			}
+			if (!NP) {
+				eventMention.isZeroPronoun = 1;
+				eventMention.zeroSubjects = new ArrayList<EntityMention>();
+				for (int p = wordPos - 1; p >= 1; p--) {
+					if (pr.words.get(p).equals("，") || p == 1) {
+						boolean got = false;
+						ArrayList<EntityMention> mentions = new ArrayList<EntityMention>();
+						int start = pr.positions.get(1)[0];
+						int end = eventMention.getAnchorEnd() - 1;
+
+						for (EntityMention candidate : candidateMentions) {
+							if (candidate.headStart >= start
+									&& candidate.headEnd <= end
+									&& !candidate.semClass.equals("time")) {
+								eventMention.zeroSubjects.add(candidate);
+								got = true;
+							}
+						}
+						Collections.sort(eventMention.zeroSubjects);
+						Collections.reverse(eventMention.zeroSubjects);
+						// 的
+						ArrayList<MyTreeNode> ancestors = leaf.getAncestors();
+						MyTreeNode npAncestor = null;
+						for (MyTreeNode node : ancestors) {
+							if (node.value.equalsIgnoreCase("np")) {
+								npAncestor = node;
+								break;
+							}
+						}
+						if (npAncestor != null) {
+							ArrayList<MyTreeNode> leafs = npAncestor
+									.getLeaves();
+							MyTreeNode deLeaf = null;
+							for (MyTreeNode tmp : leafs) {
+								if (tmp.value.equals("的")) {
+									deLeaf = tmp;
+									break;
+								}
+							}
+							if (deLeaf != null) {
+								end = pr.positions.get(leafs.get(leafs
+										.size() - 1).leafIdx)[1];
+								EntityMention zero = null;
+								for (EntityMention candidate : candidateMentions) {
+									if (candidate.headEnd == end) {
+										zero = candidate;
+										break;
+									}
+								}
+								if (zero != null) {
+									eventMention.zeroSubjects.add(0, zero);
+									got = true;
+								}
+							}
+						}
+						// 中华民国 and 中华民国政府
+						if (eventMention.zeroSubjects.size() != 0) {
+							EntityMention zero = eventMention.zeroSubjects
+									.get(0);
+							for (EntityMention mention : mentions) {
+								if (mention.start == zero.start
+										&& mention.end > zero.end) {
+									eventMention.zeroSubjects.add(0, mention);
+									zero = mention;
+								}
+							}
+						}
+						if (got) {
+							return true;
+						}
+					}
+				}
+				return false;
+			} else {
+				eventMention.isZeroPronoun = -1;
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	public static void calEventNounAttribute(EventMention em, ACEDoc doc) {
+
+		int position[] = doc.positionMap.get(em.getAnchorStart());
+		ParseResult pr = doc.parseReults.get(position[0]);
+		ArrayList<Depend> depends = doc.parseReults.get(position[0]).depends;
+		
+		HashSet<String> nonModifyPOS = new HashSet<String>(Arrays.asList("DEG",
+				"P", "CC", "DT", "M", "LC", "DEC", "VV"));
+
+		for (Depend depend : depends) {
+			String type = depend.type;
+			int wordIdx1 = depend.first;
+			int wordIdx2 = depend.second;
+			if ((type.endsWith("mod") || type.equals("nn"))
+					&& wordIdx1 == position[1]) {
+				String word2 = pr.words.get(wordIdx2);
+				if (nonModifyPOS.contains(pr.posTags.get(wordIdx2))) {
+					continue;
+				}
+				if (pr.posTags.get(wordIdx2).equals("CD") && !isNumber(word2)) {
+					continue;
+				}
+
+				if (!em.getAnchor().contains(word2) && !word2.contains(em.getAnchor())) {
+					em.modifyList.add(word2);
+				}
+			}
+		}
+
+		for (MyTreeNode leaf : getMaxNPTreeNode(em.getAnchorStart(), doc).getLeaves()) {
+			if (!leaf.value.contains(em.getAnchor())
+					&& !em.modifyList.contains(leaf.value)
+					&& !nonModifyPOS.contains(leaf.parent.value)
+					&& !em.getAnchor().contains(leaf.value)) {
+				if (leaf.parent.value.equals("CD") && !isNumber(leaf.value)) {
+					continue;
+				}
+				em.modifyList.add(leaf.value);
+			}
+		}
+
+		for (String str : em.modifyList) {
+			if (pluralModify.contains(str)) {
+				em.number = Numb.PLURAL;
+			}
+		}
+	}
+	
+	public static MyTreeNode getMaxNPTreeNode(int idx, ACEDoc doc) {
+		int position[] = doc.positionMap.get(idx);
+		ArrayList<MyTreeNode> leaves = doc.parseReults.get(position[0]).tree.leaves;
+		MyTreeNode rightNp = leaves.get(position[1]);
+		ArrayList<MyTreeNode> rightAncestors = rightNp.getAncestors();
+		MyTreeNode NP = null;
+		for (int i = rightAncestors.size() - 1; i >= 0; i--) {
+			MyTreeNode tmp = rightAncestors.get(i);
+			ArrayList<MyTreeNode> tmpLeaves = tmp.getLeaves();
+			if ((tmp.value.toLowerCase().startsWith("np") || tmp.value.toLowerCase().startsWith("qp"))
+					&& tmpLeaves.get(tmpLeaves.size() - 1).leafIdx == position[1]) {
+				NP = tmp;
+			}
+		}
+		if (NP == null) {
+			NP = rightNp.parent;
+		}
+		return NP;
+	}
+
+	public static final Set<String> pluralModify = new HashSet<String>(
+			Arrays.asList("几", "多", "不少", "很多", "一些", "有些", "部分", "多数", "少数",
+					"更多", "更少", "所有", "５", "大量"));
+
+	public static boolean isNumber(String str) {
+		try {
+			Integer i = Integer.valueOf(str);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+
 	}
 }

@@ -9,11 +9,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import model.ACEChiDoc;
 import model.ACEDoc;
-import model.ACEEngDoc;
 import model.EventMention;
 import model.ParseResult;
 import util.Common;
+import util.Util;
 import coref.ResolveGroup.Entry;
 
 public class EMLearn {
@@ -73,6 +74,10 @@ public class EMLearn {
 	public static ArrayList<ResolveGroup> extractGroups(ACEDoc doc) {
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
 
+		Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
+				doc.goldEntityMentions, doc.goldValueMentions,
+				doc.goldTimeMentions, doc);
+
 		for (int i = 0; i < doc.goldEventMentions.size(); i++) {
 			doc.goldEventMentions.get(i).sequenceID = i;
 		}
@@ -81,6 +86,11 @@ public class EMLearn {
 			ParseResult pr = doc.parseReults.get(i);
 			pr.evms = EMUtil.getEventMentionInOneS(doc, doc.goldEventMentions,
 					i);
+
+			for (EventMention event : pr.evms) {
+				Util.assignSystemAttribute(doc.fileID, event, true);
+			}
+
 			ArrayList<EventMention> precedMs = new ArrayList<EventMention>();
 			for (int j = maxDistance; j >= 1; j--) {
 				if (i - j >= 0) {
@@ -176,7 +186,8 @@ public class EMLearn {
 	static int percent = 10;
 
 	private static void extractCoNLL(ArrayList<ResolveGroup> groups) {
-		ArrayList<String> lines = Common.getLines("ACE_English_train0");
+		ArrayList<String> lines = Common.getLines("ACE_Chinese_train"
+				+ Util.part);
 		int docNo = 0;
 
 		HashMap<String, Double> tenseCounts = new HashMap<String, Double>();
@@ -188,7 +199,7 @@ public class EMLearn {
 
 		for (String line : lines) {
 			if (docNo % 10 < percent) {
-				ACEDoc d = new ACEEngDoc(line);
+				ACEDoc d = new ACEChiDoc(line);
 				groups.addAll(extractGroups(d));
 
 				for (EventMention m : d.goldEventMentions) {
@@ -287,10 +298,10 @@ public class EMLearn {
 				}
 
 				entry.p = p_context * entry.p_c;
-				entry.p *= 1 * p_tense
-						* p_polarity
-				// * p_eventSubType
-						* p_genericity * p_modality
+				// entry.p *= 1 * p_tense
+				// * p_polarity
+				// // * p_eventSubType
+				// * p_genericity * p_modality
 				;
 
 				norm += entry.p;
@@ -371,6 +382,11 @@ public class EMLearn {
 	}
 
 	public static void main(String args[]) throws Exception {
+		if (args.length != 1) {
+			System.out.println("java ~ 0");
+			Common.bangErrorPOS("");
+		}
+		Util.part = args[0];
 		run();
 	}
 
@@ -390,14 +406,14 @@ public class EMLearn {
 			it++;
 		}
 
-		tenseP.printParameter("tenseP");
-		polarityP.printParameter("polarityP");
-		eventSubTypeP.printParameter("eventSubTypeP");
-		genericityP.printParameter("genericityP");
-		modalityP.printParameter("modalityP");
+		tenseP.printParameter("tenseP" + Util.part);
+		polarityP.printParameter("polarityP" + Util.part);
+		eventSubTypeP.printParameter("eventSubTypeP" + Util.part);
+		genericityP.printParameter("genericityP" + Util.part);
+		modalityP.printParameter("modalityP" + Util.part);
 
 		ObjectOutputStream modelOut = new ObjectOutputStream(
-				new FileOutputStream("EMModel"));
+				new FileOutputStream("EMModel" + Util.part));
 		modelOut.writeObject(tenseP);
 		modelOut.writeObject(polarityP);
 		modelOut.writeObject(eventSubTypeP);
@@ -416,9 +432,9 @@ public class EMLearn {
 
 		modelOut.close();
 
-		Common.outputHashMap(contextVals, "contextVals");
-		Common.outputHashMap(fracContextCount, "fracContextCount");
-		Common.outputHashMap(contextPrior, "contextPrior");
+		Common.outputHashMap(contextVals, "contextVals" + Util.part);
+		Common.outputHashMap(fracContextCount, "fracContextCount" + Util.part);
+		Common.outputHashMap(contextPrior, "contextPrior" + Util.part);
 		// ObjectOutputStream svoStat = new ObjectOutputStream(new
 		// FileOutputStream(
 		// "/dev/shm/svoStat"));

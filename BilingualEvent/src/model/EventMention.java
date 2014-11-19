@@ -3,8 +3,16 @@ package model;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class EventMention implements Comparable {
+import model.EntityMention.Numb;
 
+public class EventMention implements Comparable<EventMention> {
+
+	public HashMap<String, String> bvs = new HashMap<String, String>();
+	
+	public Numb number;
+	
+	public boolean noun;
+	
 	private boolean isFake;
 	
 	public int sentenceID = 0;
@@ -15,6 +23,8 @@ public class EventMention implements Comparable {
 	
 	public ParseResult pr;
 	
+	public HashMap<String, ArrayList<EventMentionArgument>> argHash = new HashMap<String, ArrayList<EventMentionArgument>>();
+	
 	public ArrayList<Double> typeConfidences = new ArrayList<Double>();
 	
 	public int isZeroPronoun = 0;
@@ -24,6 +34,10 @@ public class EventMention implements Comparable {
 	public HashMap<String, Integer> typeHash = new HashMap<String, Integer>();
 
 	public String goldSubtype;
+	
+	public HashMap<String, ArrayList<EntityMention>> srlArgs = new HashMap<String, ArrayList<EntityMention>>();
+	
+	public ArrayList<String> modifyList = new ArrayList<String>();
 	
 	public String toName() {
 		return this.getAnchorStart() + "," + this.getAnchorEnd();
@@ -292,7 +306,7 @@ public class EventMention implements Comparable {
 	public EventMention antecedent;
 
 	@Override
-	public int compareTo(Object arg0) {
+	public int compareTo(EventMention arg0) {
 		int diff = this.getAnchorStart() - ((EventMention) arg0).getAnchorStart();
 		if (diff == 0) {
 			return this.getAnchorEnd() - ((EventMention) arg0).getAnchorEnd();

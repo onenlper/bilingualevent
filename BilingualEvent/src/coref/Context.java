@@ -73,9 +73,9 @@ public class Context implements Serializable {
 		int id = 0;
 		int[] feas = new int[10];
 		feas[id++] = getMentionDiss(mentionDis);
-		feas[id++] = isExactMatch(ant, anaphor, doc);
+//		feas[id++] = isExactMatch(ant, anaphor, doc);
 		
-		feas[id++] = getEvDis(ant, anaphor);
+//		feas[id++] = getEvDis(ant, anaphor);
 //		feas[id++] = getDistance(ant, anaphor, doc);
 //		feas[id++] = conflictArg(ant, anaphor, doc);
 //		feas[id++] = getSimi(ant, anaphor, doc);

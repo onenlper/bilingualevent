@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SemanticRole implements Comparable{
 	
@@ -9,6 +10,9 @@ public class SemanticRole implements Comparable{
 	public ArrayList<EntityMention> arg1;
 	
 	public ArrayList<EntityMention> tmp;
+	
+	public HashMap<String, ArrayList<EntityMention>> args = new HashMap<String, ArrayList<EntityMention>>();
+	
 	
 	public EventMention predict;
 	

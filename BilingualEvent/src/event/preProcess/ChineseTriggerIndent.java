@@ -126,7 +126,7 @@ public class ChineseTriggerIndent implements TriggerIndent {
 	public ArrayList<EventMention> extractChen(String file, Collection<EventMention> existTriggers, HashSet<EventMention> knownTriggers) {
 		ArrayList<EventMention> eventMentions = new ArrayList<EventMention>();
 		ACEChiDoc document = new ACEChiDoc(file);
-		ArrayList<SemanticRole> semanticRoles = document.semanticRoles;
+		ArrayList<SemanticRole> semanticRoles = new ArrayList<SemanticRole>(document.semanticRoles.values());
 		HashSet<Integer> corefIDs = new HashSet<Integer>();
 		int k = 0;
 		for(EventMention trigger: existTriggers) {

@@ -9,8 +9,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import model.ACEChiDoc;
 import model.ACEDoc;
-import model.ACEEngDoc;
 import model.EventChain;
 import model.EventMention;
 import util.Common;
@@ -53,7 +53,7 @@ public class ApplyEM {
 		this.folder = folder;
 		try {
 			ObjectInputStream modelInput = new ObjectInputStream(
-					new FileInputStream("EMModel"));
+					new FileInputStream("EMModel" + Util.part));
 			tenseP = (Parameter) modelInput.readObject();
 			polarityP = (Parameter) modelInput.readObject();
 			eventSubTypeP = (Parameter) modelInput.readObject();
@@ -123,7 +123,7 @@ public class ApplyEM {
 
 	public void test() {
 		String dataset = "test";
-		ArrayList<String> files = Common.getLines("ACE_English_test0");
+		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + Util.part);
 		HashMap<String, ArrayList<EventMention>> corefResults = new HashMap<String, ArrayList<EventMention>>();
 
 		HashMap<String, HashMap<String, HashSet<String>>> goldKeyses = new HashMap<String, HashMap<String, HashSet<String>>>();
@@ -133,23 +133,23 @@ public class ApplyEM {
 		ArrayList<ArrayList<EventChain>> goldEventChains = new ArrayList<ArrayList<EventChain>>();
 		ArrayList<ArrayList<EventChain>> systemEventChains = new ArrayList<ArrayList<EventChain>>();
 
-		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", "0");
-		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", "0");
-		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", "0");
-		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", "0");
-		
-		HashMap<String, HashMap<String, HashMap<String, Double>>> polarityConfMaps = AttriEvaluate.loadSystemAttriWithConf("polarity", "0");
-		HashMap<String, HashMap<String, HashMap<String, Double>>> modalityConfMaps = AttriEvaluate.loadSystemAttriWithConf("modality", "0");
-		HashMap<String, HashMap<String, HashMap<String, Double>>> genericityConfMaps = AttriEvaluate.loadSystemAttriWithConf("genericity", "0");
-		HashMap<String, HashMap<String, HashMap<String, Double>>> tenseConfMaps = AttriEvaluate.loadSystemAttriWithConf("tense", "0");
-		
-		Util.part = "0";
-		HashMap<String, HashMap<String, EventMention>> jointSVMLines = EngArgEval.jointSVMLine();
+//		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", "0");
+//		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", "0");
+//		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", "0");
+//		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", "0");
+//		
+//		HashMap<String, HashMap<String, HashMap<String, Double>>> polarityConfMaps = AttriEvaluate.loadSystemAttriWithConf("polarity", "0");
+//		HashMap<String, HashMap<String, HashMap<String, Double>>> modalityConfMaps = AttriEvaluate.loadSystemAttriWithConf("modality", "0");
+//		HashMap<String, HashMap<String, HashMap<String, Double>>> genericityConfMaps = AttriEvaluate.loadSystemAttriWithConf("genericity", "0");
+//		HashMap<String, HashMap<String, HashMap<String, Double>>> tenseConfMaps = AttriEvaluate.loadSystemAttriWithConf("tense", "0");
+//		HashMap<String, HashMap<String, EventMention>> jointSVMLines = EngArgEval.jointSVMLine();
 		
 		for (int g = 0; g < files.size(); g++) {
 			String file = files.get(g);
 			// System.out.println(file);
-			ACEDoc doc = new ACEEngDoc(file);
+			ACEDoc doc = new ACEChiDoc(file);
+			doc.docID = g;
+			
 			goldKeyses.put(doc.fileID, this.getKeys(doc.goldEventChains));
 
 			fileNames.add(doc.fileID);
@@ -163,24 +163,16 @@ public class ApplyEM {
 			ArrayList<EventMention> corefResult = new ArrayList<EventMention>();
 			corefResults.put(doc.fileID, corefResult);
 
-			HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
-			
-			if(evmMaps==null) {
-				evmMaps = new HashMap<String, EventMention>();
-			}
-			
-			ArrayList<EventMention> events = doc.goldEventMentions;
-//			ArrayList<EventMention> goldEvents = new ArrayList<EventMention>(evmMaps.values());
-//			for (EventMention m : goldEvents) {
-//				m.setAnchor(doc.content.substring(m.getAnchorStart(), m.getAnchorEnd() + 1));
+//			HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
+//			
+//			if(evmMaps==null) {
+//				evmMaps = new HashMap<String, EventMention>();
 //			}
+			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
+//			ArrayList<EventMention> events = doc.goldEventMentions;
 			
 			Collections.sort(events);
 			
-//			Util.setSystemAttribute(goldEvents, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
-			Util.setSystemAttributeWithConf(events, polarityConfMaps, modalityConfMaps, genericityConfMaps, tenseConfMaps, file);
-			
-			Collections.sort(events);
 			for(int i=0;i<events.size();i++) {
 				events.get(i).sequenceID = i;
 			}
@@ -234,9 +226,9 @@ public class ApplyEM {
 		// output keys
 		try {
 			ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys."
-					+ this.folder, goldEventChains);
+					+ Util.part, goldEventChains);
 			ToSemEval.outputSemFormat(fileNames, lengths, "sys.keys."
-					+ this.folder, systemEventChains);
+					+ Util.part, systemEventChains);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -435,10 +427,10 @@ public class ApplyEM {
 					}
 
 					double p2nd = p_context * entry.p_c;
-					p2nd *= 1 * p_tense 
-							* p_polarity 
-//							* p_eventSubType
-							* p_genericity * p_modality
+//					p2nd *= 1 * p_tense 
+//							* p_polarity 
+////							* p_eventSubType
+//							* p_genericity * p_modality
 							;
 					double p = p2nd;
 					probs[i] = p;
@@ -678,6 +670,11 @@ public class ApplyEM {
 	}
 
 	public static void run(String folder) {
+		Util.polarityMaps = null;
+		Util.tenseMaps = null;
+		Util.generecityMaps = null;
+		Util.modalityMaps = null;
+		
 		EMUtil.train = false;
 		ApplyEM test = new ApplyEM(folder);
 		test.test();
