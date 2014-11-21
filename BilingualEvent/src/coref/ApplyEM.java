@@ -25,7 +25,7 @@ public class ApplyEM {
 
 	Parameter tenseP;
 	Parameter polarityP;
-	Parameter eventSubTypeP;
+	Parameter triggerP;
 	Parameter genericityP;
 	Parameter modalityP;
 	// Parameter cilinP;
@@ -48,6 +48,12 @@ public class ApplyEM {
 	HashMap<String, Double> genericityPrior;
 	HashMap<String, Double> modalityPrior;
 	
+	static ArrayList<HashMap<String, Double>> multiFracContextsProbl0;
+	static ArrayList<HashMap<String, Double>> multiFracContextsProbl1;
+	
+	static double pl0 = 0;
+	static double pl1 = 0;
+	
 	@SuppressWarnings("unchecked")
 	public ApplyEM(String folder) {
 		this.folder = folder;
@@ -56,7 +62,7 @@ public class ApplyEM {
 					new FileInputStream("EMModel" + Util.part));
 			tenseP = (Parameter) modelInput.readObject();
 			polarityP = (Parameter) modelInput.readObject();
-			eventSubTypeP = (Parameter) modelInput.readObject();
+			triggerP = (Parameter) modelInput.readObject();
 			genericityP = (Parameter) modelInput.readObject();
 			modalityP = (Parameter) modelInput.readObject();
 			
@@ -69,6 +75,11 @@ public class ApplyEM {
 					.readObject();
 			contextPrior = (HashMap<String, Double>) modelInput.readObject();
 
+			multiFracContextsProbl0 = (ArrayList<HashMap<String, Double>>)modelInput.readObject();
+			multiFracContextsProbl1 = (ArrayList<HashMap<String, Double>>)modelInput.readObject();
+			pl0 = (Double)modelInput.readObject();
+			pl1 = (Double)modelInput.readObject();
+			
 			// Context.svoStat = (SVOStat)modelInput.readObject();
 			modelInput.close();
 
@@ -179,6 +190,7 @@ public class ApplyEM {
 
 			ArrayList<EventMention> candidates = new ArrayList<EventMention>();
 			for (EventMention m : events) {
+				EMLearn.trs.add(m.getAnchor());
 				candidates.add(m);
 			}
 
@@ -281,6 +293,7 @@ public class ApplyEM {
 			}
 			EventMention fake = new EventMention();
 			fake.extent = "fakkkkke";
+			fake.setAnchor("Fake");
 			fake.setFake();
 			cands.add(fake);
 
@@ -412,8 +425,8 @@ public class ApplyEM {
 //					System.out.println(cand.isFake() + "genericity: " + p_genericity + "\t" + p_genericity2);
 //					System.out.println("===========");
 					
-					double p_eventSubType = eventSubTypeP.getVal(
-							entry.ant.subType, anaphor.subType);
+					double p_anchor = triggerP.getVal(
+							entry.ant.getAnchor(), anaphor.getAnchor());
 
 					
 					double p_context = 0.5;
@@ -426,10 +439,33 @@ public class ApplyEM {
 						p_context = 1.0 / 2;
 					}
 
-					double p2nd = p_context * entry.p_c;
+					double p_context_l1 = pl1;
+					double p_context_l0 = pl0;
+					
+					for(int g=0;g<Context.getSubContext().size();g++) {
+						int pos[] = Context.getSubContext().get(g);
+						String key = context.toString().substring(pos[0], pos[1]);
+						if(multiFracContextsProbl1.get(g).containsKey(key)) {
+							p_context_l1 *= multiFracContextsProbl1.get(g).get(key);
+						} else {
+							p_context_l1 *= Context.normConstant.get(g);
+						}
+						
+						if(multiFracContextsProbl0.get(g).containsKey(key)) {
+							p_context_l0 *= multiFracContextsProbl0.get(g).get(key);
+						} else {
+							p_context_l0 *= Context.normConstant.get(g);
+						}
+					}
+					
+					p_context = p_context_l1/(p_context_l1 + p_context_l0);
+					
+					double p2nd = p_context * entry.p_c
+//							* p_anchor
+							;
 //					p2nd *= 1 * p_tense 
 //							* p_polarity 
-////							* p_eventSubType
+//							* p_eventSubType
 //							* p_genericity * p_modality
 							;
 					double p = p2nd;
@@ -439,6 +475,18 @@ public class ApplyEM {
 						maxP = p;
 						antName = entry.antName;
 					}
+					
+//					if (
+//							!Util.highPrecissionNegativeConstraint(cand, rg.m) && 
+//							(cand.getAnchor().equalsIgnoreCase(rg.m.getAnchor()) ||
+//									Util._commonBV_(cand, rg.m))
+//							) {
+//						antecedent = cand;
+//						antName = entry.antName;
+//						break;
+//					}
+					
+					
 				}
 
 			// if (antecedent != null && antecedent.isFake) {
@@ -665,6 +713,7 @@ public class ApplyEM {
 			System.err.println("java ~ folder");
 			System.exit(1);
 		}
+		Util.part = args[0];
 		// EMUtil.loadAlign();
 		run(args[0]);
 	}

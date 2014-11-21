@@ -14,6 +14,8 @@ import model.ACEEngDoc;
 import model.Depend;
 import model.Entity;
 import model.EntityMention;
+import model.EntityMention.Gender;
+import model.EntityMention.MentionType;
 import model.EntityMention.Numb;
 import model.EventMention;
 import model.EventMentionArgument;
@@ -1351,6 +1353,11 @@ public class Util {
 		arguments.addAll(valueExpressions);
 		arguments.addAll(timeExpressions);
 		
+		for(EntityMention  em : arguments) {
+			setMentionType(em, doc);
+			setGender(em, doc);
+		}
+		
 		for(EventMention event : events) {
 			for(EventMentionArgument argument : event.getEventMentionArguments()) {
 				boolean find = false;
@@ -1382,7 +1389,55 @@ public class Util {
 			identBVs(event, doc);
 			
 			if(event.number!=Numb.SINGULAR) {
-				System.out.println(event.getAnchor());
+//				System.out.println(event.getAnchor());
+			}
+		}
+	}
+	
+	public static void setMentionType(EntityMention mention, ACEDoc doc) {
+		if (doc.getPostag(mention.headStart).startsWith("PN") || (Common.isPronoun(mention.head))) {
+			mention.mentionType = MentionType.Pronominal;
+			mention.isPronoun = true;
+		} else if ((!mention.ner.equalsIgnoreCase("OTHER") && !mention.ner.equalsIgnoreCase("CARDINAL"))
+				|| doc.getPostag(mention.headStart).startsWith("NR")) {
+			mention.mentionType = MentionType.Proper;
+			mention.isProperNoun = true;
+		} else {
+			mention.mentionType = MentionType.Nominal;
+		}
+		String head = mention.head;
+		if (Common.getSemantic(head) == null) {
+			mention.mentionType = MentionType.Proper;
+		}
+	}
+	
+	static ChDictionary dict = new ChDictionary();
+
+	private static void setGender(EntityMention mention, ACEDoc doc) {
+		mention.gender = Gender.UNKNOWN;
+		if (mention.isPronoun) {
+			if (dict.malePronouns.contains(mention.head.toLowerCase())) {
+				mention.gender = Gender.MALE;
+			} else if (dict.femalePronouns.contains(mention.head.toLowerCase())) {
+				mention.gender = Gender.FEMALE;
+			}
+		} else {
+			mention.gender = Gender.UNKNOWN;
+		}
+		if (mention.gender == Gender.UNKNOWN) {
+			int yes = 0;
+			int no = 0;
+			Integer in;
+			if ((in = dict.maleHead.get(mention.head)) != null) {
+				yes = in.intValue();
+			}
+			if ((in = dict.femaleHead.get(mention.head)) != null) {
+				no = in.intValue();
+			}
+			if (yes > no) {
+				mention.gender = Gender.MALE;
+			} else if (yes < no) {
+				mention.gender = Gender.FEMALE;
 			}
 		}
 	}
@@ -1391,12 +1446,22 @@ public class Util {
 	
 	public static void identBVs(EventMention em, ACEDoc doc) {
 		String posTag = doc.getPostag(em.getAnchorStart());
-		if (em.getAnchor().length() == 1 && posTag.equalsIgnoreCase("VV")) {
+		if (em.getAnchor().length() == 1 && posTag.equalsIgnoreCase("VV")
+				) {
 			em.bvs.put(em.getAnchor(), "BV");
 		} else if (em.getAnchor().length() == 2) {
 			String trigger = em.getAnchor();
 			String str1 = Character.toString(trigger.charAt(0));
 			String str2 = Character.toString(trigger.charAt(1));
+			if (pos2.containsKey(str2) && pos2.get(str2).startsWith("V")) {
+				if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
+					em.bvs.put(str2, "verb_BV");
+				} else if (pos2.containsKey(str1) && pos2.get(str1).startsWith("N")) {
+					em.bvs.put(str2, "np_BV");
+				} else {
+					em.bvs.put(str2, "adj_BV");
+				}
+			}
 			if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
 				if (str2.equals("了")) {
 					em.bvs.put(str1, "BV_comp");
@@ -1406,15 +1471,6 @@ public class Util {
 					em.bvs.put(str1, "BV_np");
 				} else {
 					em.bvs.put(str1, "BV_adj");
-				}
-			}
-			if (pos2.containsKey(str2) && pos2.get(str2).startsWith("V")) {
-				if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
-					em.bvs.put(str2, "verb_BV");
-				} else if (pos2.containsKey(str1) && pos2.get(str1).startsWith("N")) {
-					em.bvs.put(str2, "np_BV");
-				} else {
-					em.bvs.put(str2, "adj_BV");
 				}
 			}
 		}
@@ -2106,6 +2162,7 @@ public class Util {
 					continue;
 				}
 				if (pr.posTags.get(wordIdx2).equals("CD") && !isNumber(word2)) {
+					em.CD = pr.words.get(wordIdx2);
 					continue;
 				}
 
@@ -2121,6 +2178,7 @@ public class Util {
 					&& !nonModifyPOS.contains(leaf.parent.value)
 					&& !em.getAnchor().contains(leaf.value)) {
 				if (leaf.parent.value.equals("CD") && !isNumber(leaf.value)) {
+					em.CD = leaf.value;
 					continue;
 				}
 				em.modifyList.add(leaf.value);
@@ -2165,6 +2223,361 @@ public class Util {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+	
+	public static boolean conflictArg_(EventMention ant, EventMention em, String role) {
+		if (em.argHash.containsKey(role) && ant.argHash.containsKey(role)) {
+			boolean conflict = false;
+			for (EventMentionArgument arg1 : em.argHash.get(role)) {
+				EntityMention m1 = arg1.mention;
+				for (EventMentionArgument arg2 : ant.argHash.get(role)) {
+					EntityMention m2 = arg2.mention;
+					if (m1.entity != m2.entity) {
+						conflict = true;
+					} else {
+						return false;
+					}
+				}
+			}
+			return conflict;
+		}
+		return false;
+	}
+	
+	public static boolean _conflictSubType_(EventMention ant, EventMention em) {
+		boolean conflict = !em.subType.equals(ant.subType) && !em.getAnchor().equals(ant.getAnchor());
+		return conflict;
+	}
+	
+	public static boolean _conflictOverlap_(EventMention ant, EventMention em, ACEDoc doc) {
+		return ant.getAnchorEnd() >= em.getAnchorStart();
+	}
+	
+	public static boolean _conflictNumber_(EventMention ant, EventMention em) {
+		return em.number != ant.number;
+	}
+	
+	public static boolean _conflictPersonArgument_(EventMention ant, EventMention em, ACEDoc doc) {
+		boolean conflict = false;
+		loop: for (String role1 : em.argHash.keySet()) {
+			for (String role2 : ant.argHash.keySet()) {
+				if (role1.equalsIgnoreCase(role2)) {
+					ArrayList<EventMentionArgument> arg1 = em.argHash.get(role1);
+					ArrayList<EventMentionArgument> arg2 = ant.argHash.get(role2);
 
+					if (arg1.size() != 1 || arg2.size() != 1) {
+						continue;
+					}
+					if (!arg1.get(0).mention.semClass.equalsIgnoreCase("per")
+							|| !arg2.get(0).mention.semClass.equalsIgnoreCase("per")) {
+						continue;
+					}
+
+					if (arg1.get(0).mention.entity != arg2.get(0).mention.entity) {
+						if (personCompatible(arg1.get(0).mention, arg2.get(0).mention, doc)) {
+						} else {
+							conflict = true;
+							break loop;
+						}
+					}
+				}
+			}
+		}
+		// arg0, arg1
+		if (em.srlArgs.containsKey("A0") && ant.srlArgs.containsKey("A0")) {
+			EntityMention m1 = em.srlArgs.get("A0").get(0);
+			EntityMention m2 = ant.srlArgs.get("A0").get(0);
+			if (m1.semClass.equalsIgnoreCase("per") && m2.semClass.equalsIgnoreCase("per")
+					&& !personCompatible(m1, m2, doc)) {
+				conflict = true;
+			}
+		}
+		if (em.srlArgs.containsKey("A1") && ant.srlArgs.containsKey("A1")) {
+			EntityMention m1 = em.srlArgs.get("A1").get(0);
+			EntityMention m2 = ant.srlArgs.get("A1").get(0);
+			if (m1.semClass.equalsIgnoreCase("per") && m2.semClass.equalsIgnoreCase("per")
+					&& !personCompatible(m1, m2, doc)) {
+				conflict = true;
+			}
+		}
+		if (conflict) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private static boolean personCompatible(EntityMention em, EntityMention ant, ACEDoc doc) {
+		if (em.gender == Gender.MALE && ant.gender == Gender.FEMALE) {
+			return false;
+		}
+		if (em.gender == Gender.FEMALE && ant.gender == Gender.MALE) {
+			return false;
+		}
+		EntityMention m = em;
+		EntityMention an = ant;
+		if (m.mentionType == MentionType.Proper && an.mentionType == MentionType.Proper && !m.head.equals(an.head)) {
+			return false;
+		}
+		String value1 = "";
+		for (MyTreeNode node : Util.getMaxNPTreeNode(m.headStart, doc).getLeaves()) {
+			if (node.parent.value.equals("CD")) {
+				value1 = node.value;
+			}
+		}
+		String value2 = "";
+		for (MyTreeNode node : Util.getMaxNPTreeNode(an.headStart, doc).getLeaves()) {
+			if (node.parent.value.equals("CD")) {
+				value1 = node.value;
+			}
+		}
+		HashMap<String, Integer> cluster = new HashMap<String, Integer>();
+		cluster.put("3", 3);
+		cluster.put("三", 3);
+		if (!value1.isEmpty()
+				&& !value2.isEmpty()
+				&& !value1.equals(value2)
+				&& !(cluster.containsKey(value1) && cluster.containsKey(value2) && cluster.get(value1) == cluster
+						.get(value2)) && em.ner.equals("CARDINAL") && ant.ner.equals("CARDINAL")) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean _conflictValueArgument_(EventMention ant, EventMention em) {
+		boolean conflict = false;
+		loop: for (String role1 : em.argHash.keySet()) {
+			for (String role2 : ant.argHash.keySet()) {
+				if (role1.equalsIgnoreCase(role2)) {
+					ArrayList<EventMentionArgument> arg1 = em.argHash.get(role1);
+					ArrayList<EventMentionArgument> arg2 = ant.argHash.get(role2);
+					boolean extra1 = false;
+					boolean extra2 = false;
+					for (EventMentionArgument a1 : arg1) {
+						EntityMention m1 = a1.mention;
+						if (!m1.semClass.equalsIgnoreCase("value")) {
+							continue;
+						}
+						boolean extra = true;
+						for (EventMentionArgument a2 : arg2) {
+							EntityMention m2 = a2.mention;
+							if (!m2.semClass.equalsIgnoreCase("value")) {
+								continue;
+							}
+							if (m2.head.contains(m1.head)) {
+								extra = false;
+								break;
+							}
+						}
+						if (extra) {
+							extra1 = true;
+							break;
+						}
+					}
+
+					for (EventMentionArgument a2 : arg2) {
+						EntityMention m2 = a2.mention;
+						if (!m2.semClass.equalsIgnoreCase("value")) {
+							continue;
+						}
+						boolean extra = true;
+						for (EventMentionArgument a1 : arg1) {
+							EntityMention m1 = a1.mention;
+							if (!m1.semClass.equalsIgnoreCase("value")) {
+								continue;
+							}
+							if (m1.head.contains(m2.head)) {
+								extra = false;
+								break;
+							}
+						}
+						if (extra) {
+							extra2 = true;
+							break;
+						}
+					}
+					if (extra1 && extra2) {
+						conflict = true;
+						break loop;
+					}
+				}
+			}
+		}
+		if (conflict) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public static boolean _conflictDestination_(EventMention ant, EventMention em, ACEDoc doc) {
+		if (em.argHash.containsKey("Destination") && ant.argHash.containsKey("Destination")) {
+			boolean conflict = false;
+			for (EventMentionArgument arg1 : em.argHash.get("Destination")) {
+				EntityMention m1 = arg1.mention;
+				if (m1.ner.equalsIgnoreCase("other")) {
+					continue;
+				}
+				for (EventMentionArgument arg2 : ant.argHash.get("Destination")) {
+					EntityMention m2 = arg2.mention;
+					if (m2.ner.equalsIgnoreCase("other")) {
+						continue;
+					}
+					if (m1.entity != m2.entity) {
+						conflict = true;
+					} else {
+						return false;
+					}
+				}
+			}
+			return conflict;
+		}
+		return false;
+	}
+	
+	public static boolean _conflictModify_(EventMention ant, EventMention em, ACEDoc doc) {
+		if (!em.modifyList.containsAll(ant.modifyList) && !ant.modifyList.containsAll(em.modifyList)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean _conflictACERoleSemantic_(EventMention ant, EventMention em) {
+		boolean conflict = false;
+		for (String role1 : em.argHash.keySet()) {
+			for (String role2 : ant.argHash.keySet()) {
+				if (role1.equalsIgnoreCase(role2)) {
+					ArrayList<EventMentionArgument> arg1 = em.argHash.get(role1);
+					ArrayList<EventMentionArgument> arg2 = ant.argHash.get(role2);
+
+					if (arg1.size() != 1 || arg2.size() != 1) {
+						continue;
+					}
+					EntityMention m1 = arg1.get(0).mention;
+					EntityMention m2 = arg2.get(0).mention;
+					if (!m1.semClass.equals(m2.semClass)) {
+						conflict = true;
+					}
+				}
+			}
+		}
+		return conflict;
+	}
+	
+	public static boolean highPrecissionNegativeConstraint(EventMention ant, EventMention em) {
+		if (Util._conflictSubType_(ant, em)) {
+			return true;
+		}
+		if (Util._conflictACERoleSemantic_(ant, em)) {
+			return true;
+		}
+		if (Util._conflictNumber_(ant, em)) {
+			return true;
+		}
+		if (Util._conflictValueArgument_(ant, em)) {
+			return true;
+		}
+		ArrayList<String> discreteRoles = new ArrayList<String>(Arrays.asList("Place", "Org", "Position",
+				"Adjudicator", "Origin", "Giver", "Recipient", "Defendant"));
+		for (String role : discreteRoles) {
+			if (Util.conflictArg_(ant, em, role)) {
+				return true;
+			}
+		}
+		
+		
+//		if (_conflictPersonArgument_(ant, em, doc)) {
+//		return true;
+//	}
+//		if(ant.CD!=null && em.CD!=null && !ant.CD.equals(em.CD)) {
+//			return true;
+//		}
+//		if (_conflictOverlap_(ant, em, doc)) {
+//			System.out.println("Conflict Overlap: " + ant.getAnchor() + "#" + em.getAnchor());
+//			return true;
+//		}
+//		if (_conflictDestination_(ant, em, doc)) {
+//			return true;
+//		}
+		
+//		if(_conflictModify_(ant, em, doc)) {
+//			return true;
+//		}
+		
+		return false;
+	}
+	
+	public static boolean _commonBV_(EventMention ant, EventMention em) {
+		if (ant.getAnchor().equals(em.getAnchor())) {
+			return false;
+		}
+		// common character
+		boolean common = false;
+		loop: for (int i = 0; i < ant.getAnchor().length(); i++) {
+			for (int j = 0; j < em.getAnchor().length(); j++) {
+				if (ant.getAnchor().charAt(i) == em.getAnchor().charAt(j)) {
+					common = true;
+					break loop;
+				}
+			}
+		}
+		// same meaning
+		/*
+		 * // String[] sem1 = Common.getSemantic(em.head); // String[] sem2 =
+		 * Common.getSemantic(an.head); // if(sem1!=null && sem2!=null) { //
+		 * for(String s1 : sem1) { // for(String s2 : sem2) { //
+		 * if(s1.equals(s2) && s1.endsWith("=")) { // return true; // } // } //
+		 * } // }
+		 */
+
+		if (common) {
+			if (!conflictBV(ant, em))
+				return true;
+//			} else {
+				// EventMention gEM =
+				// RuleCoref.goldEventMentionMap.get(em.toString());
+				// EventMention gAn =
+				// RuleCoref.goldEventMentionMap.get(an.toString());
+				// if (gEM != null && gAn != null && gEM.goldChainID ==
+				// gAn.goldChainID) {
+				// RuleCoref.printPair(em, an);
+				// }
+//			}
+		}
+		return false;
+	}
+	
+	public static boolean conflictBV(EventMention em, EventMention an) {
+		if (em.getAnchor().equals(an.getAnchor())) {
+			return false;
+		}
+		for (String bv1 : em.bvs.keySet()) {
+			String pattern1 = em.bvs.get(bv1);
+			int idx1 = em.getAnchor().indexOf(bv1);
+			for (String bv2 : an.bvs.keySet()) {
+				String pattern2 = an.bvs.get(bv2);
+				int idx2 = an.getAnchor().indexOf(bv2);
+				if (bv1.equals(bv2)) {
+					if (idx1 != idx2 && em.getAnchor().length() != 1 && an.getAnchor().length() != 1) {
+//						System.out.println("Conflict: " + em.getAnchor() + "#" + an.getAnchor());
+						return true;
+					}
+					if (pattern1.equals(pattern2) && (pattern1.equals("verb_BV") || pattern2.equals("BV_verb"))) {
+						return true;
+					}
+
+					if (pattern1.equals(pattern2) && pattern1.equals("adj_BV")) {
+						return true;
+					}
+
+					if ((pattern1.equals("adj_BV#BV") && pattern1.equals("BV"))
+							|| (pattern1.equals("BV") && pattern1.equals("adj_BV#BV"))) {
+						return true;
+					}
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }

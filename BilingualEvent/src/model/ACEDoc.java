@@ -13,6 +13,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import model.syntaxTree.MyTreeNode;
+
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -177,6 +179,8 @@ public abstract class ACEDoc {
 				expression.type = "Time";
 				expression.entity.type = "Time";
 				expression.entity.subType = "Time";
+				expression.semClass = "time";
+				expression.subType = "time";
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -203,6 +207,8 @@ public abstract class ACEDoc {
 				value.type = "Value";
 				value.entity.type = "Value";
 				value.entity.subType = "Value";
+				value.semClass = "value";
+				value.subType = "value";
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -229,6 +235,8 @@ public abstract class ACEDoc {
 			for (EntityMention mention : this.goldEntityMentions) {
 				mention.extent = mention.extent.replaceAll("\n", sep);
 				mention.head = mention.head.replaceAll("\n", sep);
+				mention.semClass = mention.entity.getType();
+				mention.subType = mention.entity.getSubType();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -325,6 +333,11 @@ public abstract class ACEDoc {
 
 	public abstract void readSemanticRole();
 
+	public MyTreeNode getTreeNode(int idx) {
+		int position[] = this.positionMap.get(idx);
+		return this.parseReults.get(position[0]).tree.leaves.get(position[1]);
+	}
+	
 	public String getWord(int idx) {
 		int position[] = this.positionMap.get(idx);
 		return this.parseReults.get(position[0]).words.get(position[1]);

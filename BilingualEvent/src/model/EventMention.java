@@ -11,6 +11,8 @@ public class EventMention implements Comparable<EventMention> {
 	
 	public Numb number;
 	
+	public String CD;
+	
 	public boolean noun;
 	
 	private boolean isFake;
@@ -229,7 +231,7 @@ public class EventMention implements Comparable<EventMention> {
 	}
 
 	public void setAnchor(String anchor) {
-		this.anchor = anchor;
+		this.anchor = anchor.replace("\n", "").replace(" ", "");
 	}
 
 	public int getAnchorStart() {
@@ -259,7 +261,7 @@ public class EventMention implements Comparable<EventMention> {
 	String ldcScope;
 	int ldcScopeStart;
 	int ldcScopeEnd;
-	String anchor;
+	String anchor = "";
 	int anchorStart;
 	int anchorEnd;
 	public ArrayList<EventMentionArgument> eventMentionArguments;
