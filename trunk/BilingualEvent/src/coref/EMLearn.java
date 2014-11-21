@@ -26,8 +26,20 @@ public class EMLearn {
 	static Parameter polarityP;
 	static Parameter genericityP;
 	static Parameter modalityP;
-	static Parameter eventSubTypeP;
+	static Parameter triggerP;
 
+	static double countl0 = 0;
+	static double countl1 = 0;
+	
+	static double pl0 = 0;
+	static double pl1 = 0;
+	
+	static ArrayList<HashMap<String, Double>> multiFracContextsCountl0 = new ArrayList<HashMap<String, Double>>();
+	static ArrayList<HashMap<String, Double>> multiFracContextsCountl1 = new ArrayList<HashMap<String, Double>>();
+	
+	static ArrayList<HashMap<String, Double>> multiFracContextsProbl0 = new ArrayList<HashMap<String, Double>>();
+	static ArrayList<HashMap<String, Double>> multiFracContextsProbl1 = new ArrayList<HashMap<String, Double>>();
+	
 	static HashMap<String, Double> tensePrior = new HashMap<String, Double>();
 	static HashMap<String, Double> polarityPrior = new HashMap<String, Double>();
 	static HashMap<String, Double> genericityPrior = new HashMap<String, Double>();
@@ -57,11 +69,18 @@ public class EMLearn {
 				0, EMUtil.Polarity.size() - 1)));
 		genericityP = new Parameter(new HashSet<String>(
 				EMUtil.Genericity.subList(0, EMUtil.Genericity.size() - 1)));
+		
 		modalityP = new Parameter(new HashSet<String>(EMUtil.Modality.subList(
 				0, EMUtil.Modality.size() - 1)));
-		eventSubTypeP = new Parameter(new HashSet<String>(
-				EMUtil.EventSubType.subList(0, EMUtil.EventSubType.size() - 1)));
+		triggerP = new Parameter(Common.readFile2Set("trSet"));
 
+		for(int i=0;i<Context.getSubContext().size();i++) {
+			multiFracContextsCountl0.add(new HashMap<String, Double>());
+			multiFracContextsCountl1.add(new HashMap<String, Double>());
+			multiFracContextsProbl0.add(new HashMap<String, Double>());
+			multiFracContextsProbl1.add(new HashMap<String, Double>());
+		}
+		
 		contextPrior = new HashMap<String, Double>();
 		contextOverall = new HashMap<String, Double>();
 		fracContextCount = new HashMap<String, Double>();
@@ -89,6 +108,7 @@ public class EMLearn {
 
 			for (EventMention event : pr.evms) {
 				Util.assignSystemAttribute(doc.fileID, event, true);
+				trs.add(event.getAnchor());
 			}
 
 			ArrayList<EventMention> precedMs = new ArrayList<EventMention>();
@@ -114,6 +134,7 @@ public class EMLearn {
 				}
 
 				EventMention fake = new EventMention();
+				fake.setAnchor("Fake");
 				fake.extent = "fakkkkke";
 				fake.setFake();
 				ants.add(fake);
@@ -140,7 +161,13 @@ public class EMLearn {
 						entry.p_c = 1 / (Entry.p_fake_decay + seq);
 					}
 				}
-
+				
+				countl0 += rg.entries.size()-1;
+				countl1 += 1;
+				
+				pl0 = countl0/(countl0 + countl1);
+				pl1 = countl1/(countl0 + countl1);
+				
 				groups.add(rg);
 			}
 		}
@@ -159,7 +186,10 @@ public class EMLearn {
 			// TODO
 			if (entry.isFake) {
 				fakeEntries.add(entry);
-			} else if (ant.getAnchor().equalsIgnoreCase(rg.m.getAnchor())) {
+			} else if (
+					(ant.getAnchor().equalsIgnoreCase(rg.m.getAnchor()) ||
+							Util._commonBV_(ant, rg.m))
+					) {
 				// else if(
 				// ant.getSubType().equals(rg.m.getSubType())
 				// &&
@@ -283,21 +313,53 @@ public class EMLearn {
 				double p_genericity = genericityP.getVal(entry.ant.genericity,
 						rg.m.genericity);
 
-				double p_eventSubType = eventSubTypeP.getVal(
-						entry.ant.getSubType(), rg.m.getSubType());
+				double p_anchor = triggerP.getVal(
+						entry.ant.getAnchor(), rg.m.getAnchor());
 
 				double p_context = .5;
-				Double d = contextVals.get(context.toString());
-				if (contextVals.containsKey(context.toString())) {
-					p_context = d.doubleValue();
-				} else {
-					p_context = .5;
-					// if(context.toString().startsWith("0")) {
-					// p_context = .1;
-					// }
-				}
+//				Double d = contextVals.get(context.toString());
+//				if (contextVals.containsKey(context.toString())) {
+//					p_context = d.doubleValue();
+//				} else {
+//					p_context = .5;
+//					// if(context.toString().startsWith("0")) {
+//					// p_context = .1;
+//					// }
+//				}
 
-				entry.p = p_context * entry.p_c;
+//				multiFracContextsCountl0.get(i).clear();
+//				multiFracContextsCountl1.get(i).clear();
+//				multiFracContextsProbl0.get(i).clear();
+//				multiFracContextsProbl1.get(i).clear();
+				
+				double p_context_l1 = pl1;
+				double p_context_l0 = pl0;
+				
+				for(int i=0;i<Context.getSubContext().size();i++) {
+					int pos[] = Context.getSubContext().get(i);
+					String key = context.toString().substring(pos[0], pos[1]);
+					if(multiFracContextsProbl1.get(i).containsKey(key)) {
+						p_context_l1 *= multiFracContextsProbl1.get(i).get(key);
+					} else {
+						p_context_l1 *= Context.normConstant.get(i);
+					}
+					
+					if(multiFracContextsProbl0.get(i).containsKey(key)) {
+						p_context_l0 *= multiFracContextsProbl0.get(i).get(key);
+					} else {
+						p_context_l0 *= Context.normConstant.get(i);
+					}
+				}
+				
+				p_context = p_context_l1/(p_context_l1 + p_context_l0);
+				
+//				double pdenom = 0;
+				
+				
+				
+				entry.p = p_context * entry.p_c
+//						* p_anchor
+						;
 				// entry.p *= 1 * p_tense
 				// * p_polarity
 				// // * p_eventSubType
@@ -338,11 +400,19 @@ public class EMLearn {
 		long t1 = System.currentTimeMillis();
 		polarityP.resetCounts();
 		tenseP.resetCounts();
-		eventSubTypeP.resetCounts();
+		triggerP.resetCounts();
 		contextVals.clear();
 		genericityP.resetCounts();
 		modalityP.resetCounts();
 		fracContextCount.clear();
+		
+		for(int i=0;i<multiFracContextsCountl1.size();i++) {
+			multiFracContextsCountl0.get(i).clear();
+			multiFracContextsCountl1.get(i).clear();
+			multiFracContextsProbl0.get(i).clear();
+			multiFracContextsProbl1.get(i).clear();
+		}
+		
 		for (ResolveGroup group : groups) {
 			for (Entry entry : group.entries) {
 				double p = entry.p;
@@ -350,8 +420,8 @@ public class EMLearn {
 
 				tenseP.addFracCount(entry.ant.tense, group.m.tense, p);
 				polarityP.addFracCount(entry.ant.polarity, group.m.polarity, p);
-				eventSubTypeP.addFracCount(entry.ant.getSubType(),
-						group.m.getSubType(), p);
+				triggerP.addFracCount(entry.ant.getAnchor(),
+						group.m.getAnchor(), p);
 
 				genericityP.addFracCount(entry.ant.genericity,
 						group.m.genericity, p);
@@ -365,11 +435,33 @@ public class EMLearn {
 					fracContextCount.put(context.toString(), d.doubleValue()
 							+ p);
 				}
+				
+				for(int i=0;i<Context.getSubContext().size();i++) {
+					int ps[] = Context.getSubContext().get(i);
+					String key = context.toString().substring(ps[0], ps[1]);
+					double l1 = p;
+					double l0 = 1 - p;
+					
+					Double cl0 = multiFracContextsCountl0.get(i).get(key); 
+					if(cl0==null) {
+						multiFracContextsCountl0.get(i).put(key, l0);
+					} else {
+						multiFracContextsCountl0.get(i).put(key, l0 + cl0.doubleValue());
+					}
+					
+					Double cl1 = multiFracContextsCountl1.get(i).get(key); 
+					if(cl1==null) {
+						multiFracContextsCountl1.get(i).put(key, l1);
+					} else {
+						multiFracContextsCountl1.get(i).put(key, l1 + cl1.doubleValue());
+					}
+				}
+				
 			}
 		}
 		polarityP.setVals();
 		tenseP.setVals();
-		eventSubTypeP.setVals();
+		triggerP.setVals();
 		genericityP.setVals();
 		// cilin.setVals();
 		modalityP.setVals();
@@ -379,15 +471,46 @@ public class EMLearn {
 			contextVals.put(key, p_context);
 		}
 		// System.out.println(System.currentTimeMillis() - t1);
+		
+		for(int i=0;i<Context.getSubContext().size();i++) {
+
+			for(String key : multiFracContextsCountl1.get(i).keySet()) {
+				
+				double contextcountl0 = 1;
+				if(multiFracContextsCountl0.get(i).containsKey(key)) {
+					contextcountl0 += multiFracContextsCountl0.get(i).get(key);
+				}
+				double pcountl0 = contextcountl0/(countl0 + Context.normConstant.get(i));
+				
+				double contextcountl1 = 1;
+				if(multiFracContextsCountl1.get(i).containsKey(key)) {
+					contextcountl1 += multiFracContextsCountl1.get(i).get(key);
+				}
+				double pcountl1 = contextcountl1/(countl1 + Context.normConstant.get(i));
+				
+
+				multiFracContextsProbl0.get(i).put(key, pcountl0);
+				multiFracContextsProbl1.get(i).put(key, pcountl1);
+			}
+			
+			
+			
+		}
 	}
 
+	static HashSet<String> trs = new HashSet<String>();
+	
 	public static void main(String args[]) throws Exception {
+		Context.todo = Common.readFile2Set("trPair");
 		if (args.length != 1) {
 			System.out.println("java ~ 0");
 			Common.bangErrorPOS("");
 		}
 		Util.part = args[0];
 		run();
+		Common.outputHashSet(trs, "trSet" + Util.part);
+		
+		Common.outputHashSet(Context.todo, "trPair");
 	}
 
 	private static void run() throws IOException, FileNotFoundException {
@@ -408,7 +531,7 @@ public class EMLearn {
 
 		tenseP.printParameter("tenseP" + Util.part);
 		polarityP.printParameter("polarityP" + Util.part);
-		eventSubTypeP.printParameter("eventSubTypeP" + Util.part);
+		triggerP.printParameter("eventSubTypeP" + Util.part);
 		genericityP.printParameter("genericityP" + Util.part);
 		modalityP.printParameter("modalityP" + Util.part);
 
@@ -416,7 +539,7 @@ public class EMLearn {
 				new FileOutputStream("EMModel" + Util.part));
 		modelOut.writeObject(tenseP);
 		modelOut.writeObject(polarityP);
-		modelOut.writeObject(eventSubTypeP);
+		modelOut.writeObject(triggerP);
 		modelOut.writeObject(genericityP);
 		modelOut.writeObject(modalityP);
 
@@ -427,7 +550,28 @@ public class EMLearn {
 
 		modelOut.writeObject(fracContextCount);
 		modelOut.writeObject(contextPrior);
+		
+		modelOut.writeObject(multiFracContextsProbl0);
+		modelOut.writeObject(multiFracContextsProbl1);
+		modelOut.writeObject(pl0);
+		modelOut.writeObject(pl1);
 
+		
+		for(int i=0;i<multiFracContextsProbl1.size();i++) {
+			ArrayList<String> output = new ArrayList<String>();
+			for(String key : multiFracContextsProbl1.get(i).keySet()) {
+				output.add(key + ":\t" + multiFracContextsProbl1.get(i).get(key));
+			}
+			Common.outputLines(output, "probl1_" + Util.part + ".sub" + i);
+		}
+		
+		for(int i=0;i<multiFracContextsProbl0.size();i++) {
+			ArrayList<String> output = new ArrayList<String>();
+			for(String key : multiFracContextsProbl0.get(i).keySet()) {
+				output.add(key + ":\t" + multiFracContextsProbl0.get(i).get(key));
+			}
+			Common.outputLines(output, "probl0_" + Util.part + ".sub" + i);
+		}
 		// modelOut.writeObject(Context.svoStat);
 
 		modelOut.close();
