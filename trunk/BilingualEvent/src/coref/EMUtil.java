@@ -53,7 +53,7 @@ public class EMUtil {
 		for(int i=0;i<goldChains.size();i++) {
 			EventChain ec = goldChains.get(i);
 			for(EventMention em : ec.getEventMentions()) {
-				map.put(ec.toString(), i);
+				map.put(em.toString(), i);
 			}
 		}
 		return map;

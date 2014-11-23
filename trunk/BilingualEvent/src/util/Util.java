@@ -2410,6 +2410,72 @@ public class Util {
 		}
 	}
 	
+	public static boolean _conflictTimeArgument_(EventMention ant, EventMention em) {
+		boolean conflict = false;
+		loop: for (String role1 : em.argHash.keySet()) {
+			for (String role2 : ant.argHash.keySet()) {
+				if (role1.equalsIgnoreCase(role2)) {
+					ArrayList<EventMentionArgument> arg1 = em.argHash.get(role1);
+					ArrayList<EventMentionArgument> arg2 = ant.argHash.get(role2);
+					boolean extra1 = false;
+					boolean extra2 = false;
+					for (EventMentionArgument a1 : arg1) {
+						EntityMention m1 = a1.mention;
+						if (!m1.semClass.equalsIgnoreCase("time")) {
+							continue;
+						}
+						boolean extra = true;
+						for (EventMentionArgument a2 : arg2) {
+							EntityMention m2 = a2.mention;
+							if (!m2.semClass.equalsIgnoreCase("time")) {
+								continue;
+							}
+							if (m2.head.contains(m1.head) || m1.head.contains(m2.head)) {
+								extra = false;
+								break;
+							}
+						}
+						if (extra) {
+							extra1 = true;
+							break;
+						}
+					}
+
+					for (EventMentionArgument a2 : arg2) {
+						EntityMention m2 = a2.mention;
+						if (!m2.semClass.equalsIgnoreCase("time")) {
+							continue;
+						}
+						boolean extra = true;
+						for (EventMentionArgument a1 : arg1) {
+							EntityMention m1 = a1.mention;
+							if (!m1.semClass.equalsIgnoreCase("time")) {
+								continue;
+							}
+							if (m2.head.contains(m1.head) || m1.head.contains(m2.head)) {
+								extra = false;
+								break;
+							}
+						}
+						if (extra) {
+							extra2 = true;
+							break;
+						}
+					}
+					if (extra1 && extra2) {
+						conflict = true;
+						break loop;
+					}
+				}
+			}
+		}
+		if (conflict) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	public static boolean _conflictDestination_(EventMention ant, EventMention em, ACEDoc doc) {
 		if (em.argHash.containsKey("Destination") && ant.argHash.containsKey("Destination")) {
 			boolean conflict = false;
@@ -2451,13 +2517,22 @@ public class Util {
 					ArrayList<EventMentionArgument> arg2 = ant.argHash.get(role2);
 
 					if (arg1.size() != 1 || arg2.size() != 1) {
-						continue;
+//						continue;
 					}
-					EntityMention m1 = arg1.get(0).mention;
-					EntityMention m2 = arg2.get(0).mention;
-					if (!m1.semClass.equals(m2.semClass)) {
-						conflict = true;
+//					EntityMention m1 = arg1.get(0).mention;
+//					EntityMention m2 = arg2.get(0).mention;
+					conflict = true;
+					for(EventMentionArgument a1 : arg1) {
+						for(EventMentionArgument a2 : arg2) {
+							EntityMention m1 = a1.mention;
+							EntityMention m2 = a2.mention;
+							if (m1.semClass.equals(m2.semClass)) {
+								conflict = false;
+							}
+						}
 					}
+					
+					
 				}
 			}
 		}
@@ -2478,7 +2553,7 @@ public class Util {
 			return true;
 		}
 		ArrayList<String> discreteRoles = new ArrayList<String>(Arrays.asList("Place", "Org", "Position",
-				"Adjudicator", "Origin", "Giver", "Recipient", "Defendant"));
+				"Adjudicator", "Origin", "Giver", "Recipient", "Defendant", "Destination", "Person", "Victim"));
 		for (String role : discreteRoles) {
 			if (Util.conflictArg_(ant, em, role)) {
 				return true;

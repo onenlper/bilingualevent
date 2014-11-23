@@ -180,167 +180,167 @@ public class EventCorefFea extends YYFeature {
 		int overlap_num = 0;
 		HashSet<String> overlap_roles = new HashSet<String>();
 
-//		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
-//			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
-//			Entity entity1 = doc.entityCorefMap.get(arg1Name);
-//			String role1 = arg1.getRole();
-//
-//			for (EventMentionArgument arg2 : this.ant
-//					.getAllEventMentionArgument()) {
-//				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
-//				Entity entity2 = doc.entityCorefMap.get(arg2Name);
-//				String role2 = arg2.getRole();
-//
-//				if (role1.equals(role2)) {
-//					if (entity1 == null && entity2 == null
-//							&& arg1.getExtent().equals(arg2.getExtent())) {
-//						overlap_num += 1;
-//						overlap_roles.add(role2);
-//					} else if (entity1 != null && entity2 != null
-//							&& entity1 == entity2) {
-//						overlap_num += 1;
-//						overlap_roles.add(role2);
-//					}
-//				}
-//			}
-//		}
-//		feas.add("overlap_num#" + overlap_num);
-//		for (String role : overlap_roles) {
-//			feas.add("overlap_role#" + role);
-//		}
-//
-//		int act_num = 0;
-//		HashSet<String> act_roles = new HashSet<String>();
-//		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
-//			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
-//			Entity entity1 = doc.entityCorefMap.get(arg1Name);
-//			String role1 = arg1.getRole();
-//			boolean find = false;
-//			for (EventMentionArgument arg2 : this.ant
-//					.getAllEventMentionArgument()) {
-//				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
-//				Entity entity2 = doc.entityCorefMap.get(arg2Name);
-//				String role2 = arg2.getRole();
-//				
-//				if(role1.equals(role2)) {
-//					if (entity1 == null && entity2 == null
-//							&& arg1.getExtent().equals(arg2.getExtent())) {
-//						find = true;
-//					} else if (entity1 != null && entity2 != null
-//							&& entity1 == entity2) {
-//						find = true;
-//					}
-//				}
-//			}
-//			if (!find) {
-//				act_num += 1;
-//				act_roles.add(role1);
-//			}
-//		}
-//		feas.add("act_num#" + act_num);
-//		for (String role : act_roles) {
-//			feas.add("act_role#" + role);
-//		}
-//
-//		int prior_num = 0;
-//		HashSet<String> prior_roles = new HashSet<String>();
-//		for (EventMentionArgument arg2 : this.ant.getAllEventMentionArgument()) {
-//			String arg2Name = arg2.getStart() + "," + arg2.getEnd();
-//			Entity entity2 = doc.entityCorefMap.get(arg2Name);
-//			String role2 = arg2.getRole();
-//			boolean find = false;
-//			
-//			for (EventMentionArgument arg1 : this.ana
-//					.getEventMentionArguments()) {
-//				String arg1Name = arg1.getStart() + "," + arg1.getEnd();
-//				Entity entity1 = doc.entityCorefMap.get(arg1Name);
-//				String role1 = arg1.getRole();
-//				if(role1.equals(role2)) {
-//					if (entity1 == null && entity2 == null
-//							&& arg1.getExtent().equals(arg2.getExtent())) {
-//						find = true;
-//					} else if (entity1 != null && entity2 != null
-//							&& entity1 == entity2) {
-//						find = true;
-//					}
-//				}
-//			}
-//			if (!find) {
-//				prior_num += 1;
-//				prior_roles.add(role2);
-//			}
-//		}
-//		feas.add("prior_num#" + prior_num);
-//		for (String role : prior_roles) {
-//			feas.add("prior_role#" + role);
-//		}
-//		
-//		int coref_num = 0;
-//		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
-//			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
-//			Entity entity1 = doc.entityCorefMap.get(arg1Name);
-//			String role1 = arg1.getRole();
-//
-//			for (EventMentionArgument arg2 : this.ant
-//					.getAllEventMentionArgument()) {
-//				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
-//				Entity entity2 = doc.entityCorefMap.get(arg2Name);
-//				String role2 = arg2.getRole();
-//
-//				if (!role1.equals(role2)) {
-//					if (entity1 == null && entity2 == null
-//							&& arg1.getExtent().equals(arg2.getExtent())) {
-//						coref_num += 1;
-//					} else if (entity1 != null && entity2 != null
-//							&& entity1 == entity2) {
-//						coref_num += 1;
-//					}
-//				}
-//			}
-//		}
-//		feas.add("coref_num#" + coref_num);
-//		
-//		boolean time_conflict = false;
-//		boolean place_conflict = false;
-//		
-//		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
-//			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
-//			Entity entity1 = doc.entityCorefMap.get(arg1Name);
-//			String role1 = arg1.getRole();
-//
-//			for (EventMentionArgument arg2 : this.ant
-//					.getAllEventMentionArgument()) {
-//				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
-//				Entity entity2 = doc.entityCorefMap.get(arg2Name);
-//				String role2 = arg2.getRole();
-//
-//				if (role1.equals(role2) && role1.equals("Time-Within")) {
-//					if (entity1 == null && entity2 == null
-//							&& arg1.getExtent().equals(arg2.getExtent())) {
-//						
-//					} else if (entity1 != null && entity2 != null
-//							&& entity1 == entity2) {
-//						
-//					} else {
-//						time_conflict = true;
-//					}
-//				}
-//				
-//				if (role1.equals(role2) && role1.equals("Place")) {
-//					if (entity1 == null && entity2 == null
-//							&& arg1.getExtent().equals(arg2.getExtent())) {
-//						
-//					} else if (entity1 != null && entity2 != null
-//							&& entity1 == entity2) {
-//						
-//					} else {
-//						place_conflict = true;
-//					}
-//				}
-//			}
-//		}
-//		feas.add("time_conflict#" + time_conflict);
-//		feas.add("place_conflict#" + place_conflict);
+		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : this.ant
+					.getAllEventMentionArgument()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						overlap_num += 1;
+						overlap_roles.add(role2);
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						overlap_num += 1;
+						overlap_roles.add(role2);
+					}
+				}
+			}
+		}
+		feas.add("overlap_num#" + overlap_num);
+		for (String role : overlap_roles) {
+			feas.add("overlap_role#" + role);
+		}
+
+		int act_num = 0;
+		HashSet<String> act_roles = new HashSet<String>();
+		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+			boolean find = false;
+			for (EventMentionArgument arg2 : this.ant
+					.getAllEventMentionArgument()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+				
+				if(role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						find = true;
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						find = true;
+					}
+				}
+			}
+			if (!find) {
+				act_num += 1;
+				act_roles.add(role1);
+			}
+		}
+		feas.add("act_num#" + act_num);
+		for (String role : act_roles) {
+			feas.add("act_role#" + role);
+		}
+
+		int prior_num = 0;
+		HashSet<String> prior_roles = new HashSet<String>();
+		for (EventMentionArgument arg2 : this.ant.getAllEventMentionArgument()) {
+			String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+			Entity entity2 = doc.entityCorefMap.get(arg2Name);
+			String role2 = arg2.getRole();
+			boolean find = false;
+			
+			for (EventMentionArgument arg1 : this.ana
+					.getEventMentionArguments()) {
+				String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+				Entity entity1 = doc.entityCorefMap.get(arg1Name);
+				String role1 = arg1.getRole();
+				if(role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						find = true;
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						find = true;
+					}
+				}
+			}
+			if (!find) {
+				prior_num += 1;
+				prior_roles.add(role2);
+			}
+		}
+		feas.add("prior_num#" + prior_num);
+		for (String role : prior_roles) {
+			feas.add("prior_role#" + role);
+		}
+		
+		int coref_num = 0;
+		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : this.ant
+					.getAllEventMentionArgument()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (!role1.equals(role2)) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						coref_num += 1;
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						coref_num += 1;
+					}
+				}
+			}
+		}
+		feas.add("coref_num#" + coref_num);
+		
+		boolean time_conflict = false;
+		boolean place_conflict = false;
+		
+		for (EventMentionArgument arg1 : this.ana.getEventMentionArguments()) {
+			String arg1Name = arg1.getStart() + "," + arg1.getEnd();
+			Entity entity1 = doc.entityCorefMap.get(arg1Name);
+			String role1 = arg1.getRole();
+
+			for (EventMentionArgument arg2 : this.ant
+					.getAllEventMentionArgument()) {
+				String arg2Name = arg2.getStart() + "," + arg2.getEnd();
+				Entity entity2 = doc.entityCorefMap.get(arg2Name);
+				String role2 = arg2.getRole();
+
+				if (role1.equals(role2) && role1.equals("Time-Within")) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						
+					} else {
+						time_conflict = true;
+					}
+				}
+				
+				if (role1.equals(role2) && role1.equals("Place")) {
+					if (entity1 == null && entity2 == null
+							&& arg1.getExtent().equals(arg2.getExtent())) {
+						
+					} else if (entity1 != null && entity2 != null
+							&& entity1 == entity2) {
+						
+					} else {
+						place_conflict = true;
+					}
+				}
+			}
+		}
+		feas.add("time_conflict#" + time_conflict);
+		feas.add("place_conflict#" + place_conflict);
 		
 //		feas.add("mod#" + this.ana.modality);
 //		feas.add("pol#" + this.ana.polarity);

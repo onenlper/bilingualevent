@@ -8,16 +8,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Random;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
 import model.EventChain;
 import model.EventMention;
+import model.EventMentionArgument;
 import util.Common;
 import util.Util;
 import coref.ResolveGroup.Entry;
-import event.postProcess.AttriEvaluate;
-import event.triggerEng.EngArgEval;
 
 public class ApplyEM {
 
@@ -144,10 +144,10 @@ public class ApplyEM {
 		ArrayList<ArrayList<EventChain>> goldEventChains = new ArrayList<ArrayList<EventChain>>();
 		ArrayList<ArrayList<EventChain>> systemEventChains = new ArrayList<ArrayList<EventChain>>();
 
-//		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", "0");
-//		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", "0");
-//		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", "0");
-//		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", "0");
+//		HashMap<String, HashMap<String, String>> polarityMaps = AttriEvaluate.loadSystemAttri("polarity", Util.part);
+//		HashMap<String, HashMap<String, String>> modalityMaps = AttriEvaluate.loadSystemAttri("modality", Util.part);
+//		HashMap<String, HashMap<String, String>> genericityMaps = AttriEvaluate.loadSystemAttri("genericity", Util.part);
+//		HashMap<String, HashMap<String, String>> tenseMaps = AttriEvaluate.loadSystemAttri("tense", Util.part);
 //		
 //		HashMap<String, HashMap<String, HashMap<String, Double>>> polarityConfMaps = AttriEvaluate.loadSystemAttriWithConf("polarity", "0");
 //		HashMap<String, HashMap<String, HashMap<String, Double>>> modalityConfMaps = AttriEvaluate.loadSystemAttriWithConf("modality", "0");
@@ -174,13 +174,14 @@ public class ApplyEM {
 			ArrayList<EventMention> corefResult = new ArrayList<EventMention>();
 			corefResults.put(doc.fileID, corefResult);
 
-//			HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
-//			
-//			if(evmMaps==null) {
-//				evmMaps = new HashMap<String, EventMention>();
-//			}
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
+			
+//			Util.setSystemAttribute(events, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
 //			ArrayList<EventMention> events = doc.goldEventMentions;
+//			Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
+//					doc.goldEntityMentions, doc.goldValueMentions,
+//					doc.goldTimeMentions, doc);
+				
 			
 			Collections.sort(events);
 			
@@ -293,7 +294,7 @@ public class ApplyEM {
 			}
 			EventMention fake = new EventMention();
 			fake.extent = "fakkkkke";
-			fake.setAnchor("Fake");
+			fake.setAnchor("Fake" + (new Random()).nextInt(20));
 			fake.setFake();
 			cands.add(fake);
 
@@ -382,6 +383,24 @@ public class ApplyEM {
 					EventMention cand = entry.ant;
 					Context context = entry.context;
 
+					boolean coref = chainMap.containsKey(anaphor.toName())
+							&& chainMap.containsKey(cand.toName())
+							&& chainMap.get(anaphor.toName()).intValue() == chainMap
+									.get(cand.toName()).intValue();
+					
+					if(coref && Context.extraRole(cand, anaphor)) {
+//						System.out.println(cand.getAnchor());
+//						for(EventMentionArgument arg : cand.getEventMentionArguments()) {
+//							System.out.println(arg.getRole() + " # " + arg.mention.head);
+//						}
+//						System.out.println("---");
+//						System.out.println(anaphor.getAnchor());
+//						for(EventMentionArgument arg : anaphor.getEventMentionArguments()) {
+//							System.out.println(arg.getRole() + " # " + arg.mention.head);
+//						}
+//						System.out.println("=====================");
+					}
+					
 					// if(entry.p_c!=0) {
 					// entry.p_c = 1.0/(seq+1);
 					// }
@@ -444,7 +463,7 @@ public class ApplyEM {
 					
 					for(int g=0;g<Context.getSubContext().size();g++) {
 						int pos[] = Context.getSubContext().get(g);
-						String key = context.toString().substring(pos[0], pos[1]);
+						String key = context.getKey(g);
 						if(multiFracContextsProbl1.get(g).containsKey(key)) {
 							p_context_l1 *= multiFracContextsProbl1.get(g).get(key);
 						} else {
@@ -465,9 +484,9 @@ public class ApplyEM {
 							;
 //					p2nd *= 1 * p_tense 
 //							* p_polarity 
-//							* p_eventSubType
+////							* p_eventSubType
 //							* p_genericity * p_modality
-							;
+//							;
 					double p = p2nd;
 					probs[i] = p;
 					if (p > maxP && p != 0) {
@@ -485,8 +504,6 @@ public class ApplyEM {
 //						antName = entry.antName;
 //						break;
 //					}
-					
-					
 				}
 
 			// if (antecedent != null && antecedent.isFake) {
@@ -521,6 +538,20 @@ public class ApplyEM {
 						&& chainMap.get(anaphor.toName()).intValue() == chainMap
 								.get(antecedent.toName()).intValue();
 
+				if(!coref) {
+//					System.out.println(antecedent.getAnchor() + " @ " + chainMap.containsKey(antecedent.toName()));
+//					for(EventMentionArgument arg : antecedent.getEventMentionArguments()) {
+//						System.out.println(arg.getRole() + " # " + arg.mention.head);
+//					}
+//					System.out.println("---");
+//					System.out.println(anaphor.getAnchor() + " @ " + chainMap.containsKey(anaphor.toName()));
+//					for(EventMentionArgument arg : anaphor.getEventMentionArguments()) {
+//						System.out.println(arg.getRole() + " # " + arg.mention.head);
+//					}
+//					System.out.println("=====================");
+					
+				}
+				
 				if (!coref && goldCorefs.size() != 0) {
 					// anaphor.antecedent= goldCorefs.get(0);
 					// System.out.println("Anaphor: " + anaphor.getAnchor() +
@@ -538,18 +569,18 @@ public class ApplyEM {
 				}
 
 				if (!coref && goldCorefs.size() == 0) {
-					// anaphor.antecedent= null;
-					// System.out.println("Anaphor: " + anaphor.getAnchor() +
-					// " "
-					// + anaphor.getType()
-					// + " # " + chainMap.containsKey(anaphor.toName()));
-					// System.out.println("Selected: " + antecedent.getAnchor()
-					// + " "
-					// + antecedent.getType() + " # "
-					// + chainMap.containsKey(antecedent.toName()));
-					// System.out.println("True Ante: EMPTY");
-					// System.out.println("---------------------------");
-					// print(antecedent, anaphor, part, chainMap);
+//					 anaphor.antecedent= null;
+//					 System.out.println("Anaphor: " + anaphor.getAnchor() +
+//					 " "
+//					 + anaphor.getType()
+//					 + " # " + chainMap.containsKey(anaphor.toName()));
+//					 System.out.println("Selected: " + antecedent.getAnchor()
+//					 + " "
+//					 + antecedent.getType() + " # "
+//					 + chainMap.containsKey(antecedent.toName()));
+//					 System.out.println("True Ante: EMPTY");
+//					 System.out.println("---------------------------");
+//					 print(antecedent, anaphor, part, chainMap);
 				}
 
 			}
