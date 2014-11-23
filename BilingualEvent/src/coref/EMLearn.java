@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Random;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
@@ -96,7 +97,7 @@ public class EMLearn {
 		Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
 				doc.goldEntityMentions, doc.goldValueMentions,
 				doc.goldTimeMentions, doc);
-
+		Collections.sort(doc.goldEventMentions);
 		for (int i = 0; i < doc.goldEventMentions.size(); i++) {
 			doc.goldEventMentions.get(i).sequenceID = i;
 		}
@@ -134,7 +135,7 @@ public class EMLearn {
 				}
 
 				EventMention fake = new EventMention();
-				fake.setAnchor("Fake");
+				fake.setAnchor("Fake" + (new Random()).nextInt(20));
 				fake.extent = "fakkkkke";
 				fake.setFake();
 				ants.add(fake);
@@ -337,7 +338,11 @@ public class EMLearn {
 				
 				for(int i=0;i<Context.getSubContext().size();i++) {
 					int pos[] = Context.getSubContext().get(i);
-					String key = context.toString().substring(pos[0], pos[1]);
+					String key = context.getKey(i);
+					if(key.equals("-")) {
+						System.out.println(context.toString());
+						Common.bangErrorPOS("!!!");
+					}
 					if(multiFracContextsProbl1.get(i).containsKey(key)) {
 						p_context_l1 *= multiFracContextsProbl1.get(i).get(key);
 					} else {
@@ -360,11 +365,11 @@ public class EMLearn {
 				entry.p = p_context * entry.p_c
 //						* p_anchor
 						;
-				// entry.p *= 1 * p_tense
-				// * p_polarity
-				// // * p_eventSubType
-				// * p_genericity * p_modality
-				;
+//				 entry.p *= 1 * p_tense
+//				 * p_polarity
+//				 // * p_eventSubType
+//				 * p_genericity * p_modality
+//				;
 
 				norm += entry.p;
 			}
@@ -438,7 +443,7 @@ public class EMLearn {
 				
 				for(int i=0;i<Context.getSubContext().size();i++) {
 					int ps[] = Context.getSubContext().get(i);
-					String key = context.toString().substring(ps[0], ps[1]);
+					String key = context.getKey(i);
 					double l1 = p;
 					double l0 = 1 - p;
 					
@@ -509,7 +514,6 @@ public class EMLearn {
 		Util.part = args[0];
 		run();
 		Common.outputHashSet(trs, "trSet" + Util.part);
-		
 		Common.outputHashSet(Context.todo, "trPair");
 	}
 
@@ -531,7 +535,7 @@ public class EMLearn {
 
 		tenseP.printParameter("tenseP" + Util.part);
 		polarityP.printParameter("polarityP" + Util.part);
-		triggerP.printParameter("eventSubTypeP" + Util.part);
+		triggerP.printParameter("triggerP" + Util.part);
 		genericityP.printParameter("genericityP" + Util.part);
 		modalityP.printParameter("modalityP" + Util.part);
 

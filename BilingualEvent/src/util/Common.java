@@ -1127,4 +1127,28 @@ public class Common {
 		return sb.toString().trim();
 	}
 
+	public static void outputHashSetList(ArrayList<HashSet<String>> sets, String fn) {
+		ArrayList<String> output = new ArrayList<String>();
+		for(HashSet<String> set : sets) {
+			StringBuilder sb = new StringBuilder();
+			for(String k : set){
+				sb.append(k).append("#");
+			}
+			output.add(sb.toString());
+		}
+		Common.outputLines(output, fn);
+	}
+	
+	public static ArrayList<HashSet<String>> readHashSetList(String fn) {
+		ArrayList<String> lines = Common.getLines(fn);
+		ArrayList<HashSet<String>> lst = new ArrayList<HashSet<String>>();
+		for(String line : lines) {
+			String tks[] = line.split("#");
+			HashSet<String> set = new HashSet<String>();
+			set.addAll(Arrays.asList(tks));
+			lst.add(set);
+		}
+		return lst;
+	}
+	
 }

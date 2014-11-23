@@ -51,6 +51,10 @@ public class EventCorefTest {
 			lengths.add(doc.content.length());
 			
 //			ArrayList<EventMention> events = doc.goldEventMentions;
+//			Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
+//			doc.goldEntityMentions, doc.goldValueMentions,
+//			doc.goldTimeMentions, doc);
+			
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
 //			HashMap<String, EventMention> evmMaps = jointSVMLines.get(file);
 //			

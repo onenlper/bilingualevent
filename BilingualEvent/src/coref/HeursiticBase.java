@@ -45,6 +45,10 @@ public class HeursiticBase {
 			lengths.add(doc.content.length());
 			
 //			ArrayList<EventMention> events = doc.goldEventMentions;
+//			Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
+//					doc.goldEntityMentions, doc.goldValueMentions,
+//					doc.goldTimeMentions, doc);
+			
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
 			
 			Collections.sort(events);
@@ -105,22 +109,27 @@ public class HeursiticBase {
 				EventMention cand = cands.get(i);
 
 				if(
-//						!Util.highPrecissionNegativeConstraint(cand, anaphor) && 
-//						(cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) ||
-//								Util._commonBV_(cand, anaphor))
-						cand.getAnchor().equals(anaphor.getAnchor())
+						!Util.highPrecissionNegativeConstraint(cand, anaphor) && 
+						
+//						(cand.antecedent==null || !Util.highPrecissionNegativeConstraint(cand.antecedent, anaphor))
+//						&&
+//						(cand.antecedent==null || cand.antecedent.antecedent==null || !Util.highPrecissionNegativeConstraint(cand.antecedent.antecedent, anaphor))
+//						&&
+						(cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) ||
+								Util._commonBV_(cand, anaphor))
+//						cand.getAnchor().equals(anaphor.getAnchor())
 //						cand.getSubType().equals(anaphor.getSubType())
-						) {
+//						) {
 				
 //				if(
 //						cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor())
 ////						doc.getWord(cand.getAnchorStart()).equalsIgnoreCase(doc.getWord(anaphor.getAnchorStart()))
-////						&&
-////						cand.getSubType().equals(anaphor.getSubType()) 
-////						&& cand.tense.equals(anaphor.tense) 
-////						&& cand.modality.equals(anaphor.modality) && cand.genericity.equals(anaphor.genericity) 
-////						&& cand.polarity.equals(anaphor.polarity)
-//						) {
+//						&&
+//						cand.getSubType().equals(anaphor.getSubType()) 
+//						&& cand.tense.equals(anaphor.tense) 
+//						&& cand.modality.equals(anaphor.modality) && cand.genericity.equals(anaphor.genericity) 
+//						&& cand.polarity.equals(anaphor.polarity)
+						) {
 					anaphor.antecedent = cand;
 					break;
 				}
