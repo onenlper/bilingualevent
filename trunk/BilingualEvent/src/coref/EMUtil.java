@@ -61,6 +61,23 @@ public class EMUtil {
 //			return 0;
 		}
 		
+//		short dis = (short) (m.sequenceID - ant.sequenceID);
+////		if (dis >= cap) {
+////			dis = cap;
+////		}
+//		int ret = (short) Context.bins.length;
+//		for(int i =0;i<Context.bins.length;i++) {
+//			int bin = Context.bins[i];
+//			if(dis<bin) {
+//				ret = (short) i;
+//				break;
+//			}
+//		}
+//		return Context.probs[ret];
+		
+		if(Context.inNegativeContext(ant, m, doc)==1) {
+			return 0;
+		}
 		
 		return 1;
 	}

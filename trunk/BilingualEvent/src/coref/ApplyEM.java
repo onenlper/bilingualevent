@@ -299,14 +299,14 @@ public class ApplyEM {
 			cands.add(fake);
 
 			ResolveGroup rg = new ResolveGroup(anaphor, doc, cands);
-			int seq = 0;
+			int norm = 0;
 			for (EventMention cand : cands) {
 				Entry entry = new Entry(cand, null, doc);
 				rg.entries.add(entry);
 				entry.p_c = EMUtil.getP_C(cand, anaphor, doc);
-				if (entry.p_c != 0) {
-					seq += 1;
-				}
+//				if (entry.p_c != 0) {
+					norm += entry.p_c;
+//				}
 
 				if (!chainMaps.containsKey(entry.antName) && !entry.isFake) {
 					HashSet<String> set = new HashSet<String>();
@@ -316,9 +316,9 @@ public class ApplyEM {
 			}
 			for (Entry entry : rg.entries) {
 				if (entry.isFake) {
-					entry.p_c = Entry.p_fake_decay / (Entry.p_fake_decay + seq);
+					entry.p_c = Entry.p_fake_decay / (Entry.p_fake_decay + norm);
 				} else if (entry.p_c != 0) {
-					entry.p_c = 1 / (Entry.p_fake_decay + seq);
+					entry.p_c = 1 / (Entry.p_fake_decay + norm);
 				}
 			}
 

@@ -64,8 +64,10 @@ public class Context implements Serializable {
 
 		int[] f = { 5, 6 };
 		subContext.add(f);
+		normConstant.add((int) (bins.length));
+		
 //		normConstant.add((int) cap);
-		normConstant.add((int) (bins.length + 1));
+		
 //		 int[] g = {6, 7};
 //		 subContext.add(g);
 //		 normConstant.add(2);
@@ -178,7 +180,7 @@ public class Context implements Serializable {
 	public static HashSet<String> negative = Common.readFile2Set("negative");
 	public static HashSet<String> negativeRight = Common.readFile2Set("negativeRight");
 	
-	private static short inNegativeContext(EventMention ant, EventMention em,
+	public static short inNegativeContext(EventMention ant, EventMention em,
 			ACEDoc doc) {
 		if (ant.isFake()) {
 			return 0;
@@ -641,16 +643,15 @@ public class Context implements Serializable {
 
 	static int[] bins = {7, 10, 11, 14};
 	
+	public static double[] probs = {.0, .5, .0, .0, .0};
+	
 //	static int[] bins = {7, 10, 11, 14};
 	
-	private static short getEvDis(EventMention ant, EventMention anaphor) {
+	public static short getEvDis(EventMention ant, EventMention anaphor) {
 		// if(ant.isFake()) {
 		// return 1;
 		// }
 		short dis = (short) (anaphor.sequenceID - ant.sequenceID);
-//		if (dis >= cap) {
-//			dis = cap;
-//		}
 		short ret = (short) bins.length;
 		for(int i =0;i<bins.length;i++) {
 			int bin = bins[i];
@@ -660,18 +661,6 @@ public class Context implements Serializable {
 			}
 		}
 		return ret;
-//		if(dis<3) {
-//			return 1;
-//		} else if(dis<5) {
-//			return 2;
-//		} else if(dis<7) {
-//			return 3;
-//		} else if(dis<9){
-//			return 4;
-//		} else {
-//			return 5;
-//		}
-//		return (short) (dis);
 	}
 
 	private static short getSentDis(EventMention ant, EventMention anaphor,

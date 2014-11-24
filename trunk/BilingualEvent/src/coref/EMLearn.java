@@ -144,22 +144,22 @@ public class EMLearn {
 				Collections.sort(ants);
 				Collections.reverse(ants);
 
-				int seq = 0;
+				double norm = 0;
 
 				for (EventMention ant : ants) {
 					Entry entry = new Entry(ant, null, doc);
 					rg.entries.add(entry);
 					entry.p_c = EMUtil.getP_C(ant, m, doc);
-					if (entry.p_c != 0) {
-						seq += 1;
-					}
+//					if (entry.p_c != 0) {
+						norm += entry.p_c;
+//					}
 				}
 				for (Entry entry : rg.entries) {
 					if (entry.isFake) {
 						entry.p_c = Entry.p_fake_decay
-								/ (Entry.p_fake_decay + seq);
+								/ (Entry.p_fake_decay + norm);
 					} else if (entry.p_c != 0) {
-						entry.p_c = 1 / (Entry.p_fake_decay + seq);
+						entry.p_c = 1 / (Entry.p_fake_decay + norm);
 					}
 				}
 				
