@@ -74,6 +74,7 @@ public class EMLearn {
 		modalityP = new Parameter(new HashSet<String>(EMUtil.Modality.subList(
 				0, EMUtil.Modality.size() - 1)));
 		triggerP = new Parameter(Common.readFile2Set("trSet"));
+//		triggerP = new Parameter(new HashSet<String>(Util.subTypes));
 
 		for(int i=0;i<Context.getSubContext().size();i++) {
 			multiFracContextsCountl0.add(new HashMap<String, Double>());
@@ -135,10 +136,11 @@ public class EMLearn {
 				}
 
 				EventMention fake = new EventMention();
-				fake.setAnchor(m.getAnchor());
+				fake.setAnchor("Fake");
 				fake.extent = "fakkkkke";
 				fake.setFake();
 				ants.add(fake);
+				fake.setSubType("null");
 
 				ResolveGroup rg = new ResolveGroup(m, doc, ants);
 				Collections.sort(ants);
@@ -302,6 +304,23 @@ public class EMLearn {
 				}
 			}
 			double norm = 0;
+			
+			double P_anchor_fake = 0;
+			double all = 0;
+			for(Entry entry : rg.entries) {
+				if(entry.isFake || entry.p_c==0) {
+					continue;
+				}
+				all += 1;
+				P_anchor_fake += triggerP.getVal(
+						entry.ant.getAnchor(), rg.m.getAnchor());
+			}
+			if(all==0) {
+				P_anchor_fake = 0;
+			} else {
+				P_anchor_fake = P_anchor_fake/all;
+			}
+			
 			for (Entry entry : rg.entries) {
 				Context context = entry.context;
 
@@ -314,9 +333,14 @@ public class EMLearn {
 				double p_genericity = genericityP.getVal(entry.ant.genericity,
 						rg.m.genericity);
 
-				double p_anchor = triggerP.getVal(
-						entry.ant.getAnchor(), rg.m.getAnchor());
-
+				double p_anchor = 0;
+				if(entry.isFake){
+					p_anchor = P_anchor_fake;
+				} else {
+					p_anchor = triggerP.getVal(
+							entry.ant.getAnchor(), rg.m.getAnchor());
+				}
+						
 				double p_context = .5;
 //				Double d = contextVals.get(context.toString());
 //				if (contextVals.containsKey(context.toString())) {
@@ -360,10 +384,8 @@ public class EMLearn {
 				
 //				double pdenom = 0;
 				
-				
-				
 				entry.p = p_context * entry.p_c
-//						* p_anchor
+						* p_anchor
 						;
 //				 entry.p *= 1 * p_tense
 //				 * p_polarity
@@ -374,7 +396,7 @@ public class EMLearn {
 				norm += entry.p;
 			}
 
-			double max = 0;
+			double max = -1;
 			int maxIdx = -1;
 
 			String antName = "";
@@ -388,10 +410,10 @@ public class EMLearn {
 					}
 				}
 			} else {
-				Common.bangErrorPOS("!");
+//				Common.bangErrorPOS("!");
 			}
-
-			if (!antName.equals("fake")) {
+			
+			if (!antName.equals("fake") && !antName.isEmpty()) {
 				HashSet<String> corefs = chainMaps.get(antName);
 				corefs.add(rg.anaphorName);
 				chainMaps.put(rg.anaphorName, corefs);
@@ -425,9 +447,10 @@ public class EMLearn {
 
 				tenseP.addFracCount(entry.ant.tense, group.m.tense, p);
 				polarityP.addFracCount(entry.ant.polarity, group.m.polarity, p);
-				triggerP.addFracCount(entry.ant.getAnchor(),
+				if(!entry.isFake) {
+					triggerP.addFracCount(entry.ant.getAnchor(),
 						group.m.getAnchor(), p);
-
+				}
 				genericityP.addFracCount(entry.ant.genericity,
 						group.m.genericity, p);
 
@@ -513,8 +536,8 @@ public class EMLearn {
 		}
 		Util.part = args[0];
 		run();
-		Common.outputHashSet(trs, "trSet" + Util.part);
-		Common.outputHashSet(Context.todo, "trPair");
+//		Common.outputHashSet(trs, "trSet" + Util.part);
+//		Common.outputHashSet(Context.todo, "trPair");
 	}
 
 	private static void run() throws IOException, FileNotFoundException {

@@ -74,10 +74,9 @@ public class EMUtil {
 //			}
 //		}
 //		return Context.probs[ret];
-		
-		if(Context.inNegativeContext(ant, m, doc)==1) {
-			return 0;
-		}
+//		if(Context.inNegativeContext(ant, m, doc)==1) {
+//			return 0;
+//		}
 		
 		return 1;
 	}
