@@ -524,7 +524,7 @@ public class ApplyEM {
 			// System.out.println("---------------------------");
 			// }
 			// }
-
+//			antecedent = fake;
 			if (antecedent != null && !antecedent.isFake()
 					&& anaphor.antecedent == null) {
 				HashSet<String> corefs = chainMaps.get(antName);
