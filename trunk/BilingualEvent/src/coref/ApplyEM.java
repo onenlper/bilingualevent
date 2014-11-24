@@ -8,16 +8,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Random;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
 import model.EventChain;
 import model.EventMention;
-import model.EventMentionArgument;
 import util.Common;
 import util.Util;
 import coref.ResolveGroup.Entry;
+import event.postProcess.AttriEvaluate;
 
 public class ApplyEM {
 
@@ -175,8 +174,8 @@ public class ApplyEM {
 			corefResults.put(doc.fileID, corefResult);
 
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
-			
 //			Util.setSystemAttribute(events, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
+			
 //			ArrayList<EventMention> events = doc.goldEventMentions;
 //			Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
 //					doc.goldEntityMentions, doc.goldValueMentions,
@@ -294,9 +293,10 @@ public class ApplyEM {
 			}
 			EventMention fake = new EventMention();
 			fake.extent = "fakkkkke";
-			fake.setAnchor(anaphor.getAnchor());
+			fake.setAnchor("Fake");
 			fake.setFake();
 			cands.add(fake);
+			fake.setSubType("null");
 
 			ResolveGroup rg = new ResolveGroup(anaphor, doc, cands);
 			int norm = 0;
@@ -377,7 +377,25 @@ public class ApplyEM {
 
 			// TODO
 			String antName = "";
-			if (anaphor.antecedent == null)
+				
+				
+				double P_anchor_fake = 0;
+				double all = 0;
+				for(Entry entry : rg.entries) {
+					if(entry.isFake || entry.p_c==0) {
+						continue;
+					}
+					all += 1;
+					P_anchor_fake += triggerP.getVal(
+						entry.ant.getAnchor(), rg.m.getAnchor());
+				}
+				if(all==0) {
+					P_anchor_fake = 0;
+				} else {
+					P_anchor_fake = P_anchor_fake/all;
+				}
+				
+				
 				for (int i = 0; i < rg.entries.size(); i++) {
 					Entry entry = rg.entries.get(i);
 					EventMention cand = entry.ant;
@@ -444,10 +462,13 @@ public class ApplyEM {
 //					System.out.println(cand.isFake() + "genericity: " + p_genericity + "\t" + p_genericity2);
 //					System.out.println("===========");
 					
-					double p_anchor = triggerP.getVal(
+					double p_anchor = 0;
+					if(entry.isFake){
+						p_anchor = P_anchor_fake;
+					} else {
+						p_anchor = triggerP.getVal(
 							entry.ant.getAnchor(), anaphor.getAnchor());
-
-					
+					}
 					double p_context = 0.5;
 					if (fracContextCount.containsKey(context.toString())) {
 						p_context = (1.0 * EMUtil.alpha + fracContextCount
@@ -480,7 +501,7 @@ public class ApplyEM {
 					p_context = p_context_l1/(p_context_l1 + p_context_l0);
 					
 					double p2nd = p_context * entry.p_c
-//							* p_anchor
+							* p_anchor
 							;
 //					p2nd *= 1 * p_tense 
 //							* p_polarity 
