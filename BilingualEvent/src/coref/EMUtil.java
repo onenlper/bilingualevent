@@ -3,12 +3,12 @@ package coref;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import model.ACEDoc;
-import model.Entity;
 import model.EventChain;
 import model.EventMention;
-import model.EventMentionArgument;
+import util.Common;
 
 public class EMUtil {
 	
@@ -39,11 +39,29 @@ public class EMUtil {
 		return mentions;
 	}
 
+	public static HashSet<String> negativeSets = Common.readFile2Set("negativePairs");
+	
 	public static double getP_C(EventMention ant, EventMention m, ACEDoc doc) {
 		// TODO Auto-generated method stub
 		if(!ant.subType.equals(m.subType) && !ant.getAnchor().equals(m.getAnchor())) {
 			return 0;
 		}
+		
+		String tr1 = ant.getAnchor();
+		String tr2 = m.getAnchor();
+		
+		String key = "";
+		if(tr1.compareTo(tr2)>0) {
+			key = tr1 + "#" + tr2;
+		} else {
+			key = tr2 + "#" + tr1;
+		}
+		if(negativeSets.contains(key)) {
+//			System.out.println(key);
+//			return 0;
+		}
+		
+		
 		return 1;
 	}
 

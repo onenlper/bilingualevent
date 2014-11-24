@@ -294,7 +294,7 @@ public class ApplyEM {
 			}
 			EventMention fake = new EventMention();
 			fake.extent = "fakkkkke";
-			fake.setAnchor("Fake" + (new Random()).nextInt(20));
+			fake.setAnchor(anaphor.getAnchor());
 			fake.setFake();
 			cands.add(fake);
 
@@ -387,7 +387,7 @@ public class ApplyEM {
 							&& chainMap.containsKey(cand.toName())
 							&& chainMap.get(anaphor.toName()).intValue() == chainMap
 									.get(cand.toName()).intValue();
-					
+					Context.coref = coref;
 					if(coref && Context.extraRole(cand, anaphor)) {
 //						System.out.println(cand.getAnchor());
 //						for(EventMentionArgument arg : cand.getEventMentionArguments()) {

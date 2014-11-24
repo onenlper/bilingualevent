@@ -5,11 +5,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import model.ACEDoc;
 import model.Entity;
 import model.EventMention;
 import model.EventMentionArgument;
+import model.syntaxTree.MyTreeNode;
+import util.CollectNegativeContext;
 import util.Common;
 import util.Util;
 import event.supercoref.EventCorefFea;
@@ -46,29 +49,31 @@ public class Context implements Serializable {
 		int[] b = { 1, 2 };
 		subContext.add(b);
 		normConstant.add(2);
-		
-		int[] c = {2, 3};
+
+		int[] c = { 2, 3 };
 		subContext.add(c);
 		normConstant.add(2);
-		
-		int[] d = {3, 4};
+
+		int[] d = { 3, 4 };
 		subContext.add(d);
 		normConstant.add(2);
-		
-		int[] e = {4, 5};
+
+		int[] e = { 4, 5 };
 		subContext.add(e);
 		normConstant.add(2);
-		
-		int[] f = {5, 6};
+
+		int[] f = { 5, 6 };
 		subContext.add(f);
-		normConstant.add((int)cap);
-		
-//		int[] g = {6, 7};
-//		subContext.add(g);
-//		normConstant.add(3);
-		
+//		normConstant.add((int) cap);
+		normConstant.add((int) (bins.length + 1));
+//		 int[] g = {6, 7};
+//		 subContext.add(g);
+//		 normConstant.add(2);
+
 		return subContext;
 	}
+
+	static short sentCap = 10;
 
 	public static Context getContext(int[] feas) {
 		// long feaL = 0;
@@ -89,12 +94,13 @@ public class Context implements Serializable {
 			return c;
 		}
 	}
-	
+
 	public String getKey(int i) {
-//		return this.toString().substring(subContext.get(i)[0], subContext.get(i)[1]);
+		// return this.toString().substring(subContext.get(i)[0],
+		// subContext.get(i)[1]);
 		String tks[] = this.toString().split("#");
 		StringBuilder sb = new StringBuilder();
-		for(int m=subContext.get(i)[0];m<subContext.get(i)[1];m++) {
+		for (int m = subContext.get(i)[0]; m < subContext.get(i)[1]; m++) {
 			sb.append(tks[m]).append("#");
 		}
 		return sb.toString();
@@ -120,63 +126,145 @@ public class Context implements Serializable {
 	static short[] feas = new short[18];
 
 	public static HashSet<String> todo = new HashSet<String>();
-	
-	public static HashMap<String, Double> simi = Common.readFile2Map5("trPair.simi");
+
+	public static HashMap<String, Double> simi = Common
+			.readFile2Map5("trPair.simi");
 
 	public static Context buildContext(EventMention ant, EventMention anaphor,
 			ACEDoc doc, ArrayList<EventMention> allCands, int mentionDis) {
-		
-//		String pair = ant.getAnchor() + " " + anaphor.getAnchor();
-//		double sim = simi.get(pair);
 
-//		System.out.println(ant.getAnchor() + " " + anaphor.getAnchor());
-		if(ant.getAnchor().isEmpty() || anaphor.getAnchor().isEmpty()) {
+		// String pair = ant.getAnchor() + " " + anaphor.getAnchor();
+		// double sim = simi.get(pair);
+
+		// System.out.println(ant.getAnchor() + " " + anaphor.getAnchor());
+		if (ant.getAnchor().isEmpty() || anaphor.getAnchor().isEmpty()) {
 			Common.bangErrorPOS("!!!");
 		}
-		
+
 		int id = 0;
 		int[] feas = new int[10];
-		
+
 		feas[id++] = isExactMatch(ant, anaphor, doc);
-		
+
 		feas[id++] = isConflictACERole(ant, anaphor);
 		feas[id++] = isConflictNumber(ant, anaphor);
 		feas[id++] = isConflictValueArgument(ant, anaphor);
 		feas[id++] = conflictArg_(ant, anaphor);
-
 		feas[id++] = getEvDis(ant, anaphor);
-//		if(ant.isFake() || sim>0.8) {
-//			feas[id++] = 0;
-//		} else {
-//			feas[id++] = 1;
-//		}
-		
 
-//		feas[id++] = compareArgs(ant, anaphor);
-//		 feas[id++] = getDistance(ant, anaphor, doc);
-//		feas[id++] = highPrec(ant, anaphor, doc);
-//		feas[id++] = isSameBV(ant, anaphor);
-//		feas[id++] = getMentionDiss(mentionDis);
-		
-		// 
+//		feas[id++] = inNegativeContext(ant, anaphor, doc);
+		// feas[id++] = getSentDis(ant, anaphor, doc);
+		// if(ant.isFake() || sim>0.8) {
+		// feas[id++] = 0;
+		// } else {
+		// feas[id++] = 1;
+		// }
+
+		// feas[id++] = compareArgs(ant, anaphor);
+		// feas[id++] = getDistance(ant, anaphor, doc);
+		// feas[id++] = highPrec(ant, anaphor, doc);
+		// feas[id++] = isSameBV(ant, anaphor);
+		// feas[id++] = getMentionDiss(mentionDis);
+
+		//
 		// feas[id++] = conflictArg(ant, anaphor, doc);
 		// feas[id++] = getSimi(ant, anaphor, doc);
-//		 feas[id++] = conflictPlaceTime(ant, anaphor, doc);
+		// feas[id++] = conflictPlaceTime(ant, anaphor, doc);
 		// feas[id++] = conflictCorefArg(ant, anaphor, doc);
 		// feas[id++] = corefArg(ant, anaphor, doc);
 		return getContext(feas);
 	}
 
+	public static HashSet<String> negative = Common.readFile2Set("negative");
+	public static HashSet<String> negativeRight = Common.readFile2Set("negativeRight");
+	
+	private static short inNegativeContext(EventMention ant, EventMention em,
+			ACEDoc doc) {
+		if (ant.isFake()) {
+			return 0;
+		}
+
+		EventMention e1 = ant;
+		EventMention e2 = em;
+
+		MyTreeNode node1 = doc.getTreeNode(e1.getAnchorStart());
+		MyTreeNode clause1 = CollectNegativeContext.lowestClause(node1, doc);
+
+		HashMap<String, ArrayList<String>> left1 = CollectNegativeContext
+				.getLeftWords(clause1, node1);
+		HashMap<String, ArrayList<String>> right1 = CollectNegativeContext
+				.getRightWords(clause1, node1);
+
+		MyTreeNode node2 = doc.getTreeNode(e2.getAnchorStart());
+		MyTreeNode clause2 = CollectNegativeContext.lowestClause(node2, doc);
+
+		HashMap<String, ArrayList<String>> left2 = CollectNegativeContext
+				.getLeftWords(clause2, node2);
+		HashMap<String, ArrayList<String>> right2 = CollectNegativeContext
+				.getRightWords(clause2, node2);
+
+		for(String key : left1.keySet()) {
+			if(left2.containsKey(key)) {
+				for(String s1 : left1.get(key)) {
+					for(String s2 : left2.get(key)) {
+						
+						String k = "";
+						if(s1.compareTo(s2)<0) {
+							k = s1 + "#" + s2; 
+						} else {
+							k = s2 + "#" + s1;
+						}
+						if(negative.contains(k)) {
+							if(coref)
+							System.out.println(k);
+							return 1;
+						}
+						
+					}
+				}
+				
+			}
+		}
+		
+		for(String key : right1.keySet()) {
+			if(right2.containsKey(key)) {
+				for(String s1 : right1.get(key)) {
+					for(String s2 : right2.get(key)) {
+						
+						String k = "";
+						if(s1.compareTo(s2)<0) {
+							k = s1 + "#" + s2; 
+						} else {
+							k = s2 + "#" + s1;
+						}
+						if(negativeRight.contains(k)) {
+							if(coref)
+							System.out.println(k);
+							return 1;
+						}
+						
+					}
+				}
+				
+			}
+		}
+		
+		return 0;
+	}
+
 	private static short compareArgs(EventMention ant, EventMention em) {
-		if(ant.isFake() || ant.getEventMentionArguments().size()==em.getEventMentionArguments().size()) {
+		if (ant.isFake()
+				|| ant.getEventMentionArguments().size() == em
+						.getEventMentionArguments().size()) {
 			return 1;
-		} else if(ant.getEventMentionArguments().size()>=em.getEventMentionArguments().size()) {
+		} else if (ant.getEventMentionArguments().size() >= em
+				.getEventMentionArguments().size()) {
 			return 1;
 		} else {
 			return 2;
 		}
 	}
-	
+
 	private static short isSameBV(EventMention ant, EventMention em) {
 		if (ant.isFake()) {
 			return 0;
@@ -216,64 +304,70 @@ public class Context implements Serializable {
 			return 1;
 		}
 		if (Util._conflictValueArgument_(ant, em)
-//				|| corefDiffRole(ant, em)
-//				|| extraRole(ant, em)
-//				|| diffNum(ant, em)
-				) {
+		// || corefDiffRole(ant, em)
+		// || extraRole(ant, em)
+		// || diffNum(ant, em)
+		) {
 			return 0;
 		} else {
 			return 1;
 		}
 	}
-	
+
 	public static boolean diffNum(EventMention ant, EventMention em) {
-		for(String role : em.argHash.keySet()) {
-			if(ant.argHash.containsKey(role) && ant.argHash.get(role).size()!=em.argHash.get(role).size()) {
+		for (String role : em.argHash.keySet()) {
+			if (ant.argHash.containsKey(role)
+					&& ant.argHash.get(role).size() != em.argHash.get(role)
+							.size()) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	public static boolean extraRole(EventMention ant, EventMention em) {
-		if(ant.getEventMentionArguments().size()>1 && em.getEventMentionArguments().size()>1) {
+		if (ant.getEventMentionArguments().size() > 1
+				&& em.getEventMentionArguments().size() > 1) {
 			HashSet<String> roles1 = new HashSet<String>(ant.argHash.keySet());
 			HashSet<String> roles2 = new HashSet<String>(em.argHash.keySet());
 			boolean match = false;
-			for(String r1 : roles1) {
-				for(String r2 : roles2) {
-					if(r1.equals(r2)) {
+			for (String r1 : roles1) {
+				for (String r2 : roles2) {
+					if (r1.equals(r2)) {
 						match = true;
 					}
 				}
 			}
-			if(!match) {
+			if (!match) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	private static boolean corefDiffRole(EventMention ant, EventMention em) {
-		for(EventMentionArgument arg1 : ant.getEventMentionArguments()) {
-			for(EventMentionArgument arg2 : em.getEventMentionArguments()) {
-				if(!arg1.role.equals(arg2.role)) {
-					if(arg1.mention.entity==arg2.mention.entity && arg1.mention.entity!=null 
-							&& arg2.mention.entity!=null) {
-						
-						
+		for (EventMentionArgument arg1 : ant.getEventMentionArguments()) {
+			for (EventMentionArgument arg2 : em.getEventMentionArguments()) {
+				if (!arg1.role.equals(arg2.role)) {
+					if (arg1.mention.entity == arg2.mention.entity
+							&& arg1.mention.entity != null
+							&& arg2.mention.entity != null) {
+
 						System.out.println(ant.getAnchor());
-						for(EventMentionArgument arg : ant.getEventMentionArguments()) {
-							System.out.println(arg.getRole() + " # " + arg.mention.head);
+						for (EventMentionArgument arg : ant
+								.getEventMentionArguments()) {
+							System.out.println(arg.getRole() + " # "
+									+ arg.mention.head);
 						}
 						System.out.println("---");
 						System.out.println(em.getAnchor());
-						for(EventMentionArgument arg : em.getEventMentionArguments()) {
-							System.out.println(arg.getRole() + " # " + arg.mention.head);
+						for (EventMentionArgument arg : em
+								.getEventMentionArguments()) {
+							System.out.println(arg.getRole() + " # "
+									+ arg.mention.head);
 						}
 						System.out.println("=====================");
-						
-						
+
 						return true;
 					}
 				}
@@ -281,30 +375,40 @@ public class Context implements Serializable {
 		}
 		return false;
 	}
-	
+
 	private static boolean conflictTime(EventMention ant, EventMention em) {
-		for(String role : em.argHash.keySet()) {
-			if(!role.equals("Time-Within")) {
+		for (String role : em.argHash.keySet()) {
+			if (!role.equals("Time-Within")) {
 				continue;
 			}
 			String t1 = em.argHash.get("Time-Within").get(0).mention.head;
-			
-			if(ant.argHash.containsKey(role)) {
+
+			if (ant.argHash.containsKey(role)) {
 				String t2 = ant.argHash.get("Time-Within").get(0).mention.head;
-				if(!t1.contains(t2) || !t2.contains(t1))
-				return true;
+				if (!t1.contains(t2) || !t2.contains(t1))
+					return true;
 			}
 		}
 		return false;
 	}
 
+	public static List<String> roles = Arrays.asList("Crime", "Victim",
+			"Origin", "Adjudicator", "Time-Holds", "Time-Before", "Target",
+			"Time-At-End", "Org", "Recipient", "Vehicle", "Plaintiff",
+			"Attacker", "Place", "Buyer", "Money", "Giver", "Beneficiary",
+			"Agent", "Time-Ending", "Time-After", "Time-Starting", "Seller",
+			"Defendant", "Time-Within", "Artifact", "Time-At-Beginning",
+			"Prosecutor", "Sentence", "Price", "Position", "Instrument",
+			"Destination", "Person", "Entity", "null");
+
 	private static short conflictArg_(EventMention ant, EventMention em) {
 		if (ant.isFake()) {
 			return 1;
 		}
-		ArrayList<String> discreteRoles = new ArrayList<String>(Arrays.asList(
+		List<String> discreteRoles = new ArrayList<String>(Arrays.asList(
 				"Place", "Org", "Position", "Adjudicator", "Origin", "Giver",
 				"Recipient", "Defendant"));
+
 		for (String role : discreteRoles) {
 			if (Util.conflictArg_(ant, em, role)) {
 				return 0;
@@ -517,7 +621,7 @@ public class Context implements Serializable {
 	private static short getMentionDiss(int diss) {
 		if (diss == 0) {
 			return 0;
-		} else if(diss==1){
+		} else if (diss == 1) {
 			return 1;
 		} else {
 			return 2;
@@ -534,16 +638,58 @@ public class Context implements Serializable {
 	}
 
 	static short cap = 20;
+
+	static int[] bins = {7, 10, 11, 14};
+	
+//	static int[] bins = {7, 10, 11, 14};
 	
 	private static short getEvDis(EventMention ant, EventMention anaphor) {
-//		if(ant.isFake()) {
-//			return 1;
-//		}
+		// if(ant.isFake()) {
+		// return 1;
+		// }
 		short dis = (short) (anaphor.sequenceID - ant.sequenceID);
-		if(dis>=cap) {
-			dis = cap;
+//		if (dis >= cap) {
+//			dis = cap;
+//		}
+		short ret = (short) bins.length;
+		for(int i =0;i<bins.length;i++) {
+			int bin = bins[i];
+			if(dis<bin) {
+				ret = (short) i;
+				break;
+			}
 		}
-		return dis;
+		return ret;
+//		if(dis<3) {
+//			return 1;
+//		} else if(dis<5) {
+//			return 2;
+//		} else if(dis<7) {
+//			return 3;
+//		} else if(dis<9){
+//			return 4;
+//		} else {
+//			return 5;
+//		}
+//		return (short) (dis);
+	}
+
+	private static short getSentDis(EventMention ant, EventMention anaphor,
+			ACEDoc doc) {
+		// if(ant.isFake()) {
+		// return 1;
+		// }
+		short d1 = 0;
+		if (!ant.isFake()) {
+			d1 = (short) doc.positionMap.get(ant.getAnchorStart())[0];
+		}
+		short d2 = (short) doc.positionMap.get(anaphor.getAnchorStart())[1];
+
+		short dis = (short) (d2 - d1);
+		if (dis >= sentCap) {
+			dis = sentCap;
+		}
+		return (short) (dis / 40);
 	}
 
 	private static short getDistance(EventMention ant, EventMention anaphor,
@@ -558,12 +704,11 @@ public class Context implements Serializable {
 		return (short) (Math.log(diss) / Math.log(2));
 	}
 
-	
 	static ArrayList<HashSet<String>> clusters = null;
-	
+
 	private static short isExactMatch(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
-		if(clusters==null) {
+		if (clusters == null) {
 			clusters = Common.readHashSetList("seedClusters");
 		}
 		if (ant.isFake()) {
@@ -571,23 +716,29 @@ public class Context implements Serializable {
 		}
 		String pair = ant.getAnchor() + " " + anaphor.getAnchor();
 		double sim = 0;
-		if(!simi.containsKey(pair)) {
+		if (!simi.containsKey(pair)) {
 			todo.add(pair);
 			sim = 0;
 			Common.bangErrorPOS("");
-		} else 
+		} else
 			sim = simi.get(pair);
+//		if(sim==10) {
+//			sim = 0;
+//		}
 		boolean sameCluster = false;
-		for(int i=0;i<clusters.size();i++) {
-			if(clusters.get(i).contains(ant.getAnchor()) && clusters.get(i).contains(anaphor.getAnchor())) {
-//				sameCluster = true;
-//				if(!ant.getAnchor().equals(anaphor.getAnchor()))
-//					System.out.println(ant.getAnchor() + "#" + anaphor.getAnchor());
+		for (int i = 0; i < clusters.size(); i++) {
+			if (clusters.get(i).contains(ant.getAnchor())
+					&& clusters.get(i).contains(anaphor.getAnchor())) {
+				// sameCluster = true;
+				// if(!ant.getAnchor().equals(anaphor.getAnchor()))
+				// System.out.println(ant.getAnchor() + "#" +
+				// anaphor.getAnchor());
 			}
 		}
 		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())
-				|| (Util._commonBV_(ant, anaphor) && sim>0.30) || sim>0.85 || sameCluster
-				) {
+				|| (Util._commonBV_(ant, anaphor) && sim > 0.30)
+				|| sim > 0.85
+				|| sameCluster) {
 			return 1;
 		} else {
 			return 0;
