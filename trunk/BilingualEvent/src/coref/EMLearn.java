@@ -135,7 +135,7 @@ public class EMLearn {
 				}
 
 				EventMention fake = new EventMention();
-				fake.setAnchor("Fake" + (new Random()).nextInt(20));
+				fake.setAnchor(m.getAnchor());
 				fake.extent = "fakkkkke";
 				fake.setFake();
 				ants.add(fake);
