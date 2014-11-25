@@ -60,15 +60,11 @@ public class Context implements Serializable {
 		int[] f = { 5, 6 };
 		subContext.add(f);
 		
-//		int[] g = { 6, 7 };
-//		subContext.add(g);
-		
 		normConstant.add(2);
 		normConstant.add(2);
 		normConstant.add(2);
 		normConstant.add(2);
 		normConstant.add(2);
-//		normConstant.add(2);
 		normConstant.add((int) (bins.length));
 
 //		normConstant.add((int) cap);
@@ -151,6 +147,7 @@ public class Context implements Serializable {
 		int[] feas = new int[10];
 
 		feas[id++] = isExactMatch(ant, anaphor, doc);
+		
 		feas[id++] = isConflictACERole(ant, anaphor);
 		feas[id++] = isConflictNumber(ant, anaphor);
 		feas[id++] = isConflictValueArgument(ant, anaphor);
@@ -699,44 +696,8 @@ public class Context implements Serializable {
 
 	static ArrayList<HashSet<String>> clusters = null;
 
-//	private static short isBVConflict(EventMention ant, EventMention anaphor, ACEDoc doc) {
-//		if(ant.isFake()) {
-//			return 0;
-//		}
-//		
-//		if (ant.getAnchor().equals(em.getAnchor())) {
-//			return false;
-//		}
-//		// common character
-//		boolean common = false;
-//		loop: for (int i = 0; i < ant.getAnchor().length(); i++) {
-//			for (int j = 0; j < em.getAnchor().length(); j++) {
-//				if (ant.getAnchor().charAt(i) == em.getAnchor().charAt(j)) {
-//					common = true;
-//					break loop;
-//				}
-//			}
-//		}
-//		// same meaning
-//		/*
-//		 * // String[] sem1 = Common.getSemantic(em.head); // String[] sem2 =
-//		 * Common.getSemantic(an.head); // if(sem1!=null && sem2!=null) { //
-//		 * for(String s1 : sem1) { // for(String s2 : sem2) { //
-//		 * if(s1.equals(s2) && s1.endsWith("=")) { // return true; // } // } //
-//		 * } // }
-//		 */
-//
-//		if (common) {
-//			if (!conflictBV(ant, em))
-//		
-//		
-//	}
-	
 	private static short isExactMatch(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
-		if (clusters == null) {
-			clusters = Common.readHashSetList("seedClusters");
-		}
 		if (ant.isFake()) {
 			return 1;
 		}
@@ -747,47 +708,76 @@ public class Context implements Serializable {
 			sim = 0;
 			Common.bangErrorPOS("");
 		} else
-			sim = simi.get(pair);
-//		if(sim==10) {
-//			sim = 0;
-//		}
-		boolean sameCluster = false;
-		for (int i = 0; i < clusters.size(); i++) {
-			if (clusters.get(i).contains(ant.getAnchor())
-					&& clusters.get(i).contains(anaphor.getAnchor())) {
-				// sameCluster = true;
-				// if(!ant.getAnchor().equals(anaphor.getAnchor()))
-				// System.out.println(ant.getAnchor() + "#" +
-				// anaphor.getAnchor());
+		
+		sim = simi.get(pair);
+
+		boolean sameBV = false;
+		for (String bv1 : ant.bvs.keySet()) {
+			for (String bv2 : anaphor.bvs.keySet()) {
+				if (bv1.equals(bv2)) {
+					sameBV = true;
+				}
 			}
 		}
+		
 		if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())
-				|| (Util._commonBV_(ant, anaphor) && sim > 0.30)
+				|| (
+						sameBV 
+						&& isBVConflict(ant, anaphor, doc)==1
+						&& sim > 0.30
+						)
 				|| sim > 0.85
-				|| sameCluster) {
+				) {
 			return 1;
 		} else {
 			return 0;
 		}
-		// int p1[] = doc.positionMap.get(ant.getAnchorStart());
-		// int p2[] = doc.positionMap.get(anaphor.getAnchorStart());
-		//
-		// String lemma1 = doc.parseReults.get(p1[0]).lemmas.get(p1[1]);
-		// String lemma2 = doc.parseReults.get(p2[0]).lemmas.get(p2[1]);
-		//
-		// if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) !=
-		// lemma1.equalsIgnoreCase(lemma2)) {
-		// // Common.pause(":!!!");
-		// }
-		//
-		// // if (ant.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) {
-		// if(lemma1.equalsIgnoreCase(lemma2)) {
-		// return 1;
-		// } else {
-		// return 0;
-		// }
 	}
-
+	
+	private static short isBVConflict(EventMention ant, EventMention anaphor, ACEDoc doc) {
+		if(ant.isFake()) {
+			return 1;
+		}
+	
+		if (ant.getAnchor().equals(anaphor.getAnchor())) {
+			return 1;
+		}
+//		
+//		double sim = 0;
+//		String pair = ant.getAnchor() + " " + anaphor.getAnchor();
+//		if (!simi.containsKey(pair)) {
+//			todo.add(pair);
+//			sim = 0;
+//			Common.bangErrorPOS("");
+//		} else
+//			sim = simi.get(pair);
+//		if(sim>.85) {
+//			return 1;
+//		}
+		boolean sameBV = false;
+		for (String bv1 : anaphor.bvs.keySet()) {
+			String pattern1 = anaphor.bvs.get(bv1);
+			int idx1 = anaphor.getAnchor().indexOf(bv1);
+			for (String bv2 : ant.bvs.keySet()) {
+				String pattern2 = ant.bvs.get(bv2);
+				int idx2 = ant.getAnchor().indexOf(bv2);
+				if (bv1.equals(bv2)) {
+					sameBV = true;
+					if (idx1 != idx2 && ant.getAnchor().length() != 1 && anaphor.getAnchor().length() != 1) {
+						return 0;
+					}
+					if (pattern1.equals(pattern2) && (pattern1.equals("verb_BV") || pattern1.equals("BV_verb") || pattern1.equals("adj_BV"))) {
+//						搜捕 # 逮捕
+//						轻伤 # 重伤
+						System.out.println(anaphor.getAnchor() + " # " + ant.getAnchor());
+						return 0;
+					}
+				}
+			}
+		}
+		return 1;
+	}
+	
 	public static String message;
 
 }
