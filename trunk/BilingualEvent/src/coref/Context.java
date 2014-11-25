@@ -44,30 +44,34 @@ public class Context implements Serializable {
 		subContext = new ArrayList<int[]>();
 		int[] a = { 0, 1 };
 		subContext.add(a);
-		normConstant.add(2);
-
+		
 		int[] b = { 1, 2 };
 		subContext.add(b);
-		normConstant.add(2);
-
+		
 		int[] c = { 2, 3 };
 		subContext.add(c);
-		normConstant.add(2);
 
 		int[] d = { 3, 4 };
 		subContext.add(d);
-		normConstant.add(2);
 
 		int[] e = { 4, 5 };
 		subContext.add(e);
-		normConstant.add(2);
-
+		
 		int[] f = { 5, 6 };
 		subContext.add(f);
+		
+//		int[] g = { 6, 7 };
+//		subContext.add(g);
+		
+		normConstant.add(2);
+		normConstant.add(2);
+		normConstant.add(2);
+		normConstant.add(2);
+		normConstant.add(2);
+//		normConstant.add(2);
 		normConstant.add((int) (bins.length));
-		
+
 //		normConstant.add((int) cap);
-		
 //		 int[] g = {6, 7};
 //		 subContext.add(g);
 //		 normConstant.add(2);
@@ -147,13 +151,13 @@ public class Context implements Serializable {
 		int[] feas = new int[10];
 
 		feas[id++] = isExactMatch(ant, anaphor, doc);
-
 		feas[id++] = isConflictACERole(ant, anaphor);
 		feas[id++] = isConflictNumber(ant, anaphor);
 		feas[id++] = isConflictValueArgument(ant, anaphor);
 		feas[id++] = conflictArg_(ant, anaphor);
 		feas[id++] = getEvDis(ant, anaphor);
 
+		
 //		feas[id++] = inNegativeContext(ant, anaphor, doc);
 		// feas[id++] = getSentDis(ant, anaphor, doc);
 		// if(ant.isFake() || sim>0.8) {
@@ -695,6 +699,39 @@ public class Context implements Serializable {
 
 	static ArrayList<HashSet<String>> clusters = null;
 
+//	private static short isBVConflict(EventMention ant, EventMention anaphor, ACEDoc doc) {
+//		if(ant.isFake()) {
+//			return 0;
+//		}
+//		
+//		if (ant.getAnchor().equals(em.getAnchor())) {
+//			return false;
+//		}
+//		// common character
+//		boolean common = false;
+//		loop: for (int i = 0; i < ant.getAnchor().length(); i++) {
+//			for (int j = 0; j < em.getAnchor().length(); j++) {
+//				if (ant.getAnchor().charAt(i) == em.getAnchor().charAt(j)) {
+//					common = true;
+//					break loop;
+//				}
+//			}
+//		}
+//		// same meaning
+//		/*
+//		 * // String[] sem1 = Common.getSemantic(em.head); // String[] sem2 =
+//		 * Common.getSemantic(an.head); // if(sem1!=null && sem2!=null) { //
+//		 * for(String s1 : sem1) { // for(String s2 : sem2) { //
+//		 * if(s1.equals(s2) && s1.endsWith("=")) { // return true; // } // } //
+//		 * } // }
+//		 */
+//
+//		if (common) {
+//			if (!conflictBV(ant, em))
+//		
+//		
+//	}
+	
 	private static short isExactMatch(EventMention ant, EventMention anaphor,
 			ACEDoc doc) {
 		if (clusters == null) {
