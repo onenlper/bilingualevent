@@ -129,7 +129,7 @@ public class Parameter implements Serializable {
 			for (String subKey : this.subKeys) {
 				if (this.values.get(key).containsKey(subKey)) {
 					sb.append("\t").append(
-							String.format("%.3f",
+							String.format("%.8f",
 									this.values.get(key).get(subKey)));
 					all += this.values.get(key).get(subKey);
 				} else {

@@ -175,7 +175,6 @@ public class ApplyEM {
 
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
 //			Util.setSystemAttribute(events, polarityMaps, modalityMaps, genericityMaps, tenseMaps, file);
-			
 //			ArrayList<EventMention> events = doc.goldEventMentions;
 //			Util.assignArgumentWithEntityMentions(doc.goldEventMentions,
 //					doc.goldEntityMentions, doc.goldValueMentions,
@@ -377,7 +376,6 @@ public class ApplyEM {
 
 			// TODO
 			String antName = "";
-				
 				
 				double P_anchor_fake = 0;
 				double all = 0;

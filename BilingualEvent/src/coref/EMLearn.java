@@ -516,13 +516,9 @@ public class EMLearn {
 				}
 				double pcountl1 = contextcountl1/(countl1 + Context.normConstant.get(i));
 				
-
 				multiFracContextsProbl0.get(i).put(key, pcountl0);
 				multiFracContextsProbl1.get(i).put(key, pcountl1);
 			}
-			
-			
-			
 		}
 	}
 
