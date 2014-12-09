@@ -384,7 +384,8 @@ public class EMLearn {
 				
 //				double pdenom = 0;
 				
-				entry.p = p_context * entry.p_c
+				entry.p = p_context 
+						* entry.p_c
 						* p_anchor
 						;
 //				 entry.p *= 1 * p_tense
@@ -579,7 +580,6 @@ public class EMLearn {
 		modelOut.writeObject(pl0);
 		modelOut.writeObject(pl1);
 
-		
 		for(int i=0;i<multiFracContextsProbl1.size();i++) {
 			ArrayList<String> output = new ArrayList<String>();
 			for(String key : multiFracContextsProbl1.get(i).keySet()) {
