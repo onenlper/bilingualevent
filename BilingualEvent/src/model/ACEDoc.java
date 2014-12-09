@@ -63,6 +63,15 @@ public abstract class ACEDoc {
 	public ArrayList<EventChain> eventChains;
 
 	public ACEDoc(String fileID, String sep) {
+		String os = System.getProperty("os.name");
+		System.out.println(os);
+		if(os.startsWith("Windows")) {
+			int a = fileID.indexOf("data");
+			String stem = fileID.substring(a).replace("/", "\\");
+			fileID = "C:\\Users\\USER\\workspace\\BilingualEvent\\data\\LDC2006T06\\" + stem;
+			System.out.println(fileID);
+		}
+		
 		this.content = "";
 		this.fileID = fileID;
 
