@@ -1686,7 +1686,11 @@ public class Util {
 			// }
 			String filename = "/users/yzcchen/workspace/NAACL2013-B/src/"
 					+ inter + "/result" + Integer.toString(folder);
-
+			String os = System.getProperty("os.name");
+			if(os.startsWith("Windows")) {
+				filename = "C:\\Users\\USER\\workspace\\BilingualEvent\\data\\joint_svm\\result" + Integer.toString(folder);
+			}
+			
 			ArrayList<String> lines = Common.getLines(filename);
 			int size = 0;
 			HashMap<String, ACEDoc> documentCache = new HashMap<String, ACEDoc>();
