@@ -178,82 +178,81 @@ public class Context implements Serializable {
 		return getContext(feas);
 	}
 
-	public static HashSet<String> negative = Common.readFile2Set("negative");
-	public static HashSet<String> negativeRight = Common.readFile2Set("negativeRight");
+//	public static HashSet<String> negative = Common.readFile2Set("negative");
+//	public static HashSet<String> negativeRight = Common.readFile2Set("negativeRight");
 	
-	public static short inNegativeContext(EventMention ant, EventMention em,
-			ACEDoc doc) {
-		if (ant.isFake()) {
-			return 0;
-		}
-
-		EventMention e1 = ant;
-		EventMention e2 = em;
-
-		MyTreeNode node1 = doc.getTreeNode(e1.getAnchorStart());
-		MyTreeNode clause1 = CollectNegativeContext.lowestClause(node1, doc);
-
-		HashMap<String, ArrayList<String>> left1 = CollectNegativeContext
-				.getLeftWords(clause1, node1);
-		HashMap<String, ArrayList<String>> right1 = CollectNegativeContext
-				.getRightWords(clause1, node1);
-
-		MyTreeNode node2 = doc.getTreeNode(e2.getAnchorStart());
-		MyTreeNode clause2 = CollectNegativeContext.lowestClause(node2, doc);
-
-		HashMap<String, ArrayList<String>> left2 = CollectNegativeContext
-				.getLeftWords(clause2, node2);
-		HashMap<String, ArrayList<String>> right2 = CollectNegativeContext
-				.getRightWords(clause2, node2);
-
-		for(String key : left1.keySet()) {
-			if(left2.containsKey(key)) {
-				for(String s1 : left1.get(key)) {
-					for(String s2 : left2.get(key)) {
-						
-						String k = "";
-						if(s1.compareTo(s2)<0) {
-							k = s1 + "#" + s2; 
-						} else {
-							k = s2 + "#" + s1;
-						}
-						if(negative.contains(k)) {
-							if(coref)
-							System.out.println(k);
-							return 1;
-						}
-						
-					}
-				}
-				
-			}
-		}
-		
-		for(String key : right1.keySet()) {
-			if(right2.containsKey(key)) {
-				for(String s1 : right1.get(key)) {
-					for(String s2 : right2.get(key)) {
-						
-						String k = "";
-						if(s1.compareTo(s2)<0) {
-							k = s1 + "#" + s2; 
-						} else {
-							k = s2 + "#" + s1;
-						}
-						if(negativeRight.contains(k)) {
-							if(coref)
-							System.out.println(k);
-							return 1;
-						}
-						
-					}
-				}
-				
-			}
-		}
-		
-		return 0;
-	}
+//	public static short inNegativeContext(EventMention ant, EventMention em,
+//			ACEDoc doc) {
+//		if (ant.isFake()) {
+//			return 0;
+//		}
+//
+//		EventMention e1 = ant;
+//		EventMention e2 = em;
+//
+//		MyTreeNode node1 = doc.getTreeNode(e1.getAnchorStart());
+//		MyTreeNode clause1 = CollectNegativeContext.lowestClause(node1, doc);
+//
+//		HashMap<String, ArrayList<String>> left1 = CollectNegativeContext
+//				.getLeftWords(clause1, node1);
+//		HashMap<String, ArrayList<String>> right1 = CollectNegativeContext
+//				.getRightWords(clause1, node1);
+//
+//		MyTreeNode node2 = doc.getTreeNode(e2.getAnchorStart());
+//		MyTreeNode clause2 = CollectNegativeContext.lowestClause(node2, doc);
+//
+//		HashMap<String, ArrayList<String>> left2 = CollectNegativeContext
+//				.getLeftWords(clause2, node2);
+//		HashMap<String, ArrayList<String>> right2 = CollectNegativeContext
+//				.getRightWords(clause2, node2);
+//
+//		for(String key : left1.keySet()) {
+//			if(left2.containsKey(key)) {
+//				for(String s1 : left1.get(key)) {
+//					for(String s2 : left2.get(key)) {
+//						
+//						String k = "";
+//						if(s1.compareTo(s2)<0) {
+//							k = s1 + "#" + s2; 
+//						} else {
+//							k = s2 + "#" + s1;
+//						}
+//						if(negative.contains(k)) {
+//							if(coref)
+//							System.out.println(k);
+//							return 1;
+//						}
+//						
+//					}
+//				}
+//				
+//			}
+//		}
+//		
+//		for(String key : right1.keySet()) {
+//			if(right2.containsKey(key)) {
+//				for(String s1 : right1.get(key)) {
+//					for(String s2 : right2.get(key)) {
+//						
+//						String k = "";
+//						if(s1.compareTo(s2)<0) {
+//							k = s1 + "#" + s2; 
+//						} else {
+//							k = s2 + "#" + s1;
+//						}
+//						if(negativeRight.contains(k)) {
+//							if(coref)
+//							System.out.println(k);
+//							return 1;
+//						}
+//						
+//					}
+//				}
+//				
+//			}
+//		}
+//		return 0;
+//	}
 
 	private static short compareArgs(EventMention ant, EventMention em) {
 		if (ant.isFake()
