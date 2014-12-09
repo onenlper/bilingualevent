@@ -1785,7 +1785,7 @@ public class Util {
 		if (timeExpressions == null) {
 			timeExpressions = getMentionsFromCRFFile(
 					Common.getLines("ACE_Chinese_test" + Util.part),
-					"/users/yzcchen/tool/CRF/CRF++-0.54/yy_time" + Util.part);
+					"yy_time" + Util.part);
 		}
 		return timeExpressions.get(doc.fileID);
 	}
@@ -1796,7 +1796,7 @@ public class Util {
 		if (valueExpressions == null) {
 			valueExpressions = getMentionsFromCRFFile(
 					Common.getLines("ACE_Chinese_test" + Util.part),
-					"/users/yzcchen/tool/CRF/CRF++-0.54/yy_value" + Util.part);
+					"yy_value" + Util.part);
 		}
 		return valueExpressions.get(doc.fileID);
 	}
