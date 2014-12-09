@@ -359,9 +359,9 @@ public abstract class ACEDoc {
 
 	public String getPostag(int idx) {
 		int position[] = this.positionMap.get(idx);
-		System.out.println(this.parseReults);
-		System.out.println(idx);
-		System.out.println(this.positionMap.values());
+//		System.out.println(this.parseReults);
+//		System.out.println(idx);
+//		System.out.println(this.positionMap.values());
 		return this.parseReults.get(position[0]).posTags.get(position[1]);
 	}
 
