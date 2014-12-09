@@ -918,8 +918,8 @@ public class Common {
 		return position;
 	}
 
-	public static String dicPath = "/users/yzcchen/workspace/ACL12/src/dict/";
-	// public static String dicPath = "./dict/";
+//	public static String dicPath = "/users/yzcchen/workspace/ACL12/src/dict/";
+	 public static String dicPath = "./dict/";
 
 	public static HashMap<String, String[]> semanticDic;
 
