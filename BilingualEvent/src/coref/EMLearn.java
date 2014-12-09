@@ -109,7 +109,7 @@ public class EMLearn {
 					i);
 
 			for (EventMention event : pr.evms) {
-				Util.assignSystemAttribute(doc.fileID, event, true);
+//				Util.assignSystemAttribute(doc.fileID, event, true);
 				trs.add(event.getAnchor());
 			}
 
