@@ -121,7 +121,7 @@ public class AltafToSemEval {
 	public static ArrayList<Entity> loadEntities(String iFileName) {
 		ArrayList<Entity> entities = new ArrayList<Entity>();
 		try {
-			BufferedReader input = new BufferedReader(new FileReader(iFileName));
+			BufferedReader input = Common.getBr(iFileName);
 			String line;
 			while ((line = input.readLine()) != null) {
 				String[] mentions = line.split("\\s");
