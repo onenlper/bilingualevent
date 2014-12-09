@@ -64,7 +64,6 @@ public abstract class ACEDoc {
 
 	public ACEDoc(String fileID, String sep) {
 		String os = System.getProperty("os.name");
-		System.out.println(os);
 		if(os.startsWith("Windows")) {
 			int a = fileID.indexOf("data");
 			String stem = fileID.substring(a).replace("/", "\\");
