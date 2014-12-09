@@ -2,11 +2,12 @@ package util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -396,7 +397,7 @@ public class Common {
 		StringBuilder sb = new StringBuilder();
 		try {
 			BufferedReader br;
-			br = new BufferedReader(new FileReader(filename));
+			br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				sb.append(line).append("\n");
@@ -564,7 +565,7 @@ public class Common {
 		HashSet<String> set = null;
 		try {
 			set = new HashSet<String>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				set.add(line.trim());
@@ -587,7 +588,7 @@ public class Common {
 		HashMap<String, int[]> map = null;
 		try {
 			map = new HashMap<String, int[]>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.isEmpty()) {
@@ -616,7 +617,7 @@ public class Common {
 		HashMap<String, Integer> map = null;
 		try {
 			map = new HashMap<String, Integer>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.isEmpty()) {
@@ -647,7 +648,7 @@ public class Common {
 		HashMap<String, Long> map = null;
 		try {
 			map = new HashMap<String, Long>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.isEmpty()) {
@@ -673,7 +674,7 @@ public class Common {
 		HashMap<String, Double> map = null;
 		try {
 			map = new HashMap<String, Double>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				int pos = line.lastIndexOf(' ');
@@ -698,7 +699,7 @@ public class Common {
 		HashMap<String, String> map = null;
 		try {
 			map = new HashMap<String, String>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				int pos = line.lastIndexOf(' ');
@@ -722,7 +723,7 @@ public class Common {
 		HashMap<String, String> map = null;
 		try {
 			map = new HashMap<String, String>();
-			BufferedReader br = new BufferedReader(new FileReader(filename));
+			BufferedReader br = getBr(filename);
 			String line;
 			while ((line = br.readLine()) != null) {
 				int pos = line.lastIndexOf(' ');
@@ -821,8 +822,12 @@ public class Common {
 	public static BufferedReader getBr(String filename) {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(filename));
+			br = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "UTF-8"));
+//			br = new BufferedReader(new FileReader(filename));
 		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
