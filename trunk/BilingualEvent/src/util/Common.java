@@ -401,6 +401,7 @@ public class Common {
 			while ((line = br.readLine()) != null) {
 				sb.append(line).append("\n");
 			}
+			br.close();
 			return sb.toString();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
