@@ -823,7 +823,6 @@ public class Common {
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "UTF-8"));
-//			br = new BufferedReader(new FileReader(filename));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
