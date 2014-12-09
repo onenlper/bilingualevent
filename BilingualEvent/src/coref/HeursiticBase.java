@@ -109,14 +109,15 @@ public class HeursiticBase {
 				EventMention cand = cands.get(i);
 
 				if(
-						!Util.highPrecissionNegativeConstraint(cand, anaphor) && 
-						
+//						!Util.highPrecissionNegativeConstraint(cand, anaphor) && 
 //						(cand.antecedent==null || !Util.highPrecissionNegativeConstraint(cand.antecedent, anaphor))
 //						&&
 //						(cand.antecedent==null || cand.antecedent.antecedent==null || !Util.highPrecissionNegativeConstraint(cand.antecedent.antecedent, anaphor))
 //						&&
-						(cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) ||
-								Util._commonBV_(cand, anaphor))
+//						(cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) 
+//								|| Util._commonBV_(cand, anaphor)
+						(false
+								)
 //						cand.getAnchor().equals(anaphor.getAnchor())
 //						cand.getSubType().equals(anaphor.getSubType())
 //						) {

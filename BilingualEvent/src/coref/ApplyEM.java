@@ -286,7 +286,6 @@ public class ApplyEM {
 				// && !predictBadOnes.contains(part.getPartName() + ":" +
 				// cand.toName())
 				) {
-
 					cands.add(cand);
 				}
 			}
@@ -479,7 +478,6 @@ public class ApplyEM {
 
 					double p_context_l1 = pl1;
 					double p_context_l0 = pl0;
-					
 					for(int g=0;g<Context.getSubContext().size();g++) {
 						int pos[] = Context.getSubContext().get(g);
 						String key = context.getKey(g);
@@ -498,7 +496,8 @@ public class ApplyEM {
 					
 					p_context = p_context_l1/(p_context_l1 + p_context_l0);
 					
-					double p2nd = p_context * entry.p_c
+					double p2nd = p_context
+							* entry.p_c
 							* p_anchor
 							;
 //					p2nd *= 1 * p_tense 

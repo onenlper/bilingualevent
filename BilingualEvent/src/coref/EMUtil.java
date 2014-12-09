@@ -39,10 +39,11 @@ public class EMUtil {
 		return mentions;
 	}
 
-//	public static HashSet<String> negativeSets = Common.readFile2Set("negativePairs");
+	public static HashSet<String> negativeSets = Common.readFile2Set("negativePairs");
 	
 	public static double getP_C(EventMention ant, EventMention m, ACEDoc doc) {
 		// TODO Auto-generated method stub
+		
 		if(!ant.subType.equals(m.subType) && !ant.getAnchor().equals(m.getAnchor())) {
 			return 0;
 		}
@@ -56,10 +57,10 @@ public class EMUtil {
 		} else {
 			key = tr2 + "#" + tr1;
 		}
-//		if(negativeSets.contains(key)) {
+		if(negativeSets.contains(key)) {
 //			System.out.println(key);
 //			return 0;
-//		}
+		}
 		
 //		short dis = (short) (m.sequenceID - ant.sequenceID);
 ////		if (dis >= cap) {
