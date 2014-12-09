@@ -63,6 +63,7 @@ public abstract class ACEDoc {
 	public ArrayList<EventChain> eventChains;
 
 	public ACEDoc(String fileID, String sep) {
+		System.setProperty("file.encoding", "UTF-8");
 		String os = System.getProperty("os.name");
 		if(os.startsWith("Windows")) {
 			int a = fileID.indexOf("data");
