@@ -768,7 +768,7 @@ public class Context implements Serializable {
 					if (pattern1.equals(pattern2) && (pattern1.equals("verb_BV") || pattern1.equals("BV_verb") || pattern1.equals("adj_BV"))) {
 //						搜捕 # 逮捕
 //						轻伤 # 重伤
-						System.out.println(anaphor.getAnchor() + " # " + ant.getAnchor());
+//						System.out.println(anaphor.getAnchor() + " # " + ant.getAnchor());
 						return 0;
 					}
 				}
