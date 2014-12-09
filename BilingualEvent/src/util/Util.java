@@ -1,5 +1,6 @@
 package util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1876,6 +1877,12 @@ public class Util {
 		// /users/yzcchen/chen3/conll12/chinese/goldEntityMentions/
 		String baseFolder = "/users/yzcchen/chen3/conll12/chinese/systemEntityMentions/ACE_test_"
 				+ Util.part + "/";
+		
+		String os = System.getProperty("os.name");
+		if(os.startsWith("Windows")) {
+			baseFolder = "C:\\Users\\USER\\workspace\\BilingualEvent\\data\\ACE_test_" + Util.part + "\\";
+		}
+		
 		ArrayList<String> lines = Common.getLines(baseFolder + doc.docID
 				+ ".entities.sieve.entity");
 		ArrayList<EntityMention> allMentions = new ArrayList<EntityMention>();
@@ -1918,6 +1925,7 @@ public class Util {
 		}
 		String stem = fileID.substring(fileID.indexOf("Chinese"));
 		String key = "/users/yzcchen/ACL12/data/ACE2005/" + stem + ".sgm";
+		key = key.replace("\\", "/");
 		ArrayList<EntityMention> systems = allSemanticResult.get(key);
 		boolean find = false;
 		for (EntityMention system : systems) {
@@ -1958,6 +1966,11 @@ public class Util {
 		HashMap<String, ArrayList<EntityMention>> allSVMResult = new HashMap<String, ArrayList<EntityMention>>();
 		// /users/yzcchen/chen3/conll12/chinese/semantic_gold_mention
 		String folder = "/users/yzcchen/ACL12/model/ACE2005/semantic_system_mention/";
+		
+		String os = System.getProperty("os.name");
+		if(os.startsWith("Windows")) {
+			folder = "C:\\Users\\USER\\workspace\\BilingualEvent\\data\\semantic_system_mention\\";
+		}
 		ArrayList<String> mentionStrs = Common.getLines(folder + "mention.test"
 				+ Util.part);
 		ArrayList<String> typeResult = Common.getLines(folder

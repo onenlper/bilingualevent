@@ -69,7 +69,7 @@ public abstract class ACEDoc {
 			int a = fileID.indexOf("data");
 			String stem = fileID.substring(a).replace("/", "\\");
 			fileID = "C:\\Users\\USER\\workspace\\BilingualEvent\\data\\LDC2006T06\\" + stem;
-			System.out.println(fileID);
+//			System.out.println(fileID);
 		}
 		
 		this.content = "";
