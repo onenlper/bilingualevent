@@ -180,7 +180,6 @@ public class ApplyEM {
 //					doc.goldEntityMentions, doc.goldValueMentions,
 //					doc.goldTimeMentions, doc);
 				
-			System.out.println(events.size());
 			Collections.sort(events);
 			
 			for(int i=0;i<events.size();i++) {
