@@ -388,6 +388,9 @@ public class EMLearn {
 						* entry.p_c
 						* p_anchor
 						;
+				
+
+				System.out.println(entry.p + "=" + p_context + "*" + entry.p_c + "*" + p_anchor);
 //				 entry.p *= 1 * p_tense
 //				 * p_polarity
 //				 // * p_eventSubType
@@ -405,7 +408,6 @@ public class EMLearn {
 				for (Entry entry : rg.entries) {
 					entry.p = entry.p / norm;
 
-					System.out.println(entry.p);
 					if (entry.p > max) {
 						max = entry.p;
 						antName = entry.antName;
