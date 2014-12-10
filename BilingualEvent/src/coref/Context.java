@@ -154,7 +154,7 @@ public class Context implements Serializable {
 		feas[id++] = isConflictACERole(ant, anaphor);
 		if(feas[1]==0) {
 			System.out.println(ant.toName() + "#" + anaphor.toName());
-			Common.pause("");
+//			Common.pause("");
 		}
 		feas[id++] = isConflictNumber(ant, anaphor);
 		feas[id++] = isConflictValueArgument(ant, anaphor);
