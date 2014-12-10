@@ -393,7 +393,6 @@ public class EMLearn {
 //				 // * p_eventSubType
 //				 * p_genericity * p_modality
 //				;
-
 				norm += entry.p;
 			}
 
@@ -405,6 +404,8 @@ public class EMLearn {
 			if (norm != 0) {
 				for (Entry entry : rg.entries) {
 					entry.p = entry.p / norm;
+
+					System.out.println(entry.p);
 					if (entry.p > max) {
 						max = entry.p;
 						antName = entry.antName;
@@ -420,6 +421,7 @@ public class EMLearn {
 				chainMaps.put(rg.anaphorName, corefs);
 			}
 		}
+		Common.pause(":");
 		// System.out.println(System.currentTimeMillis() - t1);
 	}
 
