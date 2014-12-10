@@ -506,6 +506,7 @@ public class ApplyEM {
 //							;
 					double p = p2nd;
 					probs[i] = p;
+					System.out.println(p);
 					if (p > maxP && p != 0) {
 						antecedent = cand;
 						maxP = p;
