@@ -2568,7 +2568,9 @@ public class Util {
 						}
 					}
 					
-					
+					if(conflict) {
+						return true;
+					}
 				}
 			}
 		}
