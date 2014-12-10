@@ -152,7 +152,8 @@ public class Context implements Serializable {
 
 		feas[id++] = isExactMatch(ant, anaphor, doc);
 		feas[id++] = isConflictACERole(ant, anaphor);
-		System.out.println(feas[1]);
+		if(feas[1]==0)
+			System.out.println(ant.toName() + "#" + anaphor.toName());
 		feas[id++] = isConflictNumber(ant, anaphor);
 		feas[id++] = isConflictValueArgument(ant, anaphor);
 		feas[id++] = conflictArg_(ant, anaphor);
