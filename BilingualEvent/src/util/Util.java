@@ -1341,7 +1341,7 @@ public class Util {
 		assignSemanticRole(allEvents, argumentCandidate, doc.semanticRoles);
 
 		for (EventMention event : allEvents) {
-			assignSystemAttribute(doc.fileID, event, false);
+//			assignSystemAttribute(doc.fileID, event, false);
 		}
 		assignArgumentWithEntityMentions(allEvents, entityMentions, timeExpressions, valueExpressions, doc);
 		return allEvents;
@@ -1650,8 +1650,15 @@ public class Util {
 			eventMentionsMap = readAllSystemEventMention();
 		}
 		ArrayList<EventMention> evms = new ArrayList<EventMention>();
-		if (eventMentionsMap.containsKey(fileID)) {
-			evms.addAll(eventMentionsMap.get(fileID).values());
+		
+		String key = fileID;
+		String os = System.getProperty("os.name");
+		if(os.startsWith("Windows")) {
+			int k = key.indexOf("Chinese");
+			key = "/users/yzcchen/chen3/coling2012/LDC2006T06/data/" + key.substring(k).replace("\\", "/");
+		}
+		if (eventMentionsMap.containsKey(key)) {
+			evms.addAll(eventMentionsMap.get(key).values());
 		}
 		return evms;
 	}
