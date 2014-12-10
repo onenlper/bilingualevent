@@ -360,7 +360,7 @@ public class EMLearn {
 				double p_context_l1 = pl1;
 				double p_context_l0 = pl0;
 				
-				System.out.println("pl0:" + p_context_l0);
+//				System.out.println("pl0:" + p_context_l0);
 				
 				for(int i=0;i<Context.getSubContext().size();i++) {
 					int pos[] = Context.getSubContext().get(i);
@@ -377,7 +377,6 @@ public class EMLearn {
 					
 					if(multiFracContextsProbl0.get(i).containsKey(key)) {
 						p_context_l0 *= multiFracContextsProbl0.get(i).get(key);
-						System.out.println(multiFracContextsProbl0.get(i).get(key) + "#");
 					} else {
 						p_context_l0 *= Context.normConstant.get(i);
 					}
@@ -423,7 +422,7 @@ public class EMLearn {
 				chainMaps.put(rg.anaphorName, corefs);
 			}
 		}
-		Common.pause(":");
+//		Common.pause(":");
 		// System.out.println(System.currentTimeMillis() - t1);
 	}
 
