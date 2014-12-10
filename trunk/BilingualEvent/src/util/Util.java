@@ -1791,7 +1791,13 @@ public class Util {
 					Common.getLines("ACE_Chinese_test" + Util.part),
 					"yy_time" + Util.part);
 		}
-		return timeExpressions.get(doc.fileID);
+		String key = doc.fileID;
+		String os = System.getProperty("os.name");
+		if(os.startsWith("Windows")) {
+			int k = key.indexOf("Chinese");
+			key = "/users/yzcchen/chen3/coling2012/LDC2006T06/data/" + key.substring(k).replace("\\", "/");
+		}
+		return timeExpressions.get(key);
 	}
 
 	private static HashMap<String, ArrayList<EntityMention>> valueExpressions;
@@ -1802,7 +1808,13 @@ public class Util {
 					Common.getLines("ACE_Chinese_test" + Util.part),
 					"yy_value" + Util.part);
 		}
-		return valueExpressions.get(doc.fileID);
+		String key = doc.fileID;
+		String os = System.getProperty("os.name");
+		if(os.startsWith("Windows")) {
+			int k = key.indexOf("Chinese");
+			key = "/users/yzcchen/chen3/coling2012/LDC2006T06/data/" + key.substring(k).replace("\\", "/");
+		}
+		return valueExpressions.get(key);
 	}
 
 	public static HashMap<String, ArrayList<EntityMention>> getMentionsFromCRFFile(
