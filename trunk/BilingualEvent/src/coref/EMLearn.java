@@ -381,6 +381,8 @@ public class EMLearn {
 				}
 				
 				p_context = p_context_l1/(p_context_l1 + p_context_l0);
+
+				System.out.println(p_context + "=" + p_context_l1 + "/" + p_context_l0);
 				
 //				double pdenom = 0;
 				
@@ -388,9 +390,6 @@ public class EMLearn {
 						* entry.p_c
 						* p_anchor
 						;
-				
-
-				System.out.println(entry.p + "=" + p_context + "*" + entry.p_c + "*" + p_anchor);
 //				 entry.p *= 1 * p_tense
 //				 * p_polarity
 //				 // * p_eventSubType
