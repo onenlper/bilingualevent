@@ -2,7 +2,6 @@ package event.supercoref;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
@@ -16,8 +15,6 @@ import edu.stanford.nlp.classify.LinearClassifier;
 import edu.stanford.nlp.ling.Datum;
 import edu.stanford.nlp.stats.Counter;
 import edu.stanford.nlp.stats.Distribution;
-import event.postProcess.AttriEvaluate;
-import event.triggerEng.EngArgEval;
 
 public class EventCorefTest {
 

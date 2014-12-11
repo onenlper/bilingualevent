@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import model.ACEDoc;
-import model.Entity;
 import model.EventChain;
 import model.EventMention;
-import model.EventMentionArgument;
 import util.Common;
 import util.Common.Feature;
 import util.YYFeature;
