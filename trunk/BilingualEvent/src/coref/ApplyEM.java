@@ -56,6 +56,7 @@ public class ApplyEM {
 	@SuppressWarnings("unchecked")
 	public ApplyEM(String folder) {
 		this.folder = folder;
+		System.out.println("Read Model...");
 		try {
 			ObjectInputStream modelInput = new ObjectInputStream(
 					new FileInputStream("EMModel" + Util.part));
@@ -81,7 +82,7 @@ public class ApplyEM {
 			
 			// Context.svoStat = (SVOStat)modelInput.readObject();
 			modelInput.close();
-
+			System.out.println("Finish Reading Model..");
 			// ObjectInputStream modelInput2 = new ObjectInputStream(
 			// new FileInputStream("giga2/EMModel"));
 			// tenseP = (Parameter) modelInput2.readObject();
