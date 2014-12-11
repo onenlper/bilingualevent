@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import event.triggerEng.EngArgEval;
-
 import model.ACEDoc;
 import model.ACEEngDoc;
 import model.EventMention;
@@ -14,6 +12,7 @@ import model.ParseResult;
 import model.syntaxTree.MyTreeNode;
 import util.Common;
 import util.Util;
+import event.triggerEng.EngArgEval;
 
 public class EventAttriFeaEng {
 
