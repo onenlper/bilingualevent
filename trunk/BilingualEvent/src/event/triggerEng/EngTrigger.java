@@ -10,7 +10,6 @@ import java.util.List;
 import model.ACEChiDoc;
 import model.ACEDoc;
 import model.ACEEngDoc;
-import model.Depend;
 import model.EntityMention;
 import model.EventMention;
 import model.EventMentionArgument;
