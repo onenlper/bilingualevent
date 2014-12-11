@@ -16,7 +16,6 @@ import model.EventMention;
 import util.Common;
 import util.Util;
 import coref.ResolveGroup.Entry;
-import event.postProcess.AttriEvaluate;
 
 public class ApplyEM {
 

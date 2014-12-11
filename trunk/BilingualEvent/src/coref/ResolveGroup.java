@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import model.ACEDoc;
-import model.EntityMention.Animacy;
-import model.EntityMention.Gender;
 import model.EventMention;
 
 public class ResolveGroup implements Serializable {

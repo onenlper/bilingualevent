@@ -1,19 +1,13 @@
 package coref;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
-import model.EntityMention;
-import model.EntityMention.Gender;
-import model.EntityMention.MentionType;
 import model.EventChain;
 import model.EventMention;
-import model.EventMentionArgument;
-import model.syntaxTree.MyTreeNode;
 import util.Common;
 import util.Util;
 
