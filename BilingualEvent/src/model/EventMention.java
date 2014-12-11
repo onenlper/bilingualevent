@@ -29,6 +29,8 @@ public class EventMention implements Comparable<EventMention> {
 	
 	public ArrayList<Double> typeConfidences = new ArrayList<Double>();
 	
+	public ArrayList<Double> subTypeConfidences = new ArrayList<Double>();
+	
 	public int isZeroPronoun = 0;
 
 	public ArrayList<EntityMention> zeroSubjects = null;
