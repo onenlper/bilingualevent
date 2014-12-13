@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import util.CollectCounts.Pair;
-
 import model.ACEChiDoc;
 import model.ACEDoc;
 import model.EventMention;
 import model.syntaxTree.MyTreeNode;
+import util.CollectCounts.Pair;
 
 public class CollectNegativeContext {
 
