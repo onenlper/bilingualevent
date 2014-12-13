@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import util.Common;
-
 public class ChDictionary {
 
 	public ChDictionary() {
