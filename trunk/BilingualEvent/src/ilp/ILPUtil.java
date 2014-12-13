@@ -5,8 +5,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import model.ACEDoc;
 import model.EventMention;
+import model.EventMentionArgument;
 import util.Common;
+import util.Util;
 
 public class ILPUtil {
 
@@ -107,6 +110,104 @@ public class ILPUtil {
 		return sig;
 	}
 
+	public static void loadSVMResutl2() {
+		String filename = "";
+		ArrayList<String> lines = Common.getLines(filename);
+		int size = 0;
+		HashMap<String, ACEDoc> documentCache = new HashMap<String, ACEDoc>();
+
+		
+		for (String line : lines) {
+			String tokens[] = line.split("\\s+");
+
+			String fileID = tokens[0];
+
+			// ACEDoc document = documentCache.get(fileID);
+			// if (document == null) {
+			// document = new ACEChiDoc(fileID);
+			// documentCache.put(fileID, document);
+			// }
+
+			HashMap<String, EventMention> eventMentions = eventMentionsMap
+					.get(fileID);
+			if (eventMentions == null) {
+				eventMentions = new HashMap<String, EventMention>();
+				eventMentionsMap.put(fileID, eventMentions);
+			}
+
+			int emStart = Integer.parseInt(tokens[1]);
+			int emEnd = Integer.parseInt(tokens[2]);
+			double emConfidence = Double.parseDouble(tokens[3]);
+			String type = tokens[4];
+			double typeConfidence = Double.parseDouble(tokens[5]);
+			String subType = tokens[6];
+
+			double subTypeConfidence = Double.parseDouble(tokens[7]);
+
+			EventMention temp = new EventMention();
+			temp.setAnchorStart(emStart);
+			temp.setAnchorEnd(emEnd);
+			// temp.setAnchor(document.content.substring(emStart, emEnd +
+			// 1).replace("\n", "").replace(" ", ""));
+			temp.confidence = emConfidence;
+			temp.type = type;
+			temp.typeConfidence = typeConfidence;
+			temp.subType = subType;
+			
+			if (temp.subType.equalsIgnoreCase("null")
+					|| temp.confidence < svmTh) {
+				continue;
+			}
+
+			// if (temp.subType.equalsIgnoreCase("null")) {
+			// temp.subType =
+			// pipelineResults.get(fileID).get(temp.toString()).subType;
+			// System.err.println("GE: " + temp.subType);
+			// }
+
+			temp.subTypeConfidence = subTypeConfidence;
+
+			EventMention eventMention = eventMentions.get(temp.toString());
+			if (eventMention == null) {
+				eventMention = temp;
+				eventMentions.put(temp.toString(), eventMention);
+				
+				// confidences
+				for(int i=0;i<Util.subTypes.size();i++) {
+					eventMention.subTypeConfidences.add(Double.parseDouble(tokens[13 + i]));
+				}
+				size++;
+			}
+
+			if (Integer.parseInt(tokens[8]) == -1) {
+				ArrayList<Double> confidences = new ArrayList<Double>();
+				for (int k = 13; k < tokens.length; k++) {
+					confidences.add(Double.valueOf(tokens[k]));
+				}
+				// eventMention.typeConfidences = confidences;
+				eventMention.inferFrom = tokens[9];
+				continue;
+			}
+
+			EventMentionArgument argument = new EventMentionArgument();
+			argument.setStart(Integer.parseInt(tokens[8]));
+			argument.setEnd(Integer.parseInt(tokens[9]));
+			argument.confidence = Double.parseDouble(tokens[10]);
+			argument.setRole(tokens[11]);
+			if (tokens[11].equalsIgnoreCase("null")) {
+				continue;
+			}
+			argument.roleConfidence = Double.parseDouble(tokens[12]);
+			argument.setEventMention(eventMention);
+			ArrayList<Double> confidences = new ArrayList<Double>();
+			for (int k = 13; k < tokens.length; k++) {
+				confidences.add(Double.valueOf(tokens[k]));
+			}
+			argument.roleConfidences = confidences;
+			eventMention.getEventMentionArguments().add(argument);
+		}
+	}
+	
 	public static void loadSVMResult() {
 		systemEMses = new HashMap<String, HashMap<String, EventMention>>();
 		ArrayList<String> lines = Common
