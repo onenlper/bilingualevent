@@ -1,6 +1,5 @@
 package util;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1738,7 +1737,7 @@ public class Util {
 				temp.type = type;
 				temp.typeConfidence = typeConfidence;
 				temp.subType = subType;
-
+				
 				if (temp.subType.equalsIgnoreCase("null")
 						|| temp.confidence < svmTh) {
 					continue;
@@ -1756,6 +1755,11 @@ public class Util {
 				if (eventMention == null) {
 					eventMention = temp;
 					eventMentions.put(temp.toString(), eventMention);
+					
+					// confidences
+					for(int i=0;i<Util.subTypes.size();i++) {
+						eventMention.subTypeConfidences.add(Double.parseDouble(tokens[13 + i]));
+					}
 					size++;
 				}
 
