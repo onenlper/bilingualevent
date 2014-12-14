@@ -22,7 +22,7 @@ public class EntityCorefTest {
 		run(args);
 	}
 
-	private static void run(String[] args) throws Exception {
+	public static void run(String[] args) throws Exception {
 		if(args.length!=1) {
 			System.out.println("java ~ part");
 			Common.bangErrorPOS("");
@@ -38,6 +38,8 @@ public class EntityCorefTest {
 		
 		ArrayList<ArrayList<Entity>> answers = new ArrayList<ArrayList<Entity>>();
 		ArrayList<ArrayList<Entity>> goldKeys = new ArrayList<ArrayList<Entity>>(); 
+		
+		probs.clear();
 		
 		ArrayList<String> fileNames= new ArrayList<String>();
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
@@ -59,7 +61,6 @@ public class EntityCorefTest {
 			for (int i = 0; i < entityMentions.size(); i++) {
 				EntityMention ana = entityMentions.get(i);
 
-				double maxVal = 0;
 				EntityMention predictAnt = null;
 				
 				for (int j = i - 1; j >= 0; j--) {
@@ -69,10 +70,13 @@ public class EntityCorefTest {
 					String feaStr = fea.getSVMFormatString();
 
 					double val = test(feaStr, classifier);
-					if (val > thres && val > maxVal) {
-						maxVal = val;
-						predictAnt = candidate;
-						break;
+					
+					probs.add(file + " " + candidate.toName() + " " + ana.toName() + " " + val);
+					
+					if (val > thres) {
+						if(predictAnt == null) {
+							predictAnt = candidate;
+						}
 					}
 				}
 
@@ -99,8 +103,12 @@ public class EntityCorefTest {
 		}
 		ToSemEval.outputSemFormatEntity(fileNames, lengths, "entity.sys." + args[0], answers);
 		ToSemEval.outputSemFormatEntity(fileNames, lengths, "entity.gold." + args[0], goldKeys);
+		
+		Common.outputLines(probs, "entityProbs");
 	}
 
+	static ArrayList<String> probs = new ArrayList<String>();
+	
 	public static double test(String str,
 			LinearClassifier<String, String> classifier) {
 

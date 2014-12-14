@@ -18,7 +18,7 @@ import event.supercoref.EventCorefFea;
 
 public class EntityCorefTrain {
 
-	public static void main(String args[]) {
+	public static void main(String args[]) throws Exception {
 		if(args.length!=1) {
 			System.out.println("java ~ part");
 			Common.bangErrorPOS("");
@@ -89,5 +89,7 @@ public class EntityCorefTrain {
 //		classifier.dump();
 		LinearClassifier.writeClassifier(classifier, "stanfordClassifierEntity" + args[0] + ".gz");
 		fea.freeze();
+		
+		EntityCorefTest.run(args);
 	}
 }
