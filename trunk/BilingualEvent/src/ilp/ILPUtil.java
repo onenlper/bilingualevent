@@ -116,7 +116,8 @@ public class ILPUtil {
 		int size = 0;
 		HashMap<String, ACEDoc> documentCache = new HashMap<String, ACEDoc>();
 
-		
+		HashMap<String, HashMap<String, EventMention>> eventMentionsMap = new HashMap<String, HashMap<String, EventMention>>();
+		double svmTh = 0;
 		for (String line : lines) {
 			String tokens[] = line.split("\\s+");
 
