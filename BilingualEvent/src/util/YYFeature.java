@@ -60,7 +60,7 @@ public abstract class YYFeature {
 
 		if (features != null) {
 			if (categoryFeaSize != -1 && categoryFeaSize != features.size()) {
-				System.err.println("Category fea size not equal!");
+				System.err.println("Category fea size not equal!: " + features.size() + "####" + categoryFeaSize);
 				System.exit(1);
 			}
 			categoryFeaSize = features.size();

@@ -14,6 +14,7 @@ import model.ACEEngDoc;
 import model.Depend;
 import model.Entity;
 import model.EntityMention;
+import model.EntityMention.Animacy;
 import model.EntityMention.Gender;
 import model.EntityMention.MentionType;
 import model.EntityMention.Numb;
@@ -1828,6 +1829,20 @@ public class Util {
 		return valueExpressions.get(key);
 	}
 
+	public static void calEntityMentionAttribute(EntityMention m, ACEDoc doc) {
+		
+		m.number = Numb.SINGULAR;
+		m.gender = Gender.MALE;
+		m.animacy = Animacy.ANIMATE;
+		
+	}
+	
+	public static void calEntityMentionAttribute(ArrayList<EntityMention> ems, ACEDoc doc) {
+		for(EntityMention m : ems) {
+			calEntityMentionAttribute(m, doc);
+		}
+	}
+	
 	public static HashMap<String, ArrayList<EntityMention>> getMentionsFromCRFFile(
 			ArrayList<String> files, String crfFile) {
 		ArrayList<ArrayList<EntityMention>> entityMentionses = new ArrayList<ArrayList<EntityMention>>();
@@ -1900,7 +1915,7 @@ public class Util {
 		return maps;
 	}
 
-	private static ArrayList<EntityMention> getSieveCorefMentions(ACEDoc doc) {
+	public static ArrayList<EntityMention> getSieveCorefMentions(ACEDoc doc) {
 		// /users/yzcchen/chen3/conll12/chinese/goldEntityMentions/
 		String baseFolder = "/users/yzcchen/chen3/conll12/chinese/systemEntityMentions/ACE_test_"
 				+ Util.part + "/";
