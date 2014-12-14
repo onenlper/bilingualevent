@@ -39,14 +39,10 @@ public class EntityCorefTrain {
 			
 			ACEDoc doc = new ACEChiDoc(file);
 			ArrayList<EntityMention> ems = doc.goldEntityMentions;
-			
 			Util.calEntityMentionAttribute(ems, doc);
-			
 			Collections.sort(ems);
 			
 			for(int i=0;i<ems.size();i++) {
-				
-				System.out.println(i + "#" + ems.size());
 				
 				EntityMention ana = ems.get(i);
 				boolean anaphor = false;
@@ -80,14 +76,14 @@ public class EntityCorefTrain {
 			}
 		}
 		Common.outputLines(trainLines, "entityTrain" + args[0]);
-		
+		System.out.println("Train model...");
 		LinearClassifierFactory<String, String> factory = new LinearClassifierFactory<String, String>();
 		factory.useConjugateGradientAscent();
 		// Turn on per-iteration convergence updates
 		factory.setVerbose(false);
 		// Small amount of smoothing
 		factory.setSigma(1);
-
+		
 		LinearClassifier<String, String> classifier = factory
 				.trainClassifier(trainingData);
 //		classifier.dump();
