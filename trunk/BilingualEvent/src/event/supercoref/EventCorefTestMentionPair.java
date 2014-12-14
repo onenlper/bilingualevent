@@ -24,6 +24,7 @@ public class EventCorefTestMentionPair {
 			Common.bangErrorPOS("");
 		}
 		Util.part = args[0];
+		probs.clear();
 		
 		LinearClassifier<String, String> classifier = LinearClassifier
 				.readClassifier("stanfordClassifier" + args[0] + ".gz");
@@ -62,9 +63,13 @@ public class EventCorefTestMentionPair {
 					String feaStr = fea.getSVMFormatString();
 
 					double val = test(feaStr, classifier);
+					
+					probs.add(file + " " + ec.getEventMentions().get(0).toName() + " " + ana.toName() + " " + val);
+					
 					if (val > thres && val > maxVal) {
 						maxVal = val;
 						corefID = j;
+						break;
 					}
 				}
 
@@ -91,8 +96,12 @@ public class EventCorefTestMentionPair {
 			answers.add(activeChains);
 		}
 		ToSemEval.outputSemFormat(fileNames, lengths, "baselineMP.keys." + args[0], answers);
+		
+		Common.outputLines(probs, "eventProbs");
 	}
 
+	static ArrayList<String> probs = new ArrayList<String>();
+	
 	public static double test(String str,
 			LinearClassifier<String, String> classifier) {
 
