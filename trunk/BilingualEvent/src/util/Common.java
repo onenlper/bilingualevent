@@ -1118,6 +1118,16 @@ public class Common {
 				bangErrorPOS("feature idx cannot equal or larger than feature space.");
 			}
 		}
+		
+		public Feature(int idx, int space) {
+			this.idx = idx;
+			this.value = 1;
+			this.space = space;
+			
+			if(this.idx>=this.space) {
+				bangErrorPOS("feature idx cannot equal or larger than feature space.");
+			}
+		}
 	}
 	
 	public static String feasToSVMString(ArrayList<Feature> feas) {
