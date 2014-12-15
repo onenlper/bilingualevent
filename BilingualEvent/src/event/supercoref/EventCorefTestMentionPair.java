@@ -69,7 +69,7 @@ public class EventCorefTestMentionPair {
 					if (val > thres && val > maxVal) {
 						maxVal = val;
 						corefID = j;
-						break;
+//						break;
 					}
 				}
 
