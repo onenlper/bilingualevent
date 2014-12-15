@@ -7,10 +7,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import coref.ToSemEval;
+
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 import model.ACEChiDoc;
 import model.ACEDoc;
+import model.EventChain;
 import model.EventMention;
 import util.Common;
 import util.Util;
@@ -78,7 +81,7 @@ public class ILP {
 					lp.setColName(vNo, name);
 					nameMap.put(name, vNo);
 					probMap.put(name,
-							this.mentions.get(i).typeConfidences.get(k - 1));
+							this.mentions.get(i).subTypeConfidences.get(k - 1));
 					vNo++;
 				}
 			}
@@ -88,7 +91,7 @@ public class ILP {
 					String name = "z(" + i + "," + j + ")";
 					lp.setColName(vNo, name);
 					nameMap.put(name, vNo);
-					probMap.put(name, this.confMap.get(i + "_" + j));
+					probMap.put(name, this.confMap.get(this.mentions.get(i).toName() + " " + this.mentions.get(j).toName()));
 					vNo++;
 				}
 			}
@@ -332,6 +335,7 @@ public class ILP {
 			for (int i = 0; i < s; i++) {
 				for (int j = i + 1; j < s; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
+					
 					double pij = (probMap.get("z(" + i + "," + j + ")") * 2.0) - 1;
 
 					double cij = -1.0 * Math.log(pij);
@@ -402,7 +406,7 @@ public class ILP {
 			System.err.println("left:\t" + sum);
 			System.err.println("right:\t" + (lp.getObjective() - sum));
 			for (m = 0; m < Ncol; m++) {
-				System.out.println(lp.getColName(m + 1) + ": " + row[m]);
+//				System.out.println(lp.getColName(m + 1) + ": " + row[m]);
 
 				String name = lp.getColName(m + 1);
 				int a = name.indexOf("(");
@@ -431,9 +435,13 @@ public class ILP {
 					EventMention pair[] = new EventMention[2];
 					pair[0] = m1;
 					pair[1] = m2;
+					
 					if (value == 1 && !m1.subType.equals("null")
 							&& !m2.subType.equals("null")) {
+						String key = m1.toName() + " " + m2.toName(); 
+						corefs.add(key);
 						this.corefOutput.put(pair, 1);
+						System.out.println(key);
 						if (!m1.subType.equals(m2.subType) || m1.confidence < 0
 								|| m2.confidence < 0) {
 							System.err
@@ -462,6 +470,8 @@ public class ILP {
 			lp.deleteLp();
 		return (ret);
 	}
+	
+	HashSet<String> corefs = new HashSet<String>(); 
 
 	public void printResult(LpSolve lp) {
 
@@ -489,21 +499,36 @@ public class ILP {
 			System.err.println("java ~ folder lemda");
 			System.exit(1);
 		}
+		
+		Util.part = args[0];
+		
 		lemda = Double.parseDouble(args[1]);
 
 		HashMap<String, HashMap<String, Double>> entityCorefProbMaps = loadProbs("entityProbs");
 		HashMap<String, HashMap<String, Double>> eventCorefProbMaps = loadProbs("eventProbs");
-
+		
 		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + args[0]);
+		
+		ArrayList<String> fileNames= new ArrayList<String>();
+		ArrayList<Integer> lengths = new ArrayList<Integer>();
+		ArrayList<ArrayList<EventChain>> answers = new ArrayList<ArrayList<EventChain>>(); 
+		
 		for (int k = 0; k < files.size(); k++) {
 			System.err.println(k);
 			String file = files.get(k);
 			ACEDoc doc = new ACEChiDoc(file);
+			
+			fileNames.add(doc.fileID);
+			lengths.add(doc.content.length());
+			
+			doc.docID = k;
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
+			ArrayList<EventChain> answer = new ArrayList<EventChain>();
 			if(events.size()==0) {
+				answers.add(answer);
 				continue;
 			}
-			
+			Collections.sort(events);	
 			HashSet<String> negativeConstraint = new HashSet<String>();
 
 			HashMap<String, Double> eventCorefProbMap = eventCorefProbMaps.get(file);
@@ -524,7 +549,32 @@ public class ILP {
 				ilpExtend.add(sb.toString());
 				ilpPred.add(Integer.toString(corefOutput.get(pair)));
 			}
+			
+			HashMap<String, EventChain> chainMap = new HashMap<String, EventChain>();
+			for(int i=0;i<events.size();i++) {
+				boolean find = false;
+				for(int j=i-1;j>=0;j--) {
+					String key = events.get(j).toName() + " " + events.get(i).toName();
+					System.out.println(key);
+					if(ilp.corefs.contains(key)) {
+						find = true;
+						EventChain ec = chainMap.get(events.get(j).toName());
+						ec.addEventMention(events.get(i));
+						chainMap.put(events.get(i).toName(), ec);
+						break;
+					}
+				}
+				if(!find) {
+					EventChain ec = new EventChain();
+					ec.addEventMention(events.get(i));
+					chainMap.put(events.get(i).toName(), ec);
+					answer.add(ec);
+				}
+			}
+			answers.add(answer);
 		}
+		
+		ToSemEval.outputSemFormat(fileNames, lengths, "event.ilp." + args[0], answers);
 		// ACECommon.outputResult(ILPUtil.systemEMses,
 		// "/users/yzcchen/workspace/NAACL2013-B/src/joint_ilp/result"
 		// + Common.part);
