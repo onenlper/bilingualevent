@@ -9,9 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import coref.Parameter;
-import coref.ToSemEval;
-
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 import model.ACEChiDoc;
@@ -20,8 +17,10 @@ import model.Entity;
 import model.EntityMention;
 import model.EventChain;
 import model.EventMention;
+import model.EventMentionArgument;
 import util.Common;
 import util.Util;
+import coref.ToSemEval;
 
 public class ILP {
 
@@ -44,6 +43,11 @@ public class ILP {
 	
 	HashMap<String, Integer> eventPositionMap;
 	HashMap<String, Integer> entityPositionMap;
+	HashMap<String, Integer> argPositionMap;
+	
+	int numberOfArgs = 0;
+	
+	ArrayList<EventMentionArgument> args = new ArrayList<EventMentionArgument>();
 	
 	public ILP(ArrayList<EventMention> eventMs,
 			HashMap<String, Double> confMap, HashSet<String> negativeConstraint, HashMap<String, ArrayList<String>> sameBVsStr,
@@ -66,6 +70,15 @@ public class ILP {
 		for(int i=0;i<eventMs.size();i++) {
 			EventMention event = eventMs.get(i);
 			eventPositionMap.put(event.toName(), i);
+			Collections.sort(event.getEventMentionArguments());
+			numberOfArgs += event.getEventMentionArguments().size();
+			args.addAll(event.getEventMentionArguments());
+		}
+		
+		this.argPositionMap = new HashMap<String, Integer>();
+		for(int i=0;i<args.size();i++) {
+			EventMentionArgument arg = args.get(i);
+			argPositionMap.put(arg.getEventMention().toName() + " " + arg.toString(), i);
 		}
 		
 		this.entityPositionMap = new HashMap<String, Integer>();
@@ -99,7 +112,8 @@ public class ILP {
 		 */
 		Ncol = numberOfEvents * 34 + 
 				numberOfEvents * (numberOfEvents - 1) / 2 + 
-				numberOfEntities * (numberOfEntities-1)/2; /* there are three variables in the model */
+				numberOfEntities * (numberOfEntities-1)/2 +
+				numberOfArgs * Util.roles.size(); /* there are three variables in the model */
 		if (Ncol == 0) {
 			return 0;
 		}
@@ -155,6 +169,16 @@ public class ILP {
 				}
 			}
 			
+			for(int i=0;i<this.args.size();i++) {
+				EventMentionArgument arg = this.args.get(i);
+				for(int k=1;k<=Util.roles.size();k++) {
+					String name = "r(" + i + "," + k + ")";
+					lp.setColName(vNo, name);
+					nameMap.put(name, vNo);
+					probMap.put(name, arg.roleConfidences.get(k-1));
+					vNo++;
+				}
+			}
 			
 			entityEventOverlap = new HashSet<String>();
 			for(String key : entityCorefMaps.keySet()) {
@@ -166,7 +190,7 @@ public class ILP {
 			
 			lp.setAddRowmode(true);
 		}
-		// constraint 1: only one type & has type <=> trigger
+		// constraint 1.a: only one type & has type <=> trigger
 		if (ret == 0) {
 			/* construct xi=sum y(i, k) over all k */
 			for (int i = 0; i < numberOfEvents; i++) {
@@ -182,6 +206,18 @@ public class ILP {
 				/* add the row to lp_solve */
 				lp.addConstraintex(m, row, colno, LpSolve.EQ, 1);
 			}
+		}
+		
+		// constraint 1.b only one role & has role
+		for (int i = 0; i < numberOfArgs; i++) {
+			m = 0;
+			for (int k = 1; k <= Util.roles.size(); k++) {
+				int rik = nameMap.get("r(" + i + "," + k + ")");
+				colno[m] = rik;
+				row[m++] = 1;
+			}
+			/* add the row to lp_solve */
+			lp.addConstraintex(m, row, colno, LpSolve.EQ, 1);
 		}
 
 		// constraint 2.a: if coreference, then trigger
@@ -501,6 +537,17 @@ public class ILP {
 				}
 				// System.err.println("V:" + v);
 			}
+			
+			
+			for(int i=0;i<this.numberOfArgs;i++) {
+				for(int k=1;k<=Util.roles.size();k++) {
+					int rik = nameMap.get("r(" + i + "," + k + ")");
+					double pik = probMap.get("r(" + i + "," + k + ")");
+					
+					colno[m] = rik;
+					row[m++] = pik * gamma;
+				}
+			}
 			/* set the objective in lp_solve */
 			lp.setObjFnex(m, row, colno);
 		}
@@ -564,13 +611,24 @@ public class ILP {
 			
 			for (m = 0; m < Ncol; m++) {
 //				System.out.println(lp.getColName(m + 1) + ": " + row[m]);
-
 				String name = lp.getColName(m + 1);
 				int a = name.indexOf("(");
 				int b = name.indexOf(")");
 				String content = name.substring(a + 1, b);
 				double value = row[m];
-				if (name.startsWith("y")) {
+				if(name.startsWith("r")) {
+					String tokens[] = content.split(",");
+					int idx = Integer.valueOf(tokens[0]);
+					String role = Util.roles.get(Integer.parseInt(tokens[1])-1);
+					if(value==1) {
+						this.args.get(idx).role = role;
+						if(!role.equals("null")) {
+							this.args.get(idx).confidence = 1;
+						} else {
+							this.args.get(idx).confidence = -1;
+						}
+					}
+				} else if (name.startsWith("y")) {
 					String tokens[] = content.split(",");
 					int idx = Integer.valueOf(tokens[0]);
 					String subType = Util.subTypes.get(Integer
@@ -640,8 +698,8 @@ public class ILP {
 	}
 
 	static double lamda = 0.16;
-
 	static double beta = .5;
+	static double gamma = .5;
 
 	private static HashMap<String, HashMap<String, Double>> loadProbs(String fn) {
 		ArrayList<String> lines = Common.getLines(fn);
