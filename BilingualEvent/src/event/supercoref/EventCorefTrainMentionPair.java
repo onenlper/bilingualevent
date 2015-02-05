@@ -18,7 +18,7 @@ import edu.stanford.nlp.ling.Datum;
 public class EventCorefTrainMentionPair {
 
 	public static void main(String args[]) {
-		if(args.length!=1) {
+		if(args.length==0) {
 			System.out.println("java ~ part");
 			Common.bangErrorPOS("");
 		}
@@ -53,12 +53,13 @@ public class EventCorefTrainMentionPair {
 					String feaStr = fea.getSVMFormatString();
 					String svm = "";
 					if(coref) {
+						trainLines.add("1 " + feaStr);
 						svm = "+1 " + feaStr;	
 					} else {
+						trainLines.add("2 " + feaStr);
 						svm = "-1 " + feaStr;
 					}
 					trainingData.add(Dataset.svmLightLineToDatum(svm));
-					trainLines.add(svm);
 				}
 					
 //				if(corefID==-1) {
@@ -73,16 +74,19 @@ public class EventCorefTrainMentionPair {
 		fea.freeze();
 		Common.outputLines(trainLines, "eventTrain" + args[0]);
 		
-		LinearClassifierFactory<String, String> factory = new LinearClassifierFactory<String, String>();
-		factory.useConjugateGradientAscent();
-		// Turn on per-iteration convergence updates
-		factory.setVerbose(false);
-		// Small amount of smoothing
-		factory.setSigma(1);
-
-		LinearClassifier<String, String> classifier = factory
-				.trainClassifier(trainingData);
-//		classifier.dump();
-		LinearClassifier.writeClassifier(classifier, "stanfordClassifier" + args[0] + ".gz");
+		if(args[1].equals("maxent")) {
+			System.out.println("Train model...");
+			LinearClassifierFactory<String, String> factory = new LinearClassifierFactory<String, String>();
+			factory.useConjugateGradientAscent();
+			// Turn on per-iteration convergence updates
+			factory.setVerbose(false);
+			// Small amount of smoothing
+			factory.setSigma(1);
+	
+			LinearClassifier<String, String> classifier = factory
+					.trainClassifier(trainingData);
+	//		classifier.dump();
+			LinearClassifier.writeClassifier(classifier, "stanfordClassifier" + args[0] + ".gz");
+		}
 	}
 }

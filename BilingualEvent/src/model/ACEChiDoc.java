@@ -11,10 +11,85 @@ public class ACEChiDoc extends ACEDoc{
 		super(fileID, "");
 	}
 
+//	public void readSemanticRole() {
+//		this.semanticRoles = new HashMap<EventMention, SemanticRole>();
+//		ArrayList<String> srlInLines = Common.getLines(this.fileID + ".slrin");
+//		ArrayList<String> srlOutLines = Common.getLines(this.fileID + ".slrout");
+//
+//		for (int i = 0; i < srlInLines.size();) {
+//			if (srlInLines.get(i).isEmpty()) {
+//				i++;
+//				continue;
+//			}
+//			ArrayList<SemanticRole> roles = new ArrayList<SemanticRole>();
+//			int semanticSize = srlOutLines.get(i).split("\\s+").length - 14;
+//			for (int j = 0; j < semanticSize; j++) {
+//				SemanticRole role = new SemanticRole();
+//				roles.add(role);
+//			}
+//			int predictIndex = 0;
+//			while (true) {
+//				String slrIn = srlInLines.get(i);
+//				String slrOut = srlOutLines.get(i);
+//				if (slrIn.trim().isEmpty()) {
+//					break;
+//				}
+//
+//				String tokens[] = slrIn.split("\\s+");
+//				int start = Integer.parseInt(tokens[2]);
+//				int end = Integer.parseInt(tokens[3]);
+//
+//				EventMention word = new EventMention();
+//				word.setAnchorStart(start);
+//				word.setAnchorEnd(end);
+//
+//				tokens = slrOut.split("\\s+");
+//				word.setAnchor(tokens[1]);
+//
+//				if (tokens[12].equalsIgnoreCase("Y")) {
+//					roles.get(predictIndex).predict = word;
+//					predictIndex++;
+//				}
+//				for (int j = 0; j < semanticSize; j++) {
+//					String label = tokens[14 + j];
+//					if (!label.equals("_")) {
+//						EntityMention entityMention = new EntityMention();
+//						entityMention.headStart = start;
+//						entityMention.headEnd = end;
+//						entityMention.head = tokens[1];
+//
+//						ArrayList<EntityMention> args = roles.get(j).args.get(label);
+//						if (args == null) {
+//							args = new ArrayList<EntityMention>();
+//							roles.get(j).args.put(label, args);
+//						}
+//						args.add(entityMention);
+//					}
+//				}
+//				i++;
+//			}
+//			for (SemanticRole role : roles) {
+//				semanticRoles.put(role.predict, role);
+//			}
+//		}
+//	}
+	
+	
 	public void readSemanticRole() {
 		this.semanticRoles = new HashMap<EventMention, SemanticRole>();
 		ArrayList<String> srlInLines = Common.getLines(this.fileID + ".slrin");
 		ArrayList<String> srlOutLines = Common.getLines(this.fileID + ".slrout");
+
+		HashMap<Integer, EntityMention> entityMap = new HashMap<Integer, EntityMention>();
+		for (EntityMention mention : this.goldEntityMentions) {
+			entityMap.put(mention.end, mention);
+		}
+		for (EntityMention mention : this.goldTimeMentions) {
+			entityMap.put(mention.end, mention);
+		}
+		for (EntityMention mention : this.goldValueMentions) {
+			entityMap.put(mention.end, mention);
+		}
 
 		for (int i = 0; i < srlInLines.size();) {
 			if (srlInLines.get(i).isEmpty()) {
@@ -52,24 +127,34 @@ public class ACEChiDoc extends ACEDoc{
 				}
 				for (int j = 0; j < semanticSize; j++) {
 					String label = tokens[14 + j];
-					if (!label.equals("_")) {
-						EntityMention entityMention = new EntityMention();
-						entityMention.headStart = start;
-						entityMention.headEnd = end;
-						entityMention.head = tokens[1];
-
-						ArrayList<EntityMention> args = roles.get(j).args.get(label);
-						if (args == null) {
-							args = new ArrayList<EntityMention>();
-							roles.get(j).args.put(label, args);
+					if (label.equalsIgnoreCase("A0") || label.equalsIgnoreCase("A1") || label.equalsIgnoreCase("TMP")) {
+						EntityMention entityMention = entityMap.get(end);
+//						if (entityMention == null) {
+//							for (int m=0; m < this.allMentions.size(); m++) {
+//								EntityMention temp = this.allMentions.get(m);
+//								if (temp.end >= end && temp.start <= start) {
+//									entityMention = temp;
+//									break;
+//								}
+//							}
+//						}
+						if (entityMention != null) {
+							if (label.equalsIgnoreCase("A0")) {
+								roles.get(j).arg0.add(entityMention);
+							}
+							if (label.equalsIgnoreCase("A1")) {
+								roles.get(j).arg1.add(entityMention);
+							}
+							if (label.equalsIgnoreCase("TMP")) {
+								roles.get(j).tmp.add(entityMention);
+							}
 						}
-						args.add(entityMention);
 					}
 				}
 				i++;
 			}
-			for (SemanticRole role : roles) {
-				semanticRoles.put(role.predict, role);
+			for(SemanticRole role : roles) {
+				this.semanticRoles.put(role.predict, role);
 			}
 		}
 	}

@@ -122,7 +122,7 @@ public class EventMention implements Comparable<EventMention> {
 
 	public String inferFrom = "-";
 
-	public String subType = "None";
+	public String subType = "null";
 
 	public boolean svm = false;
 	public boolean maxent = false;

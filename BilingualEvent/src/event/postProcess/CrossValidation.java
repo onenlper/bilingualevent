@@ -163,7 +163,10 @@ public class CrossValidation {
 							continue;
 						}
 						for (EventMentionArgument gA : g.getEventMentionArguments()) {
-							if (sA.equals(gA) && s.getSubType().equals(g.getSubType())) {
+							if ( (sA.equals(gA) || false 
+									|| (gA.getEntityMention().headStart==sA.getStart() && gA.getEntityMention().headEnd==sA.getEnd())
+									)
+									&& s.getSubType().equals(g.getSubType())) {
 								if (sA.getRole().equals(gA.getRole())) {
 									hitRole++;
 									break;
@@ -181,7 +184,10 @@ public class CrossValidation {
 							continue;
 						}
 						for (EventMentionArgument gA : g.getEventMentionArguments()) {
-							if (sA.equals(gA) && s.getSubType().equals(g.getSubType())) {
+							if ( (sA.equals(gA) || false 
+									|| (gA.getEntityMention().headStart==sA.getStart() && gA.getEntityMention().headEnd==sA.getEnd())
+									)
+									&& s.getSubType().equals(g.getSubType())) {
 								hitArg++;
 								break;
 							}

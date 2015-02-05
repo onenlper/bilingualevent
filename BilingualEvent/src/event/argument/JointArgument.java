@@ -26,17 +26,23 @@ public class JointArgument {
 
 	int near = 0;
 	int far = 0;
-	
+
 	public static void main(String args[]) {
-		if (args.length <3) {
+		if (args.length < 3) {
 			System.out.println("java ~ [train|test|development] [svm|maxent] [folder]");
 		}
 		mode = args[0];
 		String model = args[1];
 		Util.part = args[2];
+		if (mode.equals("test")) {
+			allSVMResult = Util.loadSemanticResult();
+			loadSystemEntityMentions();
+			loadTest(Util.part);
+		}
 		if (!args[0].equalsIgnoreCase("train")) {
-			if(args.length==4 && args[3].equals("discourse")) {
-				systemEventMentionses = Util.readResult("joint_" + args[1] + "/result" + ".trigger.discourse" + Util.part, "chi");
+			if (args.length == 4 && args[3].equals("discourse")) {
+				systemEventMentionses = Util.readResult("joint_" + args[1] + "/result" + ".trigger.discourse"
+						+ Util.part, "chi");
 			} else {
 				systemEventMentionses = Util.readResult("joint_" + args[1] + "/result" + ".trigger" + Util.part, "chi");
 			}
@@ -56,6 +62,8 @@ public class JointArgument {
 		ArrayList<String> argumentLines = new ArrayList<String>();
 		ArrayList<String> relateEMs = new ArrayList<String>();
 
+		int number = 0;
+		
 		for (String file : files) {
 			ACEChiDoc document = new ACEChiDoc(file);
 			if (args[0].equalsIgnoreCase("train")) {
@@ -64,20 +72,22 @@ public class JointArgument {
 				}
 			} else {
 				ArrayList<EventMention> eventMentions = new ArrayList<EventMention>();
-//				eventMentions.addAll(document.goldEventMentions);
+//				 eventMentions.addAll(document.goldEventMentions);
 				if (systemEventMentionses.containsKey(file)) {
 					eventMentions.addAll(systemEventMentionses.get(file).values());
 				}
 				if (eventMentions == null) {
 					continue;
 				}
+				number += eventMentions.size();
 				for (EventMention eventMention : eventMentions) {
 					StringBuilder sb = new StringBuilder();
 					sb.append(document.fileID).append(" ").append(eventMention.getAnchorStart()).append(" ").append(
 							eventMention.getAnchorEnd()).append(" ").append(eventMention.confidence).append(" ")
 							.append(eventMention.type).append(" ").append(eventMention.typeConfidence).append(" ")
-							.append(eventMention.subType).append(" ").append(eventMention.subTypeConfidence).append(" ").append(eventMention.inferFrom);
-					for(double confidence : eventMention.typeConfidences) {
+							.append(eventMention.subType).append(" ").append(eventMention.subTypeConfidence)
+							.append(" ").append(eventMention.inferFrom);
+					for (double confidence : eventMention.typeConfidences) {
 						sb.append(" ").append(confidence);
 					}
 					relateEMs.add(sb.toString());
@@ -87,28 +97,31 @@ public class JointArgument {
 				}
 			}
 		}
+		System.out.println(number + "###");
 		ArrayList<String> argumentLinesFar = new ArrayList<String>();
 		ArrayList<String> argumentLinesNear = new ArrayList<String>();
 		if (!args[0].equalsIgnoreCase("train")) {
 			Common.outputLines(argumentLines, "data/Joint_argumentLines_" + mode + model + Util.part);
-			for(int i=0;i<argumentLines.size();i++) {
+			for (int i = 0; i < argumentLines.size(); i++) {
 				boolean sameIP = argumentFeature.sameClause.get(i);
-				if(sameIP) {
+				if (sameIP) {
 					argumentLinesNear.add(argumentLines.get(i));
 				} else {
 					argumentLinesFar.add(argumentLines.get(i));
 				}
 			}
-			Common.outputLines(argumentLinesNear, "data/Joint_argumentLines_near" + mode + model + Util.part);
-			Common.outputLines(argumentLinesFar, "data/Joint_argumentLines_far" + mode + model + Util.part);
+			// Common.outputLines(argumentLinesNear,
+			// "data/Joint_argumentLines_near" + mode + model + Util.part);
+			// Common.outputLines(argumentLinesFar,
+			// "data/Joint_argumentLines_far" + mode + model + Util.part);
 		}
 		Common.outputLines(argumentRoleFeatures, "data/Joint_argument_" + mode + model + Util.part);
 
 		ArrayList<String> argumentRoleFeaturesFar = new ArrayList<String>();
 		ArrayList<String> argumentRoleFeaturesNear = new ArrayList<String>();
-		for(int i=0;i<argumentRoleFeatures.size();i++) {
+		for (int i = 0; i < argumentRoleFeatures.size(); i++) {
 			boolean sameIP = argumentFeature.sameClause.get(i);
-			if(sameIP) {
+			if (sameIP) {
 				argumentRoleFeaturesNear.add(argumentRoleFeatures.get(i));
 			} else {
 				argumentRoleFeaturesFar.add(argumentRoleFeatures.get(i));
@@ -118,30 +131,126 @@ public class JointArgument {
 		System.out.println(argumentRoleFeaturesFar.size());
 		Common.outputLines(argumentRoleFeaturesNear, "data/Joint_argument_near" + mode + model + Util.part);
 		Common.outputLines(argumentRoleFeaturesFar, "data/Joint_argument_far" + mode + model + Util.part);
-		
+
 		Common.outputLines(relateEMs, "data/Joint_argumentRelateEM_" + mode + model + Util.part);
-		
+
 		System.out.println("Build argument detection feature " + mode + "...");
 		System.out.println("=================");
 
 		if (mode.equals("train")) {
 			Common.outputHashMap(argumentFeature.featureSpace, "argumentJointFeaSpace_" + args[1] + Util.part);
 		}
-//		System.out.println("far: " + argumentFeature.far);
-//		System.out.println("near: " + argumentFeature.near);
-//		System.out.println("Right:" + Util.right);
-//		System.out.println("Wrong:" + Util.wrong);
-//		System.out.println("Precision:" + (double)Util.right/((double)Util.right+(double)Util.wrong));
+		
+		System.err.println("ArgCount: " + argCount);
 	}
 
-	public ArrayList<EntityMention> getArgumentCandidates(EventMention em, ACEChiDoc document) {
+	public static void loadSystemEntityMentions() {
+		String mentionCRFFile = "/users/yzcchen/tool/CRF/CRF++-0.54/yy" + Util.part;
+		mentionses = Util.getMentionsFromCRFFile(Common.getLines("ACE_Chinese_test" + Util.part),
+				mentionCRFFile);
+		String timeCRFFile = "/users/yzcchen/tool/CRF/CRF++-0.54/yy_time" + Util.part;
+		timeExpressions = Util.getMentionsFromCRFFile(Common.getLines("ACE_Chinese_test" + Util.part),
+				timeCRFFile);
+		String valueCRFFile = "/users/yzcchen/tool/CRF/CRF++-0.54/yy_value" + Util.part;
+		valueExpressions = Util.getMentionsFromCRFFile(Common.getLines("ACE_Chinese_test" + Util.part),
+				valueCRFFile);
+
+		String nerFile = "/users/yzcchen/tool/CRF/CRF++-0.54/ACE/Ner/" + Util.part + ".result";
+		nerses = Util.getSemanticsFromCRFFile(Common.getLines("ACE_Chinese_test" + Util.part), nerFile);
+
+		for (String key : timeExpressions.keySet()) {
+			for (EntityMention time : timeExpressions.get(key)) {
+				time.semClass = "time";
+				time.subType = "time";
+				time.type = "time";
+			}
+		}
+
+		for (String key : valueExpressions.keySet()) {
+			for (EntityMention value : valueExpressions.get(key)) {
+				value.semClass = "value";
+				value.subType = "value";
+				value.type = "value";
+			}
+		}
+
+		for (String key : mentionses.keySet()) {
+			for (EntityMention mention : mentionses.get(key)) {
+				if (Common.isPronoun(mention.head)) {
+					mention.type = "PRO";
+				} else {
+					mention.type = "NOM";
+				}
+				String key2 = key.replace("/users/yzcchen/chen3/coling2012/LDC2006T06/data/", "/users/yzcchen/ACL12/data/ACE2005/")
+						+ ".sgm";
+//				System.out.println(key + "@@");
+//				System.out.println(allSVMResult.keySet().iterator().next() + "##");
+				for (EntityMention sem : allSVMResult.get(key2)) {
+					if (sem.start == mention.start && sem.end == mention.end) {
+						mention.semClass = sem.semClass;
+						mention.subType = sem.subType.substring(2);
+						break;
+					}
+				}
+				for (EntityMention ne : nerses.get(key)) {
+					if (ne.start == mention.start && ne.end == mention.end) {
+						mention.type = "NAM";
+						break;
+					}
+				}
+			} 
+		}
+	}
+
+	public static HashMap<String, ArrayList<EntityMention>> allSVMResult;
+	static HashMap<String, ArrayList<EntityMention>> mentionses;
+	static HashMap<String, ArrayList<EntityMention>> timeExpressions;
+	static HashMap<String, ArrayList<EntityMention>> valueExpressions;
+
+	static HashMap<String, ArrayList<EntityMention>> nerses;
+
+	public void assignSystemSemanticType(EntityMention mention, ACEChiDoc document) {
+		//TODO
+		ArrayList<EntityMention> systemSemantics = allSVMResult.get(document.fileID);
+		boolean find = false;
+		for(EntityMention system : systemSemantics) {
+			if(system.start==mention.headStart && system.end==mention.headEnd) {
+				mention.semClass = system.semClass;
+				mention.subType = system.subType;
+				find = true;
+				break;
+			}
+		}
+		if(!find) {
+			System.err.println("GEE");
+			System.exit(1);
+		}
+	}
+	
+	public ArrayList<EntityMention> getArgumentCandidates(EventMention em, ACEChiDoc document, boolean train) {
 		ArrayList<EntityMention> candidates = new ArrayList<EntityMention>();
 
 		ArrayList<EntityMention> mentions = new ArrayList<EntityMention>();
 
-		ArrayList<EntityMention> npMentions = document.goldEntityMentions;
-		ArrayList<EntityMention> timeMentions = document.goldTimeMentions;
-		ArrayList<EntityMention> valueMentions = document.goldValueMentions;
+		ArrayList<EntityMention> npMentions = null;
+		ArrayList<EntityMention> timeMentions = null;
+		ArrayList<EntityMention> valueMentions = null;
+
+		if (!train) {
+			npMentions = mentionses.get(document.fileID);
+			timeMentions = timeExpressions.get(document.fileID);
+			valueMentions = valueExpressions.get(document.fileID);
+		} else {
+			npMentions = document.goldEntityMentions;
+			timeMentions = document.goldTimeMentions;
+			valueMentions = document.goldValueMentions;
+		}
+			
+//		if(!train) {
+//			for(EntityMention mention : npMentions) {
+//				this.assignSystemSemanticType(mention, document);
+//			}
+//		}
 
 		mentions.addAll(npMentions);
 		mentions.addAll(timeMentions);
@@ -160,7 +269,11 @@ public class JointArgument {
 		}
 		return candidates;
 	}
+
 	static boolean sw = false;
+	
+	static int argCount = 0;
+
 	public ArrayList<String> buildTrainRoleFeatures(EventMention eventMention, ACEChiDoc document) {
 		ArrayList<EventMentionArgument> arguments = eventMention.getEventMentionArguments();
 
@@ -170,7 +283,7 @@ public class JointArgument {
 			goldArgHash.put(arg.toString(), arg);
 		}
 
-		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(eventMention, document);
+		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(eventMention, document, true);
 		sw = true;
 		ArrayList<String> features = new ArrayList<String>();
 		for (EntityMention mention : entityMentions) {
@@ -200,9 +313,10 @@ public class JointArgument {
 
 	public ArrayList<String> buildTestFeatures(EventMention eventMention, ACEChiDoc document,
 			ArrayList<String> argumentLines) {
-		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(eventMention, document);
+		ArrayList<EntityMention> entityMentions = this.getArgumentCandidates(eventMention, document, false);
 		ArrayList<String> features = new ArrayList<String>();
 
+		argCount += entityMentions.size();
 		for (EntityMention entityMention : entityMentions) {
 			String feature = this.buildFeature(entityMention, eventMention, document, Integer.toString(Util.roles
 					.indexOf("null") + 1));
@@ -222,7 +336,6 @@ public class JointArgument {
 		return features;
 	}
 
-	
 	public int getFeaIdx(String feature) {
 		if (!featureSpace.containsKey(feature)) {
 			if (mode.equalsIgnoreCase("train")) {
@@ -237,7 +350,7 @@ public class JointArgument {
 	}
 
 	public ArrayList<Boolean> sameClause = new ArrayList<Boolean>();
-	
+
 	public String buildFeature(EntityMention entityMention, EventMention eventMention, ACEChiDoc document,
 			String label) {
 		String trigger = eventMention.getAnchor();
@@ -267,44 +380,44 @@ public class JointArgument {
 		int distance = -1;
 		MyTreeNode entityNode = pr.tree.leaves.get(position[3]);
 		MyTreeNode eventNode = pr2.tree.leaves.get(position2[3]);
-		
+
 		int entityID = position[3];
 		int eventID = position2[3];
-		
+
 		if (position[0] == position2[0]) {
 			ArrayList<MyTreeNode> entityAncestors = entityNode.getAncestors();
 			ArrayList<MyTreeNode> eventAncestors = eventNode.getAncestors();
-			
+
 			MyTreeNode entityIP = null;
 			MyTreeNode eventIP = null;
-			for(int k=entityAncestors.size()-1;k>=0;k--) {
+			for (int k = entityAncestors.size() - 1; k >= 0; k--) {
 				MyTreeNode node = entityAncestors.get(k);
-				if(node.value.equalsIgnoreCase("ip")||node.value.equalsIgnoreCase("root")) {
+				if (node.value.equalsIgnoreCase("ip") || node.value.equalsIgnoreCase("root")) {
 					entityIP = node;
 					break;
 				}
 			}
-			for(int k=eventAncestors.size()-1;k>=0;k--) {
+			for (int k = eventAncestors.size() - 1; k >= 0; k--) {
 				MyTreeNode node = eventAncestors.get(k);
-				if(node.value.equalsIgnoreCase("ip")||node.value.equalsIgnoreCase("root")) {
+				if (node.value.equalsIgnoreCase("ip") || node.value.equalsIgnoreCase("root")) {
 					eventIP = node;
 					break;
 				}
 			}
-			if(entityIP==eventIP) {
+			if (entityIP == eventIP) {
 				sameClause.add(true);
 			} else {
 				sameClause.add(false);
 			}
 
-			if(!Util.roles.get(Integer.parseInt(label)-1).equalsIgnoreCase("null")) {
-				if(entityIP==eventIP) {
+			if (!Util.roles.get(Integer.parseInt(label) - 1).equalsIgnoreCase("null")) {
+				if (entityIP == eventIP) {
 					near++;
 				} else {
 					far++;
 				}
 			}
-			
+
 			int common = 0;
 			MyTreeNode commonNode = null;
 			for (int i = 0; i < entityAncestors.size() && i < eventAncestors.size(); i++) {
@@ -327,13 +440,13 @@ public class JointArgument {
 				distance++;
 			}
 			path = sb.toString();
-			while (!pr.dependTree.vertexMapTree.containsKey(entityID) && entityID!=0) {
+			while (!pr.dependTree.vertexMap.containsKey(entityID) && entityID != 0) {
 				entityID--;
 			}
 			if (entityID != eventID) {
 				MyTreeNode entityDepNode = pr.dependTree.vertexMapTree.get(entityID);
 				MyTreeNode eventDepNode = pr.dependTree.vertexMapTree.get(eventID);
-				if(entityDepNode!=null && eventDepNode!=null) {
+				if (entityDepNode != null && eventDepNode != null) {
 					entityAncestors = entityDepNode.getAncestors();
 					eventAncestors = eventDepNode.getAncestors();
 					common = 0;
@@ -392,15 +505,21 @@ public class JointArgument {
 
 		features.add(trigger);
 		features.add(triggerPOS);
-		
+
 		features.add(eventMention.getSubType());
 		features.add(entityMention.head);
 		features.add(entityMention.getType());
-		features.add(entityMention.entity.type);
-		features.add(entityMention.entity.subType);
-		features.add(eventMention.subType + "_" + entityMention.head);
-		features.add(eventMention.subType + "_" + entityMention.entity.type);
-		features.add(eventMention.subType + "_" + entityMention.entity.subType);
+		features.add(entityMention.semClass);
+		features.add(entityMention.subType);
+		
+		String eventSubType = eventMention.subType;
+		if(eventSubType.equalsIgnoreCase("null")) {
+			eventSubType = pipelineResults.get(document.fileID).get(eventMention.toString()).subType;
+		}
+		
+		features.add(eventSubType + "_" + entityMention.head);
+		features.add(eventSubType + "_" + entityMention.semClass);
+		features.add(eventSubType + "_" + entityMention.subType);
 
 		features.add(leftWord2);
 		features.add(rightWord2);
@@ -420,17 +539,17 @@ public class JointArgument {
 		} else {
 			features.add("right");
 		}
-		
+
 		features.add(path);
 		features.add(Integer.toString(distance));
 		features.add(depPath);
-		
-		ArrayList<SemanticRole> semanticRoles = new ArrayList<SemanticRole>(document.semanticRoles.values());
+
+		HashMap<EventMention, SemanticRole> semanticRoles = document.semanticRoles;
 		boolean arg0 = false;
 		boolean arg1 = false;
 		boolean tmpArg = false;
 		boolean pred = false;
-		for (SemanticRole role : semanticRoles) {
+		for (SemanticRole role : semanticRoles.values()) {
 			EventMention predicate = role.predict;
 			if (!(predicate.getAnchorEnd() < eventMention.getAnchorStart() || predicate.getAnchorStart() > eventMention
 					.getAnchorEnd())) {
@@ -478,6 +597,10 @@ public class JointArgument {
 			features.add("0");
 		}
 		Util.addZeroPronounFeature(features, document, entityMention, eventMention, label, sw);
+		
+//		System.out.println(features);
+//		Common.pause("");
+		
 		return this.convert(features, label);
 	}
 
@@ -486,10 +609,14 @@ public class JointArgument {
 		StringBuilder sb = new StringBuilder();
 		sb.append(label);
 		for (int i = 0; i < feaStrs.size(); i++) {
-			String feaStr = feaStrs.get(i);
+			if(feaStrs.get(i)==null) {
+				continue;
+			}
+			String feaStr = feaStrs.get(i).toLowerCase();
 			String extendFeaStr = feaStr.trim() + "_" + i;
 			int idx = getFeaIdx(extendFeaStr);
 			if (idx == -1) {
+//				System.err.println(extendFeaStr);
 				continue;
 			}
 			feas.add(new Feature(idx, 1));
@@ -500,5 +627,10 @@ public class JointArgument {
 		}
 		return sb.toString().trim().replace("\n", "");
 	}
-
+	static HashMap<String, HashMap<String, EventMention>> pipelineResults;
+	public static void loadTest(String folder) {
+		pipelineResults = Util.readResult("pipe_svm_3extend/result" + folder, "chi");
+	}
+	
 }
+

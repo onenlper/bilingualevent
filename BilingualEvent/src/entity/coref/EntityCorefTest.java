@@ -19,22 +19,36 @@ import edu.stanford.nlp.stats.Distribution;
 public class EntityCorefTest {
 
 	public static void main(String args[]) throws Exception {
+		if(args.length==0) {
+			System.err.println("java ~ part [maxent|prepare|load]");
+			System.exit(1);
+		}
 		run(args);
 	}
 
 	public static void run(String[] args) throws Exception {
-		if(args.length!=1) {
+		if(args.length==0) {
 			System.out.println("java ~ part");
 			Common.bangErrorPOS("");
 		}
 		Util.part = args[0];
-		ACECorefFeature fea = new ACECorefFeature(false, "entityCoref");
 		
-		LinearClassifier<String, String> classifier = LinearClassifier
+		String mode = args[1];
+		
+		ACECorefFeature fea = new ACECorefFeature(false, "entityCoref" + Util.part);
+		LinearClassifier<String, String> classifier = null;
+		if(mode.equals("maxent")) {
+			classifier = LinearClassifier
 				.readClassifier("stanfordClassifierEntity" + args[0] + ".gz");
-
+		}
+		ArrayList<String> predicts = new ArrayList<String>();
+		if(mode.equals("load")) {
+			predicts = Common.getLines("entityPredict" + args[0]);
+		}
+		
 		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + args[0]);
-		double thres = .8;
+		double thres = .7;
+//		double thres = .5;
 		
 		ArrayList<ArrayList<Entity>> answers = new ArrayList<ArrayList<Entity>>();
 		ArrayList<ArrayList<Entity>> goldKeys = new ArrayList<ArrayList<Entity>>(); 
@@ -43,6 +57,10 @@ public class EntityCorefTest {
 		
 		ArrayList<String> fileNames= new ArrayList<String>();
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
+		
+//		HashMap<String, ArrayList<EntityMention>> maps = Util.getMentionsFromCRFFile(files, "yy0");
+		ArrayList<String> testLines = new ArrayList<String>();
+		
 		for (int t=0;t<files.size();t++) {
 			String file = files.get(t);
 			ACEDoc doc = new ACEChiDoc(file);
@@ -53,6 +71,14 @@ public class EntityCorefTest {
 			
 //			ArrayList<EventMention> events = doc.goldEventMentions;
 			ArrayList<EntityMention> entityMentions = Util.getSieveCorefMentions(doc);
+//			ArrayList<EntityMention> entityMentions = maps.get(doc.fileID);
+//			for(EntityMention mention : entityMentions) {
+//				mention.start = mention.headStart;
+//				mention.end = mention.headEnd;
+////				System.out.println(mention.headStart + "#" + mention.headEnd);
+//				Util.assignSystemSemantic(mention, doc.fileID);
+//			}
+			
 			Util.calEntityMentionAttribute(entityMentions, doc);
 			
 			ArrayList<Entity> activeChains = new ArrayList<Entity>();
@@ -62,21 +88,30 @@ public class EntityCorefTest {
 				EntityMention ana = entityMentions.get(i);
 
 				EntityMention predictAnt = null;
+				double maxVal = 0;
 				
 				for (int j = i - 1; j >= 0; j--) {
 					EntityMention candidate = entityMentions.get(j);
 					fea.configure(candidate, ana, doc);
 					
-					String feaStr = fea.getSVMFormatString();
-
-					double val = test(feaStr, classifier);
+					double val = 0;
+					if(mode.equals("maxent")) {
+						String feaStr = fea.getSVMFormatString();
+						val = test(feaStr, classifier);
+					} else if(mode.equals("load")) {
+						String line = predicts.remove(0);
+						String tks[] = line.split("\\s+");
+						val = Double.parseDouble(tks[1]);
+					} else if(mode.equals("prepare")){
+						String feaStr = fea.getSVMFormatString();
+						testLines.add("1 " + feaStr);
+					}
 					
 					probs.add(file + " " + candidate.toName() + " " + ana.toName() + " " + val);
 					
-					if (val > thres) {
-						if(predictAnt == null) {
+					if (val > thres && val > maxVal) {
+//						if(predictAnt == null) 
 							predictAnt = candidate;
-						}
 					}
 				}
 
@@ -101,10 +136,17 @@ public class EntityCorefTest {
 			answers.add(activeChains);
 			goldKeys.add(doc.goldEntities);
 		}
-		ToSemEval.outputSemFormatEntity(fileNames, lengths, "entity.sys." + args[0], answers);
-		ToSemEval.outputSemFormatEntity(fileNames, lengths, "entity.gold." + args[0], goldKeys);
 		
-		Common.outputLines(probs, "entityProbs");
+		if(!args[1].equals("prepare")) {
+			if(predicts.size()!=0) {
+				Common.bangErrorPOS("");
+			}
+			ToSemEval.outputSemFormatEntity(fileNames, lengths, "entity.sys." + args[0], answers);
+			ToSemEval.outputSemFormatEntity(fileNames, lengths, "entity.gold." + args[0], goldKeys);
+			Common.outputLines(probs, "entityProbs" + args[0]);
+		} else {
+			Common.outputLines(testLines, "entityTest" + args[0]);
+		}
 	}
 
 	static ArrayList<String> probs = new ArrayList<String>();

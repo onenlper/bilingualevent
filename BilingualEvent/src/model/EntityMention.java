@@ -42,7 +42,7 @@ public class EntityMention implements Comparable<EntityMention> {
 	public String original = "";
 	public String source = "";
 	public String buckUnWalter = "";
-
+	
 	public String semClass;
 	
 	public String toName() {
@@ -154,7 +154,7 @@ public class EntityMention implements Comparable<EntityMention> {
 
 	public boolean flag = false;
 
-	String type;
+	public String type;
 
 	public int getStart() {
 		return start;

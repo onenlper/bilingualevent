@@ -1,6 +1,18 @@
 ./compile.sh
-#java -Xmx16g -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/stanford-classifier-3.2.0.jar:. entity/coref/EntityCorefTrain 0
-java -Xmx16g -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/stanford-classifier-3.2.0.jar:. entity/coref/EntityCorefTest 0
+#java -Xmx16g -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/stanford-classifier-3.2.0.jar:. entity/coref/EntityCorefTrain 0 svm
+
+cd /users/yzcchen/tool/svm_multiclass
+#./svm_multiclass_learn -c 1000000 ~/chen3/eventBilingual/BilingualEvent/src/entityTrain0 entityCorefModel0
+
+cd /users/yzcchen/chen3/eventBilingual/BilingualEvent/src
+java -Xmx16g -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/stanford-classifier-3.2.0.jar:. entity/coref/EntityCorefTest 0 prepare
+
+cd /users/yzcchen/tool/svm_multiclass 
+
+./svm_multiclass_classify ~/chen3/eventBilingual/BilingualEvent/src/entityTest0 entityCorefModel0 /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/entityPredict0
+
+cd /users/yzcchen/chen3/eventBilingual/BilingualEvent/src
+java -Xmx16g -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/stanford-classifier-3.2.0.jar:. entity/coref/EntityCorefTest 0 load
 python python/scorer.py entity.gold.0 entity.sys.0
 
 #java -cp ../lib/edu.mit.jwi_2.2.3.jar:.:../lib/ws4j-1.0.1.jar coref/EMLearn 1
