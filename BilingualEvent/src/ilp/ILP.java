@@ -151,160 +151,159 @@ public class ILP {
 				}
 			}
 		}
-
-		// constraint 3.a: if coreference, then type equal
-		if (ret == 0) {
-			/* construct 1 - zij >= yik - yjk, for all k */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = 1; k <= 34; k++) {
-						int yik = nameMap.get("y(" + i + "," + k + ")");
-						int yjk = nameMap.get("y(" + j + "," + k + ")");
-
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = yik;
-						row[m++] = 1;
-
-						colno[m] = yjk;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraint 3.b: if coreference, then type equal
-		if (ret == 0) {
-			/* construct 1 - zij >= yjk - yik, for all k */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = 1; k <= 34; k++) {
-						int yik = nameMap.get("y(" + i + "," + k + ")");
-						int yjk = nameMap.get("y(" + j + "," + k + ")");
-
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = yjk;
-						row[m++] = 1;
-
-						colno[m] = yik;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
+//		// constraint 3.a: if coreference, then type equal
+//		if (ret == 0) {
+//			/* construct 1 - zij >= yik - yjk, for all k */
+//			for (int i = 0; i < numberOfEvents; i++) {
+//				for (int j = i + 1; j < numberOfEvents; j++) {
+//					int zij = nameMap.get("z(" + i + "," + j + ")");
+//
+//					for (int k = 1; k <= 34; k++) {
+//						int yik = nameMap.get("y(" + i + "," + k + ")");
+//						int yjk = nameMap.get("y(" + j + "," + k + ")");
+//
+//						m = 0;
+//						colno[m] = zij;
+//						row[m++] = 1;
+//
+//						colno[m] = yik;
+//						row[m++] = 1;
+//
+//						colno[m] = yjk;
+//						row[m++] = -1;
+//
+//						/* add the row to lp_solve */
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+//					}
+//				}
+//			}
+//		}
+//
+//		// constraint 3.b: if coreference, then type equal
+//		if (ret == 0) {
+//			/* construct 1 - zij >= yjk - yik, for all k */
+//			for (int i = 0; i < numberOfEvents; i++) {
+//				for (int j = i + 1; j < numberOfEvents; j++) {
+//					int zij = nameMap.get("z(" + i + "," + j + ")");
+//
+//					for (int k = 1; k <= 34; k++) {
+//						int yik = nameMap.get("y(" + i + "," + k + ")");
+//						int yjk = nameMap.get("y(" + j + "," + k + ")");
+//
+//						m = 0;
+//						colno[m] = zij;
+//						row[m++] = 1;
+//
+//						colno[m] = yjk;
+//						row[m++] = 1;
+//
+//						colno[m] = yik;
+//						row[m++] = -1;
+//
+//						/* add the row to lp_solve */
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+//					}
+//				}
+//			}
+//		}
 
 		// // constraint 4.a: if transitive constraint
-		if (ret == 0) {
-			/* construct z(i,j)+z(j,k)-z(i,k)<=1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = j + 1; k < numberOfEvents; k++) {
-						int zjk = nameMap.get("z(" + j + "," + k + ")");
-						int zik = nameMap.get("z(" + i + "," + k + ")");
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = zjk;
-						row[m++] = 1;
-
-						colno[m] = zik;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraint 4.b: if transitive constraint
-		if (ret == 0) {
-			/* construct z(i,j)+z(i,k)-z(j,k)<=1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = j + 1; k < numberOfEvents; k++) {
-						int zjk = nameMap.get("z(" + j + "," + k + ")");
-						int zik = nameMap.get("z(" + i + "," + k + ")");
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = zik;
-						row[m++] = 1;
-
-						colno[m] = zjk;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraint 4.c: if transitive constraint
-		if (ret == 0) {
-			/* construct z(i,k)+z(j,k)-z(i,j)<=1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = j + 1; k < numberOfEvents; k++) {
-						int zjk = nameMap.get("z(" + j + "," + k + ")");
-						int zik = nameMap.get("z(" + i + "," + k + ")");
-						m = 0;
-						colno[m] = zik;
-						row[m++] = 1;
-
-						colno[m] = zjk;
-						row[m++] = 1;
-
-						colno[m] = zij;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
+//		if (ret == 0) {
+//			/* construct z(i,j)+z(j,k)-z(i,k)<=1 */
+//			for (int i = 0; i < numberOfEvents; i++) {
+//				for (int j = i + 1; j < numberOfEvents; j++) {
+//					int zij = nameMap.get("z(" + i + "," + j + ")");
+//
+//					for (int k = j + 1; k < numberOfEvents; k++) {
+//						int zjk = nameMap.get("z(" + j + "," + k + ")");
+//						int zik = nameMap.get("z(" + i + "," + k + ")");
+//						m = 0;
+//						colno[m] = zij;
+//						row[m++] = 1;
+//
+//						colno[m] = zjk;
+//						row[m++] = 1;
+//
+//						colno[m] = zik;
+//						row[m++] = -1;
+//
+//						/* add the row to lp_solve */
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+//					}
+//				}
+//			}
+//		}
+//
+//		// constraint 4.b: if transitive constraint
+//		if (ret == 0) {
+//			/* construct z(i,j)+z(i,k)-z(j,k)<=1 */
+//			for (int i = 0; i < numberOfEvents; i++) {
+//				for (int j = i + 1; j < numberOfEvents; j++) {
+//					int zij = nameMap.get("z(" + i + "," + j + ")");
+//
+//					for (int k = j + 1; k < numberOfEvents; k++) {
+//						int zjk = nameMap.get("z(" + j + "," + k + ")");
+//						int zik = nameMap.get("z(" + i + "," + k + ")");
+//						m = 0;
+//						colno[m] = zij;
+//						row[m++] = 1;
+//
+//						colno[m] = zik;
+//						row[m++] = 1;
+//
+//						colno[m] = zjk;
+//						row[m++] = -1;
+//
+//						/* add the row to lp_solve */
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+//					}
+//				}
+//			}
+//		}
+//
+//		// constraint 4.c: if transitive constraint
+//		if (ret == 0) {
+//			/* construct z(i,k)+z(j,k)-z(i,j)<=1 */
+//			for (int i = 0; i < numberOfEvents; i++) {
+//				for (int j = i + 1; j < numberOfEvents; j++) {
+//					int zij = nameMap.get("z(" + i + "," + j + ")");
+//
+//					for (int k = j + 1; k < numberOfEvents; k++) {
+//						int zjk = nameMap.get("z(" + j + "," + k + ")");
+//						int zik = nameMap.get("z(" + i + "," + k + ")");
+//						m = 0;
+//						colno[m] = zik;
+//						row[m++] = 1;
+//
+//						colno[m] = zjk;
+//						row[m++] = 1;
+//
+//						colno[m] = zij;
+//						row[m++] = -1;
+//
+//						/* add the row to lp_solve */
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+//					}
+//				}
+//			}
+//		}
 
 		// constraint 8: best first constraint
-		// if (ret == 0) {
-		// /* construct z(i,k)+z(j,k)-z(i,j)<=1 */
-		// for (int j = 0; j < s; j++) {
-		// m = 0;
-		// for (int i = j - 1; i >= 0; i--) {
-		// int zij = nameMap.get("z(" + i + "," + j + ")");
-		//
-		// colno[m] = zij;
-		// row[m++] = 1;
-		//
-		// }
-		// /* add the row to lp_solve */
-		// lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-		// }
-		// }
+//		 if (ret == 0) {
+//		 /* construct z(i,k)+z(j,k)-z(i,j)<=1 */
+//		 for (int j = 0; j < numberOfEvents ; j++) {
+//		 m = 0;
+//		 for (int i = j - 1; i >= 0; i--) {
+//		 int zij = nameMap.get("z(" + i + "," + j + ")");
+//		
+//		 colno[m] = zij;
+//		 row[m++] = 1;
+//		
+//		 }
+//		 /* add the row to lp_solve */
+//		 lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+//		 }
+//		 }
 
 //		// constraint 9: negative constraint
 ////		System.err.println("Neg:" + this.negativeConstraint.size());
