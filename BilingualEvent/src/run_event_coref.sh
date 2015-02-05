@@ -1,7 +1,18 @@
 ./compile.sh
 
-java -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/ws4j-1.0.1.jar:../lib/stanford-classifier-3.2.0.jar:. event/supercoref/EventCorefTrainMentionPair 0 maxent
-java -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/ws4j-1.0.1.jar:../lib/stanford-classifier-3.2.0.jar:. event/supercoref/EventCorefTestMentionPair 0 maxent
+java -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/ws4j-1.0.1.jar:../lib/stanford-classifier-3.2.0.jar:. event/supercoref/EventCorefTrainMentionPair 0 svm
+
+cd /users/yzcchen/tool/svm_multiclass
+./svm_multiclass_learn -c 10000000 ~/chen3/eventBilingual/BilingualEvent/src/eventTrain0 eventCorefModel0
+
+cd /users/yzcchen/chen3/eventBilingual/BilingualEvent/src
+java -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/ws4j-1.0.1.jar:../lib/stanford-classifier-3.2.0.jar:. event/supercoref/EventCorefTestMentionPair 0 prepare
+
+cd /users/yzcchen/tool/svm_multiclass
+./svm_multiclass_classify ~/chen3/eventBilingual/BilingualEvent/src/eventTest0 eventCorefModel0 /users/yzcchen/chen3/eventBilingual/BilingualEvent/src/eventPredict0
+
+cd /users/yzcchen/chen3/eventBilingual/BilingualEvent/src
+java -cp ../lib/edu.mit.jwi_2.2.3.jar:../lib/ws4j-1.0.1.jar:../lib/stanford-classifier-3.2.0.jar:. event/supercoref/EventCorefTestMentionPair 0 load
 
 python python/scorer.py gold.keys.0 baselineMP.keys.0
 
