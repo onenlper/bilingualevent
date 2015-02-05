@@ -108,14 +108,15 @@ public class HeursiticBase {
 //						&&
 //						(cand.antecedent==null || cand.antecedent.antecedent==null || !Util.highPrecissionNegativeConstraint(cand.antecedent.antecedent, anaphor))
 //						&&
-//						(cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor()) 
-//								|| Util._commonBV_(cand, anaphor)
-						(false
-								)
+						(cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor())) 
+								|| 
+//						Util._commonBV_(cand, anaphor)
+//						(false
+//								)
 //						cand.getAnchor().equals(anaphor.getAnchor())
 //						cand.getSubType().equals(anaphor.getSubType())
 //						) {
-				
+						BV_match(cand, anaphor)
 //				if(
 //						cand.getAnchor().equalsIgnoreCase(anaphor.getAnchor())
 ////						doc.getWord(cand.getAnchorStart()).equalsIgnoreCase(doc.getWord(anaphor.getAnchorStart()))
@@ -130,5 +131,16 @@ public class HeursiticBase {
 				}
 			}
 		}
+	}
+	
+	private static boolean BV_match(EventMention em, EventMention an) {
+		for (String bv1 : em.bvs.keySet()) {
+			for (String bv2 : an.bvs.keySet()) {
+				if (bv1.equals(bv2)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

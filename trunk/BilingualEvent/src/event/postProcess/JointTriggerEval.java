@@ -12,11 +12,46 @@ public class JointTriggerEval {
 
 	public static HashMap<String, HashMap<String, EventMention>> systemEMses;
 
+	//load stanford maxent
+	public static void loadMaxEntSystem2(String folder) {
+		System.err.println("GE");
+		systemEMses = new HashMap<String, HashMap<String, EventMention>>();
+		ArrayList<String> lines = Common.getLines("/users/yzcchen/workspace/NAACL2013-B/src/data/Joint_triggers_test_system" + Util.part);
+		ArrayList<String> typeLines = Common.getLines("/users/yzcchen/tool/stanford-classifier-2012-11-11/output"
+				+ Util.part);
+		for (int i = 0; i < lines.size(); i++) {
+			String line = lines.get(i);
+			String typeLine = typeLines.get(i);
+
+			String tokens[] = typeLine.split("\\s+");
+			String subType = tokens[2];
+			subType = Util.subTypes.get(Integer.valueOf(subType) - 1);
+			tokens = line.split("\\s+");
+			String fileID = tokens[0];
+			int start = Integer.valueOf(tokens[1]);
+			int end = Integer.valueOf(tokens[2]);
+			EventMention em = new EventMention();
+			em.setAnchorStart(start);
+			em.setAnchorEnd(end);
+			em.inferFrom = tokens[4];
+			em.setSubType(subType);
+			em.confidence = 1;
+			if (systemEMses.containsKey(fileID)) {
+				systemEMses.get(fileID).put(em.toString(), em);
+			} else {
+				HashMap<String, EventMention> ems = new HashMap<String, EventMention>();
+				ems.put(em.toString(), em);
+				systemEMses.put(fileID, ems);
+			}
+		}
+	}
+
 	public static void loadMaxEntSystem(String folder) {
+		System.err.println("GE");
 		systemEMses = new HashMap<String, HashMap<String, EventMention>>();
 		ArrayList<String> lines = Common.getLines("data/Joint_triggers_test_system" + Util.part);
 		ArrayList<String> typeLines = Common
-				.getLines("/users/yzcchen/tool/maxent/bin/coling2012/JointTriggerOutput_test" + Util.part);
+				.getLines("/users/yzcchen/tool/maxent/bin/JointTriggerOutput_test" + Util.part);
 		for (int i = 0; i < lines.size(); i++) {
 			String line = lines.get(i);
 			String typeLine = typeLines.get(i);
@@ -95,7 +130,7 @@ public class JointTriggerEval {
 			em.inferFrom = inferFrom;
 			em.typeConfidences = confidences;
 			em.typeConfidence = typeConfidence;
-			if (subType.equals("null") || subType.equalsIgnoreCase("none")) {
+			if (subType.equals("null")) {
 				em.confidence = -1;
 			} else {
 				em.confidence = 1;
@@ -119,8 +154,10 @@ public class JointTriggerEval {
 		mode = args[0];
 		if (args[1].equals("svm")) {
 			loadSVMSystem(mode);
-		} else {
+		} else if (args[1].equals("maxent")) {
 			loadMaxEntSystem(mode);
+		} else if (args[1].equals("maxent_std")) {
+			loadMaxEntSystem2(mode);
 		}
 		ArrayList<String> files = Common.getLines("ACE_Chinese_" + mode + Util.part);
 		double gold = 0;
@@ -139,13 +176,10 @@ public class JointTriggerEval {
 			if (systemEMses.containsKey(file)) {
 				for (String key : systemEMses.get(file).keySet()) {
 					EventMention s = systemEMses.get(file).get(key);
-					if (s.subType.equalsIgnoreCase("null") || s.type.equalsIgnoreCase("none")) {
+					if (s.subType.equalsIgnoreCase("null")) {
 						continue;
 					}
-					if ((args[1].equalsIgnoreCase("svm") && s.confidence > 0)
-							|| (args[1].equalsIgnoreCase("maxent") && s.confidence > 0.5)) {
-						systems.add(s);
-					}
+					systems.add(s);
 				}
 				system += systems.size();
 				if (golds != null) {
@@ -155,7 +189,6 @@ public class JointTriggerEval {
 							EventMention s = systems.get(j);
 							if (g.equals(s)) {
 								hit++;
-								System.out.println(g.subType + " # " + s.subType);
 								if (g.subType.equals(s.subType)) {
 									hitType++;
 								}
@@ -195,7 +228,9 @@ public class JointTriggerEval {
 		// System.out.println(em + ":" + em.getAnchor() + " " +
 		// em.document.fileID);
 		// }
-
+		System.out.println("Gold: " + gold);
+		System.out.println("System: " + system);
+		System.out.println("Hit: " + hit);
 		System.out.println("====Trigger Identify====");
 		double p = hit / system;
 		double r = hit / gold;
@@ -221,6 +256,7 @@ public class JointTriggerEval {
 				Util.outputResult(systemEMses, "joint_" + args[1] + "/result.trigger.discourse" + args[2]);
 			} else {
 				Util.outputResult(systemEMses, "joint_" + args[1] + "/result.trigger" + args[2]);
+				Util.outputResult(systemEMses, "joint_" + args[1] + "/result" + args[2]);
 			}
 
 		}

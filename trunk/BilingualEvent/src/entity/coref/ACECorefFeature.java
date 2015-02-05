@@ -462,22 +462,23 @@ public class ACECorefFeature extends YYFeature {
 		String canHead = candidate.head;
 		String curHead = current.head;
 		
-		canStr = canHead;
-		curStr = curHead;
+//		canStr = canHead;
+//		curStr = curHead;
 		
 		ArrayList<String> strs = new ArrayList<String>();
 		strs.add(this.current.semClass);
 		strs.add(this.current.ner);
 		strs.add(this.current.subType);
-		
+		strs.add(curHead);
 		// TODO
-		strs.add(this.current.subType + "#" + this.candidate.subType);
+//		strs.add(this.current.subType + "#" + this.candidate.subType);
 		
-
 		String concat = canStr + "_" + curStr;
 		concat = concat.replace("\n", "").replace("\r", "");
 		strs.add(concat);
-				
+		
+		strs.add(canHead + "_" + curHead);
+		
 		// ner relation feature
 		String nerRelation = this.current.ner.toLowerCase() + "_" + this.candidate.ner.toLowerCase();
 		strs.add(nerRelation);
@@ -490,6 +491,7 @@ public class ACECorefFeature extends YYFeature {
 			between = between.replace("\n", "").replace("\r", "");
 		}
 		strs.add(between);
+		
 		return strs;
 	}
 

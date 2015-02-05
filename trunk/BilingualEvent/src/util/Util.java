@@ -89,7 +89,7 @@ public class Util {
 			"Charge-Indict", "Divorce", "End-Position", "Nominate", "Fine",
 			"Release-Parole", "Transfer-Money", "Phone-Write", "Merge-Org",
 			"Die", "Arrest-Jail", "Be-Born", "Injure", "Transport", "Sentence",
-			"Acquit", "Execute", "None");
+			"Acquit", "Execute", "null");
 
 	public static List<String> roles = Arrays.asList("Crime", "Victim",
 			"Origin", "Adjudicator", "Time-Holds", "Time-Before", "Target",
@@ -1566,16 +1566,12 @@ public class Util {
 				try {
 					em.getClass().getField(attribute).set(em, label);
 				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (SecurityException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (NoSuchFieldException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -1662,13 +1658,14 @@ public class Util {
 		}
 		return evms;
 	}
-
+	
 	private static HashMap<String, HashMap<String, EventMention>> readAllSystemEventMention() {
 		// if (pipelineResults == null) {
 		// pipelineResults = readSystemPipelineEventMention();
 		// }
 		double svmTh = 0;
 		eventMentionsMap = new HashMap<String, HashMap<String, EventMention>>();
+		
 		for (int folder = 0; folder < 5; folder++) {
 			String inter = "joint_svm_systemEventMention_systemArgument_goldEntityMentions_goldSemantic/";
 			// if(ACECommon.goldEventMention && ACECommon.goldEntityMention &&
@@ -1741,7 +1738,7 @@ public class Util {
 				
 				if (temp.subType.equalsIgnoreCase("null")
 						|| temp.confidence < svmTh) {
-					continue;
+//					continue;
 				}
 
 				// if (temp.subType.equalsIgnoreCase("null")) {
@@ -1757,21 +1754,40 @@ public class Util {
 					eventMention = temp;
 					eventMentions.put(temp.toString(), eventMention);
 					
+					double min = Integer.MIN_VALUE;
 					// confidences
 					for(int i=0;i<Util.subTypes.size();i++) {
-						eventMention.subTypeConfidences.add(Double.parseDouble(tokens[13 + i]));
+						double conf = Double.parseDouble(tokens[13 + i]);
+						if(conf==-1000000.0) {
+							if(i==Util.subTypes.size()-1) {
+								conf = 100;
+							} else {
+								conf = 0;
+							}
+						}
+						min = Math.min(conf, min);
+						eventMention.subTypeConfidences.add(conf);
 					}
 					size++;
+					// normalize
+					for(int i=0;i<Util.subTypes.size();i++) {
+						
+					}
+					
 				}
-
+				
+				
 				if (Integer.parseInt(tokens[8]) == -1) {
 					ArrayList<Double> confidences = new ArrayList<Double>();
 					for (int k = 13; k < tokens.length; k++) {
 						confidences.add(Double.valueOf(tokens[k]));
 					}
 					// eventMention.typeConfidences = confidences;
+//					System.out.println(temp.subType + "#");
+					// TODO
 					eventMention.inferFrom = tokens[9];
 					continue;
+//					System.out.println("here??");
 				}
 
 				EventMentionArgument argument = new EventMentionArgument();
@@ -1792,6 +1808,7 @@ public class Util {
 				eventMention.getEventMentionArguments().add(argument);
 			}
 		}
+		
 		return eventMentionsMap;
 	}
 
@@ -1801,7 +1818,7 @@ public class Util {
 		if (timeExpressions == null) {
 			timeExpressions = getMentionsFromCRFFile(
 					Common.getLines("ACE_Chinese_test" + Util.part),
-					"yy_time" + Util.part);
+					"/users/yzcchen/tool/CRF/CRF++-0.54/yy_time" + Util.part);
 		}
 		String key = doc.fileID;
 		String os = System.getProperty("os.name");
@@ -1818,7 +1835,7 @@ public class Util {
 		if (valueExpressions == null) {
 			valueExpressions = getMentionsFromCRFFile(
 					Common.getLines("ACE_Chinese_test" + Util.part),
-					"yy_value" + Util.part);
+					"/users/yzcchen/tool/CRF/CRF++-0.54/yy_value" + Util.part);
 		}
 		String key = doc.fileID;
 		String os = System.getProperty("os.name");
@@ -1896,6 +1913,10 @@ public class Util {
 				// System.out.println(start + "," + end + "$" + em.head);
 				em.headStart = start;
 				em.headEnd = end;
+				
+				em.start = start;
+				em.end = end;
+				
 				currentArrayList.add(em);
 
 				if (crfFile.contains("time")) {
@@ -1906,6 +1927,88 @@ public class Util {
 					em.subType = "value";
 				}
 
+			}
+		}
+		HashMap<String, ArrayList<EntityMention>> maps = new HashMap<String, ArrayList<EntityMention>>();
+		for (int i = 0; i < files.size(); i++) {
+			maps.put(files.get(i), entityMentionses.get(i));
+		}
+		return maps;
+	}
+	
+	
+	// get all semantic class from CRF predicted files
+	public static HashMap<String, ArrayList<EntityMention>> getSemanticsFromCRFFile(ArrayList<String> files,
+			String crfFile) {
+		// System.out.println(crfFile);
+		ArrayList<ArrayList<EntityMention>> entityMentionses = new ArrayList<ArrayList<EntityMention>>();
+		ArrayList<String> lines = Common.getLines(crfFile);
+		int fileIdx = 0;
+		ACEDoc doc = new ACEChiDoc(files.get(fileIdx));
+		int idx = doc.start - 1;
+		String content = doc.content;
+		int start = 0;
+		int end = 0;
+		int lastIdx = 0;
+		ArrayList<EntityMention> currentArrayList = new ArrayList<EntityMention>();
+		entityMentionses.add(currentArrayList);
+		for (int i = 0; i < lines.size();) {
+			String line = lines.get(i);
+			if (line.trim().isEmpty() || (line.charAt(0) == '#') && line.split("\\s+").length == 2) {
+				i++;
+				continue;
+			}
+			String tokens[] = line.trim().split("\\s+");
+			String predict = tokens[tokens.length - 1];
+			idx = content.indexOf(line.charAt(0), idx + 1);
+			// System.out.println(line);
+			if (idx == -1) {
+				fileIdx++;
+				currentArrayList = new ArrayList<EntityMention>();
+				entityMentionses.add(currentArrayList);
+				// System.out.println(files.get(fileIdx));
+				// System.out.println(line);
+				doc = new ACEChiDoc(files.get(fileIdx));
+				idx = doc.start - 1;
+				content = doc.content;
+				continue;
+			}
+			i++;
+			double totalConfidence = 0;
+			int pos = predict.lastIndexOf('/');
+			if (pos > 0) {
+				totalConfidence += Double.parseDouble(predict.substring(pos + 1));
+			}
+			String type = "";
+			if (predict.startsWith("B")) {
+				start = idx;
+				if (pos > 0) {
+					type = predict.substring(2, pos);
+				} else {
+					type = predict.substring(2);
+				}
+
+				while (true) {
+					lastIdx = idx;
+					line = lines.get(i);
+					tokens = line.trim().split("\\s+");
+					predict = tokens[tokens.length - 1];
+					if (!predict.startsWith("I") || lines.get(i).isEmpty() || (line.charAt(0) == '#')
+							&& line.split("\\s+").length == 2) {
+						break;
+					}
+					pos = predict.lastIndexOf('/');
+					if (pos > 0) {
+						totalConfidence += Double.parseDouble(predict.substring(pos + 1));
+					}
+					idx = content.indexOf(lines.get(i++).charAt(0), lastIdx + 1);
+				}
+				end = lastIdx;
+				EntityMention em = new EntityMention();
+				em.start = start;
+				em.end = end;
+				em.ner = type.replace("_", "");
+				currentArrayList.add(em);
 			}
 		}
 		HashMap<String, ArrayList<EntityMention>> maps = new HashMap<String, ArrayList<EntityMention>>();
@@ -1960,7 +2063,7 @@ public class Util {
 
 	static HashMap<String, ArrayList<EntityMention>> allSemanticResult;
 
-	private static void assignSystemSemantic(EntityMention mention,
+	public static void assignSystemSemantic(EntityMention mention,
 			String fileID) {
 		if (allSemanticResult == null) {
 			allSemanticResult = loadSemanticResult();
@@ -1981,6 +2084,8 @@ public class Util {
 		}
 		if (!find) {
 			System.err.println("GEE");
+//			mention.subType = "other";
+//			mention.semClass = "other";
 			Common.bangErrorPOS("");
 			System.exit(1);
 		}
@@ -2008,6 +2113,7 @@ public class Util {
 		HashMap<String, ArrayList<EntityMention>> allSVMResult = new HashMap<String, ArrayList<EntityMention>>();
 		// /users/yzcchen/chen3/conll12/chinese/semantic_gold_mention
 		String folder = "/users/yzcchen/ACL12/model/ACE2005/semantic_system_mention/";
+//		String folder = "/users/yzcchen/ACL12/model/ACE2005/semantic3/";
 		
 		String os = System.getProperty("os.name");
 		if(os.startsWith("Windows")) {
@@ -2029,7 +2135,8 @@ public class Util {
 			EntityMention em = new EntityMention();
 			em.headStart = headStart;
 			em.headEnd = headEnd;
-
+			em.start = headStart;
+			em.end = headEnd;
 			int typeIndex = Integer.valueOf(typeResult.get(i).split("\\s+")[0]);
 			int subTypeIndex = Integer.valueOf(subTypeResult.get(i).split(
 					"\\s+")[0]);
@@ -2663,7 +2770,7 @@ public class Util {
 		 */
 
 		if (common) {
-			if (!conflictBV(ant, em))
+			if (!conflictBV(ant, em)) 
 				return true;
 //			} else {
 				// EventMention gEM =
@@ -2712,4 +2819,6 @@ public class Util {
 		}
 		return true;
 	}
+	
+
 }

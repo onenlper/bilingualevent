@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import model.ACEChiDoc;
+import model.ACEDoc;
 import model.EntityMention;
 import model.EventMention;
 import model.EventMentionArgument;
@@ -253,6 +254,9 @@ public class JointTriggerIndent {
 		String documentType = "";
 		documentType = this.getMainLabel(pipeEventMentions);
 
+//		System.out.println(features);
+//		Common.pause("");
+		
 		return convert(features, label, documentType, jointEventMentions, eventType, arguments, document,
 				pipeMentionTest, jointMentionTest, jointEventMentions, eventMentionsFromTest, em);
 	}
@@ -277,7 +281,10 @@ public class JointTriggerIndent {
 	}
 
 	public void addSemanticRoleFeature(ArrayList<String> features, ACEChiDoc document, EventMention em) {
-		HashMap<EventMention, SemanticRole> predicates = document.semanticRoles;
+		HashMap<EventMention, SemanticRole> predicates = new HashMap<EventMention, SemanticRole>();
+		for (SemanticRole role : document.semanticRoles.values()) {
+			predicates.put(role.predict, role);
+		}
 		SemanticRole role = predicates.get(em);
 		if (role != null) {
 			features.add("0");
@@ -364,7 +371,6 @@ public class JointTriggerIndent {
 			ArrayList<MyTreeNode> leaves = prs.get(npSenIdx).tree.leaves;
 			MyTreeNode leftNp = leaves.get(npWordStartIdx);
 			MyTreeNode rightNp = leaves.get(npWordEndIdx);
-			// System.out.println(npWordEndIdx +np.getContent());
 			ArrayList<MyTreeNode> leftAncestors = leftNp.getAncestors();
 			ArrayList<MyTreeNode> rightAncestors = rightNp.getAncestors();
 			for (int i = 0; i < leftAncestors.size() && i < rightAncestors.size(); i++) {
@@ -419,30 +425,6 @@ public class JointTriggerIndent {
 			}
 			feas.add(new Feature(idx, 1));
 		}
-		// for(EntityMention argument : arguments) {
-		// String type = argument.entity.type;
-		// if(type.equalsIgnoreCase("time") || type.equalsIgnoreCase("value")) {
-		// continue;
-		// }
-		// if(document.salienceChain.get(type).entityIdx==argument.entity.entityIdx
-		// && argument.entity.mentions.size()>=3) {
-		// if(type.equalsIgnoreCase("FAC")) {
-		// feas.add(new Feature(mostFac, 1));
-		// } else if(type.equalsIgnoreCase("GPE")) {
-		// feas.add(new Feature(mostGPE, 1));
-		// } else if(type.equalsIgnoreCase("LOC")) {
-		// feas.add(new Feature(mostLOC, 1));
-		// } else if(type.equalsIgnoreCase("ORG")) {
-		// feas.add(new Feature(mostORG, 1));
-		// } else if(type.equalsIgnoreCase("PER")) {
-		// feas.add(new Feature(mostPER, 1));
-		// } else if(type.equalsIgnoreCase("VEH")) {
-		// feas.add(new Feature(mostVEH, 1));
-		// } else if(type.equalsIgnoreCase("WEA")) {
-		// feas.add(new Feature(mostWEA, 1));
-		// }
-		// }
-		// }
 		if (pipeMentionTest != null) {
 			for (EventMentionArgument argument : pipeMentionTest.eventMentionArguments) {
 				String role = argument.getRole();
@@ -487,42 +469,48 @@ public class JointTriggerIndent {
 		for (Feature fea : feas) {
 			sb.append(" ").append(fea.idx).append(":").append(fea.value);
 		}
-		if (!documentType.equals("null") && !eventType.equals("null")) {
-			double yyFea = this.getYYFeaValue(documentType, eventType);
-			// sb.append(" ").append(yyFeaIdx - 1).append(":").append(yyFea);
-			// System.out.println(documentType + "@" + eventType + ":" + yyFea +
-			// "#" + mode);
-		}
-		String typeConsistentFea = "";
-		if (pipeMentionTest != null) {
-			// type distribution
-			typeConsistentFea = this.getYYFeaValueList(documentEventMentions, eventType, pipeMentionTest);
-		}
-		sb.append(" ").append(typeConsistentFea);
-
-		String discourseFea = "";
-		if (pipeMentionTest != null && discourse) {
-			// discourse consistency
-//			discourseFea = this.buildDiscourseFea(pipeMentionTest, eventMentionsFromTest);
-		}
-		sb.append(" ").append(discourseFea);
-
-		if (triggerProb == null) {
-			triggerProb = Common.readFile2Map5("pipeline/triggerProbability" + Util.part);
-		}
-
-		double prob = 0;
-
-		if (pipeMentionTest != null) {
-			if (triggerProb.containsKey(pipeMentionTest.getAnchor())) {
-				prob = triggerProb.get(pipeMentionTest.getAnchor());
-			} else {
-				if (triggerProb.containsKey(pipeMentionTest.inferFrom)) {
-					prob = triggerProb.get(pipeMentionTest.inferFrom);
-				}
-			}
-			sb.append(" 701000:").append(prob);
-		} 
+//		String typeConsistentFea = "";
+//		if (pipeMentionTest != null) {
+//			// type distribution
+//			 typeConsistentFea = this.getYYFeaValueList(documentEventMentions, eventType, pipeMentionTest);
+//		}
+//		sb.append(" ").append(typeConsistentFea);
+//
+//		String discourseFea = "";
+//		if (pipeMentionTest != null && discourse) {
+//			// discourse consistency
+////			discourseFea = this.buildDiscourseFea(pipeMentionTest, eventMentionsFromTest);
+//		}
+//		sb.append(" ").append(discourseFea);
+//
+//		if (triggerProb == null) {
+//			triggerProb = Common.readFile2Map5("pipeline/triggerProbability" + Util.part);
+//		}
+//
+//		double prob = 0;
+//
+//		if (pipeMentionTest != null) {
+//			if (triggerProb.containsKey(pipeMentionTest.getAnchor())) {
+//				prob = triggerProb.get(pipeMentionTest.getAnchor());
+//			} else {
+//				if (triggerProb.containsKey(pipeMentionTest.inferFrom)) {
+//					prob = triggerProb.get(pipeMentionTest.inferFrom);
+//				}
+//			}
+//			sb.append(" 701000:").append(prob);
+////			sb.append(" ").append(701000 + (int)(prob*10)).append(":1");
+////			if(prob>.75) {
+////				sb.append(" :").append(1);
+////			} else if(prob>.5) {
+////				sb.append(" 701001:").append(1);
+////			} else if(prob>.25) {
+////				sb.append(" 701002:").append(1);
+////			} else if(prob>.0) {
+////				sb.append(" 701003:").append(1);
+////			} else {
+////				sb.append(" 701004:").append(1);
+////			}
+//		}
 		return sb.toString().trim();
 	}
 
@@ -540,8 +528,6 @@ public class JointTriggerIndent {
 				prob = consisProb.get(em.inferFrom);
 			}
 		}
-
-		// System.out.println(prob + "@" + em.getAnchor() + "#" + em.inferFrom);
 
 		int trigger = 0;
 		int nonTrigger = 0;
@@ -563,10 +549,8 @@ public class JointTriggerIndent {
 		feas.add(fea3);
 		Feature fea4 = new Feature(discourseFeaIdx + 3, em.typeConfidence);
 		feas.add(fea4);
-		Feature fea5 = new Feature(discourseFeaIdx + 4 + types.indexOf(em.type), 1);
+		Feature fea5 = new Feature(discourseFeaIdx + 4 + Util.subTypes.indexOf(em.subType), 1);
 		feas.add(fea5);
-
-		// System.out.println(em.typeConfidence + "$" + em.type);
 
 		StringBuilder sb = new StringBuilder();
 		for (Feature fea : feas) {
@@ -581,41 +565,6 @@ public class JointTriggerIndent {
 
 	public static int yyFeaIdx = 600000;
 
-	// public String getYYFeaValueList(ArrayList<EventMention> eventMentions,
-	// String eventType, EventMention mentionTest) {
-	// StringBuilder sb = new StringBuilder();
-	// ArrayList<Feature> feas = new ArrayList<Feature>();
-	// double trigger = 0;
-	// double nonTrigger = 0;
-	// for(EventMention mention : eventMentions) {
-	// if(mention.type.equals(eventType)) {
-	// if(mention.confidence>0) {
-	// trigger++;
-	// } else {
-	// nonTrigger++;
-	// }
-	// }
-	// }
-	// // Feature fea1 = new Feature(yyFeaIdx, trigger/(trigger+nonTrigger));
-	// // feas.add(fea1);
-	// Feature fea2 = new Feature(yyFeaIdx + 1, trigger);
-	// feas.add(fea2);
-	// Feature fea3 = new Feature(yyFeaIdx + 2, nonTrigger);
-	// feas.add(fea3);
-	// Feature fea4 = new Feature(yyFeaIdx + 3, mentionTest.typeConfidence);
-	// feas.add(fea4);
-	// // Feature fea5 = new Feature(yyFeaIdx + 4 +
-	// types.indexOf(mentionTest.type), 1);
-	// // feas.add(fea5);
-	//	
-	// // System.out.println(mentionTest.typeConfidence + "$" +
-	// mentionTest.type);
-	//	
-	// for (Feature fea : feas) {
-	// sb.append(" ").append(fea.idx).append(":").append(fea.value);
-	// }
-	// return sb.toString();
-	// }
 
 	public String getYYFeaValueList(ArrayList<EventMention> eventMentions, String eventType, EventMention mentionTest) {
 		HashMap<String, Integer> typeCounts = new HashMap<String, Integer>();
@@ -639,19 +588,7 @@ public class JointTriggerIndent {
 			if (Util.subTypes.get(i).equals(eventType)) {
 				yyValues[i] = poss;
 			}
-			// else {
-			// if(probs.containsKey(types.get(i))) {
-			// if(probs.get(types.get(i)).containsKey(eventType)) {
-			// yyValues[i] = poss * probs.get(types.get(i)).get(eventType);
-			// }
-			// }
-			// }
 		}
-		// for (int i = 0; i < 8; i++) {
-		// if (types.get(i).equals(eventType)) {
-		// yyValues[i + 8] = yyCounts[i] / (double) eventMentions.size();
-		// }
-		// }
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < yyValues.length; i++) {
 			// type distribution
@@ -659,28 +596,6 @@ public class JointTriggerIndent {
 		}
 
 		ArrayList<Feature> feas = new ArrayList<Feature>();
-		// double trigger = 0;
-		// double nonTrigger = 0;
-		// for (EventMention mention : eventMentions) {
-		// if (mention.type.equals(eventType)) {
-		// if (mention.confidence > 0) {
-		// trigger++;
-		// } else {
-		// nonTrigger++;
-		// }
-		// }
-		// }
-		//
-		// Feature fea2 = new Feature(yyFeaIdx + 100 + 1, trigger);
-		// feas.add(fea2);
-		// Feature fea3 = new Feature(yyFeaIdx + 100 + 2, nonTrigger);
-		// feas.add(fea3);
-		// Feature fea4 = new Feature(yyFeaIdx + 100 + 3,
-		// mentionTest.typeConfidence);
-		// feas.add(fea4);
-		// Feature fea5 = new Feature(yyFeaIdx + 100 + 4 +
-		// types.indexOf(mentionTest.type), 1);
-		// feas.add(fea5);
 		for (Feature fea : feas) {
 			sb.append(" ").append(fea.idx).append(":").append(fea.value);
 		}
@@ -765,6 +680,7 @@ public class JointTriggerIndent {
 		ArrayList<String> triggerSubTypeFeatures = new ArrayList<String>();
 
 		JointTriggerIndent triggerFeature = new JointTriggerIndent();
+		int notNone = 0;
 		ArrayList<String> systemEMses = new ArrayList<String>();
 		for (String file : files) {
 			HashSet<EventMention> goldEMs = new HashSet<EventMention>();
@@ -783,11 +699,9 @@ public class JointTriggerIndent {
 				sb.append(file).append(" ").append(em.getAnchorStart()).append(" ").append(em.getAnchorEnd()).append(
 						" ").append(em.getType()).append(" ").append(em.inferFrom);
 				systemEMses.add(sb.toString());
-
-				EventMention mentionTest = null;
-				if (pipelineResults.containsKey(document.fileID)
-						&& pipelineResults.get(document.fileID).containsKey(em.toString())) {
-					mentionTest = pipelineResults.get(document.fileID).get(em.toString());
+				
+				if(!em.subType.equals("null")) {
+					notNone += 1;
 				}
 				
 				triggerSubTypeFeatures.add(triggerFeature.buildFeature(em, document, Integer.toString(Util.subTypes
@@ -802,6 +716,7 @@ public class JointTriggerIndent {
 		if (mode.equalsIgnoreCase("train")) {
 			Common.outputHashMap(featureSpace, "triggerValueFeaSpaceJoint" + Util.part);
 		}
+		System.out.println(notNone + "##");
 	}
 
 	static HashMap<String, HashMap<String, EventMention>> pipelineResults;
@@ -813,23 +728,7 @@ public class JointTriggerIndent {
 		TriggerIndent triggerIndent = new ChineseTriggerIndent();
 		ArrayList<EventMention> candidates = triggerIndent.extractTrigger(document.fileID);
 		candidateEMSet.addAll(candidates);
-//		for (ParseResult pr : document.parseReults) {
-//			for (int i = 1; i < pr.words.size(); i++) {
-//				int start = pr.positions.get(i)[0];
-//				int end = pr.positions.get(i)[1];
-//				String word = pr.words.get(i).replace("\n", "").replaceAll("\\s+", "");
-//				EventMention em = new EventMention();
-//				em.setAnchorStart(start);
-//				em.setAnchorEnd(end);
-//				em.setAnchor(word);
-//				em.setType("null");
-//				if (!candidateEMSet.contains(em)) {
-//					testEMs.add(em);
-//				}
-//			}
-//		}
-
-		testEMs.addAll(candidateEMSet);
+		testEMs.addAll(candidates);
 		ArrayList<EventMention> ems = new ArrayList<EventMention>();
 		ems.addAll(testEMs);
 		return ems;
@@ -848,8 +747,8 @@ public class JointTriggerIndent {
 				em.setAnchorStart(start);
 				em.setAnchorEnd(end);
 				em.setAnchor(word);
-				em.setType("None");
-				em.setSubType("None");
+				em.setType("null");
+				em.setSubType("null");
 				if (!goldEMSet.contains(em)) {
 					trainEMs.add(em);
 				}
@@ -868,7 +767,7 @@ public class JointTriggerIndent {
 
 	public static void loadTrainForTest(String folder) {
 		pipelineResults = new HashMap<String, HashMap<String, EventMention>>();
-		for (int i = 1; i <= 10; i++) {
+		for (int i = 0; i < 5; i++) {
 			if (i == Integer.valueOf(folder)) {
 				continue;
 			}
@@ -880,7 +779,7 @@ public class JointTriggerIndent {
 		}
 
 		jointResults = new HashMap<String, HashMap<String, EventMention>>();
-		for (int i = 1; i <= 10; i++) {
+		for (int i = 0; i < 5; i++) {
 			if (i == Integer.valueOf(folder)) {
 				continue;
 			}
@@ -890,6 +789,5 @@ public class JointTriggerIndent {
 				jointResults.put(key, part.get(key));
 			}
 		}
-
 	}
 }

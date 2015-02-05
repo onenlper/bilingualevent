@@ -20,22 +20,22 @@ import util.Util;
 
 public class ILP {
 
-	ArrayList<EventMention> mentions;
-	HashMap<String, Double> confMap;
+	ArrayList<EventMention> eventMentions;
+	HashMap<String, Double> eventCorefMaps;
 
 	HashSet<String> negativeConstraint;
 
-	int s = 0;
+	int numberOfEvents = 0;
 
 	HashMap<EventMention[], Integer> corefOutput = new HashMap<EventMention[], Integer>();
 
 	public ILP(ArrayList<EventMention> mentions,
 			HashMap<String, Double> confMap, HashSet<String> negativeConstraint) {
 		// read trigger type probabilities
-		this.mentions = mentions;
-		this.confMap = confMap;
-		this.s = this.mentions.size();
-		System.err.println("S:" + s);
+		this.eventMentions = mentions;
+		this.eventCorefMaps = confMap;
+		this.numberOfEvents = this.eventMentions.size();
+//		System.err.println("S:" + numberOfEvents);
 		// read maxent coref probabilities
 		this.negativeConstraint = negativeConstraint;
 	}
@@ -52,7 +52,7 @@ public class ILP {
 		 * We will build the model row by row So we start with creating a model
 		 * with 0 rows and 2 columns
 		 */
-		Ncol = s * 34 + s * (s - 1) / 2; /* there are two variables in the model */
+		Ncol = numberOfEvents * 34 + numberOfEvents * (numberOfEvents - 1) / 2; /* there are two variables in the model */
 		if (Ncol == 0) {
 			return 0;
 		}
@@ -75,23 +75,23 @@ public class ILP {
 			 */
 			int vNo = 1;
 
-			for (int i = 0; i < s; i++) {
+			for (int i = 0; i < numberOfEvents; i++) {
 				for (int k = 1; k <= 34; k++) {
 					String name = "y(" + i + "," + k + ")";
 					lp.setColName(vNo, name);
 					nameMap.put(name, vNo);
 					probMap.put(name,
-							this.mentions.get(i).subTypeConfidences.get(k - 1));
+							this.eventMentions.get(i).subTypeConfidences.get(k - 1));
 					vNo++;
 				}
 			}
 
-			for (int j = 0; j < s; j++) {
+			for (int j = 0; j < numberOfEvents; j++) {
 				for (int i = 0; i < j; i++) {
 					String name = "z(" + i + "," + j + ")";
 					lp.setColName(vNo, name);
 					nameMap.put(name, vNo);
-					probMap.put(name, this.confMap.get(this.mentions.get(i).toName() + " " + this.mentions.get(j).toName()));
+					probMap.put(name, this.eventCorefMaps.get(this.eventMentions.get(i).toName() + " " + this.eventMentions.get(j).toName()));
 					vNo++;
 				}
 			}
@@ -101,12 +101,12 @@ public class ILP {
 		// constraint 1: only one type & has type <=> trigger
 		if (ret == 0) {
 			/* construct xi=sum y(i, k) over all k */
-			for (int i = 0; i < s; i++) {
+			for (int i = 0; i < numberOfEvents; i++) {
 				m = 0;
-				int yi34 = nameMap.get("y(" + i + ",34)");
-				colno[m] = yi34;
-				row[m++] = 1;
-				for (int k = 1; k <= 33; k++) {
+//				int yi34 = nameMap.get("y(" + i + ",34)");
+//				colno[m] = yi34;
+//				row[m++] = 1;
+				for (int k = 1; k <= 34; k++) {
 					int yik = nameMap.get("y(" + i + "," + k + ")");
 					colno[m] = yik;
 					row[m++] = 1;
@@ -116,12 +116,12 @@ public class ILP {
 			}
 		}
 
-		// constraint 2: if coreference, then trigger
+		// constraint 2.a: if coreference, then trigger
 		if (ret == 0) {
-			/* construct z(i, j)<=xi */
-			for (int i = 0; i < s; i++) {
+			/* construct z(i, j) + Zij <= 1 */
+			for (int i = 0; i < numberOfEvents; i++) {
 				int yi34 = nameMap.get("y(" + i + ",34)");
-				for (int j = i + 1; j < s; j++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					m = 0;
 					colno[m] = yi34;
 					row[m++] = 1;
@@ -134,10 +134,10 @@ public class ILP {
 			}
 		}
 
-		// constraint 3: if coreference, then trigger
+		// constraint 2.b: if coreference, then trigger
 		if (ret == 0) {
-			/* construct z(i, j)<=xj */
-			for (int j = 0; j < s; j++) {
+			/* construct z(i, j) + Zij <= 1 */
+			for (int j = 0; j < numberOfEvents; j++) {
 				int yj34 = nameMap.get("y(" + j + ",34)");
 				for (int i = 0; i < j; i++) {
 					m = 0;
@@ -152,11 +152,11 @@ public class ILP {
 			}
 		}
 
-		// constraint 4: if coreference, then type equal
+		// constraint 3.a: if coreference, then type equal
 		if (ret == 0) {
 			/* construct 1 - zij >= yik - yjk, for all k */
-			for (int i = 0; i < s; i++) {
-				for (int j = i + 1; j < s; j++) {
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
 
 					for (int k = 1; k <= 34; k++) {
@@ -180,11 +180,11 @@ public class ILP {
 			}
 		}
 
-		// constraint 5: if coreference, then type equal
+		// constraint 3.b: if coreference, then type equal
 		if (ret == 0) {
 			/* construct 1 - zij >= yjk - yik, for all k */
-			for (int i = 0; i < s; i++) {
-				for (int j = i + 1; j < s; j++) {
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
 
 					for (int k = 1; k <= 34; k++) {
@@ -208,14 +208,14 @@ public class ILP {
 			}
 		}
 
-		// // constraint 6: if transitive constraint
+		// // constraint 4.a: if transitive constraint
 		if (ret == 0) {
 			/* construct z(i,j)+z(j,k)-z(i,k)<=1 */
-			for (int i = 0; i < s; i++) {
-				for (int j = i + 1; j < s; j++) {
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
 
-					for (int k = j + 1; k < s; k++) {
+					for (int k = j + 1; k < numberOfEvents; k++) {
 						int zjk = nameMap.get("z(" + j + "," + k + ")");
 						int zik = nameMap.get("z(" + i + "," + k + ")");
 						m = 0;
@@ -235,14 +235,14 @@ public class ILP {
 			}
 		}
 
-		// constraint 7: if transitive constraint
+		// constraint 4.b: if transitive constraint
 		if (ret == 0) {
 			/* construct z(i,j)+z(i,k)-z(j,k)<=1 */
-			for (int i = 0; i < s; i++) {
-				for (int j = i + 1; j < s; j++) {
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
 
-					for (int k = j + 1; k < s; k++) {
+					for (int k = j + 1; k < numberOfEvents; k++) {
 						int zjk = nameMap.get("z(" + j + "," + k + ")");
 						int zik = nameMap.get("z(" + i + "," + k + ")");
 						m = 0;
@@ -262,14 +262,14 @@ public class ILP {
 			}
 		}
 
-		// constraint 8: if transitive constraint
+		// constraint 4.c: if transitive constraint
 		if (ret == 0) {
 			/* construct z(i,k)+z(j,k)-z(i,j)<=1 */
-			for (int i = 0; i < s; i++) {
-				for (int j = i + 1; j < s; j++) {
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
 
-					for (int k = j + 1; k < s; k++) {
+					for (int k = j + 1; k < numberOfEvents; k++) {
 						int zjk = nameMap.get("z(" + j + "," + k + ")");
 						int zik = nameMap.get("z(" + i + "," + k + ")");
 						m = 0;
@@ -306,55 +306,50 @@ public class ILP {
 		// }
 		// }
 
-		// constraint 9: negative constraint
-		System.err.println("Neg:" + this.negativeConstraint.size());
-		if (ret == 0) {
-			for (int j = 0; j < s; j++) {
-				for (int i = j - 1; i >= 0; i--) {
-					m = 0;
-					EventMention m1 = this.mentions.get(i);
-					EventMention m2 = this.mentions.get(j);
-					String pair = m1.getAnchorStart() + "," + m1.getAnchorEnd()
-							+ "," + m2.getAnchorStart() + ","
-							+ m2.getAnchorEnd();
-					if (this.negativeConstraint.contains(pair)) {
-						int zij = nameMap.get("z(" + i + "," + j + ")");
-						colno[m] = zij;
-						row[m++] = 1;
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
-					}
-				}
-			}
-		}
+//		// constraint 9: negative constraint
+////		System.err.println("Neg:" + this.negativeConstraint.size());
+//		if (ret == 0) {
+//			for (int j = 0; j < numberOfEvents; j++) {
+//				for (int i = j - 1; i >= 0; i--) {
+//					m = 0;
+//					EventMention m1 = this.eventMentions.get(i);
+//					EventMention m2 = this.eventMentions.get(j);
+//					String pair = m1.getAnchorStart() + "," + m1.getAnchorEnd()
+//							+ "," + m2.getAnchorStart() + ","
+//							+ m2.getAnchorEnd();
+//					if (this.negativeConstraint.contains(pair)) {
+//						int zij = nameMap.get("z(" + i + "," + j + ")");
+//						colno[m] = zij;
+//						row[m++] = 1;
+//						/* add the row to lp_solve */
+//						lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+//					}
+//				}
+//			}
+//		}
 
 		HashMap<Integer, Double> obj = new HashMap<Integer, Double>();
 		if (ret == 0) {
 			/* set the objective function */
 			m = 0;
-			for (int i = 0; i < s; i++) {
-				for (int j = i + 1; j < s; j++) {
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
 					int zij = nameMap.get("z(" + i + "," + j + ")");
 					
 					double pij = (probMap.get("z(" + i + "," + j + ")") * 2.0) - 1;
 
-					double cij = -1.0 * Math.log(pij);
-					double cij2 = -1.0 * Math.log(1 - pij);
 					colno[m] = zij;
-					row[m++] = pij * lemda / s;
-
-					obj.put(zij, pij * lemda / s);
+					row[m++] = pij * lamda / numberOfEvents;
+					obj.put(zij, pij * lamda / numberOfEvents);
 				}
 			}
-			for (int i = 0; i < s; i++) {
-				double v = 0;
+			for (int i = 0; i < numberOfEvents; i++) {
 				for (int k = 1; k <= 34; k++) {
 					int yik = nameMap.get("y(" + i + "," + k + ")");
 					double pik = probMap.get("y(" + i + "," + k + ")");
-					v += pik;
-					colno[m] = yik;
-					row[m++] = pik * (1 - lemda);
 
+					colno[m] = yik;
+					row[m++] = pik * (1 - lamda);
 					// obj.put(yik, pik * (1 - lemda));
 				}
 				// System.err.println("V:" + v);
@@ -388,11 +383,11 @@ public class ILP {
 			else
 				ret = 5;
 		}
-		System.err.println("Return: " + ret);
+//		System.err.println("Return: " + ret);
 		if (ret == 0) {
 			/* a solution is calculated, now lets get some results */
 			/* objective value */
-			System.err.println("Objective value: " + lp.getObjective());
+//			System.err.println("Objective value: " + lp.getObjective());
 
 			/* variable values */
 			lp.getVariables(row);
@@ -403,8 +398,8 @@ public class ILP {
 				double term = time * row[key.intValue() - 1];
 				sum += term;
 			}
-			System.err.println("left:\t" + sum);
-			System.err.println("right:\t" + (lp.getObjective() - sum));
+//			System.err.println("left:\t" + sum);
+//			System.err.println("right:\t" + (lp.getObjective() - sum));
 			for (m = 0; m < Ncol; m++) {
 //				System.out.println(lp.getColName(m + 1) + ": " + row[m]);
 
@@ -416,9 +411,9 @@ public class ILP {
 				if (name.startsWith("x")) {
 					int idx = Integer.valueOf(content);
 					if (value == 0) {
-						mentions.get(idx).confidence = -1;
+						eventMentions.get(idx).confidence = -1;
 					} else {
-						mentions.get(idx).confidence = 1;
+						eventMentions.get(idx).confidence = 1;
 					}
 				} else if (name.startsWith("y")) {
 					String tokens[] = content.split(",");
@@ -426,12 +421,18 @@ public class ILP {
 					String subType = Util.subTypes.get(Integer
 							.parseInt(tokens[1]) - 1);
 					if (value == 1) {
-						mentions.get(idx).subType = subType;
+						eventMentions.get(idx).subType = subType;
+						
+						if(!subType.equals("null")) {
+							eventMentions.get(idx).confidence = 1;
+						} else {
+							eventMentions.get(idx).confidence = -1;
+						}
 					}
 				} else if (name.startsWith("z")) {
 					String tokens[] = content.split(",");
-					EventMention m1 = mentions.get(Integer.parseInt(tokens[0]));
-					EventMention m2 = mentions.get(Integer.parseInt(tokens[1]));
+					EventMention m1 = eventMentions.get(Integer.parseInt(tokens[0]));
+					EventMention m2 = eventMentions.get(Integer.parseInt(tokens[1]));
 					EventMention pair[] = new EventMention[2];
 					pair[0] = m1;
 					pair[1] = m2;
@@ -441,28 +442,26 @@ public class ILP {
 						String key = m1.toName() + " " + m2.toName(); 
 						corefs.add(key);
 						this.corefOutput.put(pair, 1);
-						System.out.println(key);
 						if (!m1.subType.equals(m2.subType) || m1.confidence < 0
 								|| m2.confidence < 0) {
-							System.err
-									.println("GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+//							System.err
+//									.println("GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 						}
 					} else {
 						this.corefOutput.put(pair, -1);
 					}
 				}
 			}
-			for (int i = 0; i < s; i++) {
-				EventMention mention = mentions.get(i);
+			for (int i = 0; i < numberOfEvents; i++) {
+				EventMention mention = eventMentions.get(i);
 				if (mention.confidence > 0 && mention.subType.equals("null")) {
-					System.err.println("GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+//					System.err.println("GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 				} else if (mention.confidence < 0
 						&& !mention.subType.equals("null")) {
-					System.err.println("GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+//					System.err.println("GEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 				}
 			}
 			/* we are done now */
-
 		}
 
 		/* clean up such that all used memory by lp_solve is freeed */
@@ -477,7 +476,7 @@ public class ILP {
 
 	}
 
-	static double lemda = 0.5;
+	static double lamda = 0.76;
 
 	private static HashMap<String, HashMap<String, Double>> loadProbs(String fn) {
 		ArrayList<String> lines = Common.getLines(fn);
@@ -489,32 +488,38 @@ public class ILP {
 				map = new HashMap<String, Double>();
 				maps.put(tks[0], map);
 			}
-			map.put(tks[1] + " " + tks[2], Double.parseDouble(tks[3]));
+			map.put(tks[1] + " " + tks[2], Double.parseDouble(tks[3]) + .3);
 		}
 		return maps;
 	}
 
 	public static void main(String[] args) throws Exception {
-		if (args.length != 2) {
+		if (args.length < 1) {
 			System.err.println("java ~ folder lemda");
 			System.exit(1);
 		}
 		
 		Util.part = args[0];
 		
-		lemda = Double.parseDouble(args[1]);
+		lamda = Double.parseDouble(args[1]);
 
-		HashMap<String, HashMap<String, Double>> entityCorefProbMaps = loadProbs("entityProbs");
-		HashMap<String, HashMap<String, Double>> eventCorefProbMaps = loadProbs("eventProbs");
+		HashMap<String, HashMap<String, Double>> entityCorefProbMaps = loadProbs("entityProbs" + args[0]);
+		HashMap<String, HashMap<String, Double>> eventCorefProbMaps = loadProbs("eventProbs" + args[0]);
 		
 		ArrayList<String> files = Common.getLines("ACE_Chinese_test" + args[0]);
 		
 		ArrayList<String> fileNames= new ArrayList<String>();
 		ArrayList<Integer> lengths = new ArrayList<Integer>();
 		ArrayList<ArrayList<EventChain>> answers = new ArrayList<ArrayList<EventChain>>(); 
+		ArrayList<ArrayList<EventChain>> goldKeys = new ArrayList<ArrayList<EventChain>>(); 
+		
+		HashMap<String, HashMap<String, EventMention>> allEvents = new HashMap<String, HashMap<String, EventMention>>();
+		
+		int ev1 = 0;
+		int ev2 = 0;
 		
 		for (int k = 0; k < files.size(); k++) {
-			System.err.println(k);
+//			System.err.println(k);
 			String file = files.get(k);
 			ACEDoc doc = new ACEChiDoc(file);
 			
@@ -523,9 +528,17 @@ public class ILP {
 			
 			doc.docID = k;
 			ArrayList<EventMention> events = Util.loadSystemComponents(doc);
+			
+			for(EventMention e : events) {
+				if(!e.subType.equals("null")) {
+					ev1 += 1;
+				}
+			}
+			
 			ArrayList<EventChain> answer = new ArrayList<EventChain>();
 			if(events.size()==0) {
 				answers.add(answer);
+				goldKeys.add(doc.goldEventChains);
 				continue;
 			}
 			Collections.sort(events);	
@@ -552,10 +565,12 @@ public class ILP {
 			
 			HashMap<String, EventChain> chainMap = new HashMap<String, EventChain>();
 			for(int i=0;i<events.size();i++) {
+				if(events.get(i).subType.equals("null")) {
+					continue;
+				}
 				boolean find = false;
 				for(int j=i-1;j>=0;j--) {
 					String key = events.get(j).toName() + " " + events.get(i).toName();
-					System.out.println(key);
 					if(ilp.corefs.contains(key)) {
 						find = true;
 						EventChain ec = chainMap.get(events.get(j).toName());
@@ -572,12 +587,28 @@ public class ILP {
 				}
 			}
 			answers.add(answer);
+			goldKeys.add(doc.goldEventChains);
+			
+			HashMap<String, EventMention> eventMap = new HashMap<String, EventMention>();
+			allEvents.put(file, eventMap);
+			
+			for(EventMention event : events) {
+				eventMap.put(event.toName(), event);
+				if(!event.subType.equals("null")) {
+						ev2 += 1;
+				}
+			}
 		}
 		
 		ToSemEval.outputSemFormat(fileNames, lengths, "event.ilp." + args[0], answers);
+		ToSemEval.outputSemFormat(fileNames, lengths, "gold.keys." + args[0], goldKeys);
+		
+		Util.outputResult(allEvents, "ilp_svm/result0");
+		System.out.println("Before: " + ev1);
+		System.out.println("After: " + ev2);
 		// ACECommon.outputResult(ILPUtil.systemEMses,
 		// "/users/yzcchen/workspace/NAACL2013-B/src/joint_ilp/result"
 		// + Common.part);
-
+		System.out.println("ILP Done.");
 	}
 }
