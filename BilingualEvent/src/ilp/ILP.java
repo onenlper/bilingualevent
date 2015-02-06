@@ -5,9 +5,11 @@ package ilp;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
@@ -452,6 +454,118 @@ public class ILP {
 			lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
 		}
 		
+		// constraint 8, non trigger=>no argument, argument=>trigger
+		// sum of yik(k<34) - sum of rjk(k<34) >= 0
+		for(int i=0;i<this.eventMentions.size();i++) {
+			EventMention event = this.eventMentions.get(i);
+			int yi34 = nameMap.get("y(" + i + "," + 34 + ")");
+			
+			for(EventMentionArgument arg : event.getEventMentionArguments()) {
+				int j = this.argPositionMap.get(event.toName() + " " + arg.toString());
+				int rj36 = nameMap.get("r(" + i + "," + 36 + ")");
+				
+				m = 0;
+				colno[m] = yi34;
+				row[m++] = 1;
+				colno[m] = rj36;
+				row[m++] = -1;
+				/* add the row to lp_solve */
+//				lp.addConstraintex(m, row, colno, LpSolve.GE, 0);
+			}
+		}
+		
+		
+		// constraint 9
+//		for(int i=0;i<this.eventMentions.size();i++) {
+//			for(int j=i+1;j<this.eventMentions.size();j++) {
+//				EventMention e1 = this.eventMentions.get(i);
+//				EventMention e2 = this.eventMentions.get(j);
+//				
+//				if(e1.number!=e2.number) {
+//					int zij = nameMap.get("z(" + i + "," + j + ")");
+//					m = 0;
+//					colno[m] = zij;
+//					row[m++] = 1;
+//					
+//					lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+//				}
+//			}
+//		}
+		
+		// constraint 9, 
+		for(int i=0;i<this.args.size();i++) {
+			EventMentionArgument arg1 = this.args.get(i);
+			for(int j=i+1;j<this.args.size();j++) {
+				EventMentionArgument arg2 = this.args.get(j);
+
+				if(arg1.role.equals(arg2.role) && !arg1.role.equals("null")) {
+					
+					int e1 = this.eventPositionMap.get(arg1.getEventMention().toName());
+					int e2 = this.eventPositionMap.get(arg2.getEventMention().toName());
+					
+					Integer m1 = this.entityPositionMap.get(arg1.toString());
+					Integer m2 = this.entityPositionMap.get(arg2.toString());
+					
+					if(m1!=null && m2!=null && e1!=e2 && m1<m2) {
+						EntityMention entityMention1 = this.entityMentions.get(m1);
+						EntityMention entityMention2 = this.entityMentions.get(m2);
+						int zij = nameMap.get("z(" + (e1<e2?e1:e2) + "," + (e1<e2?e2:e1) + ")");
+						int eij = nameMap.get("e(" + m1 + "," + m2 + ")");
+						
+						if(!entityMention1.semClass.equals(entityMention2.semClass)) {
+							m = 0;
+							colno[m] = zij;
+							row[m++] = 1;
+//							colno[m] = eij;
+//							row[m++] = -1;
+							lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+						}
+					} 
+				}
+			}
+		}
+		
+		List<String> discreteRoles = new ArrayList<String>(Arrays.asList(
+				"Place", "Org", "Position", "Adjudicator", "Origin", "Giver",
+				"Recipient", "Defendant",
+				"Agent",
+				"Person"
+//				"Prosecutor"
+				));
+		
+		// constraint 9, 
+		for(int i=0;i<this.args.size();i++) {
+			EventMentionArgument arg1 = this.args.get(i);
+			for(int j=i+1;j<this.args.size();j++) {
+				EventMentionArgument arg2 = this.args.get(j);
+
+				if(arg1.role.equals(arg2.role) && !arg1.role.equals("null") && discreteRoles.contains(arg1.role)) {
+					int e1 = this.eventPositionMap.get(arg1.getEventMention().toName());
+					int e2 = this.eventPositionMap.get(arg2.getEventMention().toName());
+					
+					Integer m1 = this.entityPositionMap.get(arg1.toString());
+					Integer m2 = this.entityPositionMap.get(arg2.toString());
+					
+					if(m1!=null && m2!=null && e1!=e2 && m1<m2) {
+						EntityMention entityMention1 = this.entityMentions.get(m1);
+						EntityMention entityMention2 = this.entityMentions.get(m2);
+						int zij = nameMap.get("z(" + (e1<e2?e1:e2) + "," + (e1<e2?e2:e1) + ")");
+						int eij = nameMap.get("e(" + m1 + "," + m2 + ")");
+						
+							m = 0;
+							colno[m] = zij;
+							row[m++] = 1;
+							colno[m] = eij;
+							row[m++] = -1;
+							lp.addConstraintex(m, row, colno, LpSolve.GE, 0);
+					} 
+				}
+			}
+		}
+		
+		
+		
+		
 		// constraint 8: best first constraint
 //		 if (ret == 0) {
 //		 /* construct z(i,k)+z(j,k)-z(i,j)<=1 */
@@ -699,7 +813,7 @@ public class ILP {
 
 	static double lamda = 0.16;
 	static double beta = .5;
-	static double gamma = .5;
+	static double gamma = .005;
 
 	private static HashMap<String, HashMap<String, Double>> loadProbs(String fn) {
 		ArrayList<String> lines = Common.getLines(fn);
