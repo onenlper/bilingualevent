@@ -451,7 +451,7 @@ public class ILP {
 			colno[m] = eij;
 			row[m++] = -1;
 			/* add the row to lp_solve */
-			lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+//			lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
 		}
 		
 		// constraint 8, non trigger=>no argument, argument=>trigger
@@ -518,7 +518,7 @@ public class ILP {
 							row[m++] = 1;
 //							colno[m] = eij;
 //							row[m++] = -1;
-							lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+//							lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
 						}
 					} 
 				}
@@ -555,6 +555,12 @@ public class ILP {
 							m = 0;
 							colno[m] = zij;
 							row[m++] = 1;
+							
+//							double probEij = probMap.get("e(" + m1 + "," + m2 + ")");
+//							if(probEij<0) {
+//								lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+//							}
+							
 							colno[m] = eij;
 							row[m++] = -1;
 							lp.addConstraintex(m, row, colno, LpSolve.GE, 0);
@@ -653,15 +659,15 @@ public class ILP {
 			}
 			
 			
-			for(int i=0;i<this.numberOfArgs;i++) {
-				for(int k=1;k<=Util.roles.size();k++) {
-					int rik = nameMap.get("r(" + i + "," + k + ")");
-					double pik = probMap.get("r(" + i + "," + k + ")");
-					
-					colno[m] = rik;
-					row[m++] = pik * gamma;
-				}
-			}
+//			for(int i=0;i<this.numberOfArgs;i++) {
+//				for(int k=1;k<=Util.roles.size();k++) {
+//					int rik = nameMap.get("r(" + i + "," + k + ")");
+//					double pik = probMap.get("r(" + i + "," + k + ")");
+//					
+//					colno[m] = rik;
+//					row[m++] = pik * gamma;
+//				}
+//			}
 			/* set the objective in lp_solve */
 			lp.setObjFnex(m, row, colno);
 		}
@@ -731,17 +737,17 @@ public class ILP {
 				String content = name.substring(a + 1, b);
 				double value = row[m];
 				if(name.startsWith("r")) {
-					String tokens[] = content.split(",");
-					int idx = Integer.valueOf(tokens[0]);
-					String role = Util.roles.get(Integer.parseInt(tokens[1])-1);
-					if(value==1) {
-						this.args.get(idx).role = role;
-						if(!role.equals("null")) {
-							this.args.get(idx).confidence = 1;
-						} else {
-							this.args.get(idx).confidence = -1;
-						}
-					}
+//					String tokens[] = content.split(",");
+//					int idx = Integer.valueOf(tokens[0]);
+//					String role = Util.roles.get(Integer.parseInt(tokens[1])-1);
+//					if(value==1) {
+//						this.args.get(idx).role = role;
+//						if(!role.equals("null")) {
+//							this.args.get(idx).confidence = 1;
+//						} else {
+//							this.args.get(idx).confidence = -1;
+//						}
+//					}
 				} else if (name.startsWith("y")) {
 					String tokens[] = content.split(",");
 					int idx = Integer.valueOf(tokens[0]);
@@ -812,7 +818,7 @@ public class ILP {
 	}
 
 	static double lamda = 0.16;
-	static double beta = .5;
+	static double beta = .4;
 	static double gamma = .005;
 
 	private static HashMap<String, HashMap<String, Double>> loadProbs(String fn) {
@@ -840,6 +846,8 @@ public class ILP {
 		
 		lamda = Double.parseDouble(args[1]);
 
+		beta = Double.parseDouble(args[2]);
+		
 		HashMap<String, HashMap<String, Double>> entityCorefProbMaps = loadProbs("entityProbs" + args[0]);
 		HashMap<String, HashMap<String, Double>> eventCorefProbMaps = loadProbs("eventProbs" + args[0]);
 		
