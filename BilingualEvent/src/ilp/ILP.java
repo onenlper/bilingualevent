@@ -428,7 +428,7 @@ public class ILP {
 		}
 		
 		
-//		addEntityTransitivityConstraint(lp, ret, colno, row);
+		addEntityTransitivityConstraint(lp, ret, colno, row);
 		
 		List<String> discreteRoles = new ArrayList<String>(Arrays.asList(
 				"Place", "Org", "Position", "Adjudicator", "Origin", "Giver",
