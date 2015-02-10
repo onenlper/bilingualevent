@@ -346,88 +346,7 @@ public class ILP {
 			}
 		}
 
-		// constraint 4.a: if transitive constraint
-		if (ret == 0) {
-			/* construct z(i,j)+z(j,k)-z(i,k)<=1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = j + 1; k < numberOfEvents; k++) {
-						int zjk = nameMap.get("z(" + j + "," + k + ")");
-						int zik = nameMap.get("z(" + i + "," + k + ")");
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = zjk;
-						row[m++] = 1;
-
-						colno[m] = zik;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraint 4.b: if transitive constraint
-		if (ret == 0) {
-			/* construct z(i,j)+z(i,k)-z(j,k)<=1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = j + 1; k < numberOfEvents; k++) {
-						int zjk = nameMap.get("z(" + j + "," + k + ")");
-						int zik = nameMap.get("z(" + i + "," + k + ")");
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = zik;
-						row[m++] = 1;
-
-						colno[m] = zjk;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraint 4.c: if transitive constraint
-		if (ret == 0) {
-			/* construct z(i,k)+z(j,k)-z(i,j)<=1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = j + 1; k < numberOfEvents; k++) {
-						int zjk = nameMap.get("z(" + j + "," + k + ")");
-						int zik = nameMap.get("z(" + i + "," + k + ")");
-						m = 0;
-						colno[m] = zik;
-						row[m++] = 1;
-
-						colno[m] = zjk;
-						row[m++] = 1;
-
-						colno[m] = zij;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-		
-		
+		addEventTransitivityConstraint(lp, ret, colno, row);
 		addEntityTransitivityConstraint(lp, ret, colno, row);
 		
 		List<String> discreteRoles = new ArrayList<String>(Arrays.asList(
@@ -752,6 +671,91 @@ public class ILP {
 		if (lp.getLp() != 0)
 			lp.deleteLp();
 		return (ret);
+	}
+
+	private void addEventTransitivityConstraint(LpSolve lp, int ret,
+			int[] colno, double[] row) throws LpSolveException {
+		int m;
+		// constraint 4.a: if transitive constraint
+		if (ret == 0) {
+			/* construct z(i,j)+z(j,k)-z(i,k)<=1 */
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+
+					for (int k = j + 1; k < numberOfEvents; k++) {
+						int zjk = nameMap.get("z(" + j + "," + k + ")");
+						int zik = nameMap.get("z(" + i + "," + k + ")");
+						m = 0;
+						colno[m] = zij;
+						row[m++] = 1;
+
+						colno[m] = zjk;
+						row[m++] = 1;
+
+						colno[m] = zik;
+						row[m++] = -1;
+
+						/* add the row to lp_solve */
+						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+					}
+				}
+			}
+		}
+
+		// constraint 4.b: if transitive constraint
+		if (ret == 0) {
+			/* construct z(i,j)+z(i,k)-z(j,k)<=1 */
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+
+					for (int k = j + 1; k < numberOfEvents; k++) {
+						int zjk = nameMap.get("z(" + j + "," + k + ")");
+						int zik = nameMap.get("z(" + i + "," + k + ")");
+						m = 0;
+						colno[m] = zij;
+						row[m++] = 1;
+
+						colno[m] = zik;
+						row[m++] = 1;
+
+						colno[m] = zjk;
+						row[m++] = -1;
+
+						/* add the row to lp_solve */
+						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+					}
+				}
+			}
+		}
+
+		// constraint 4.c: if transitive constraint
+		if (ret == 0) {
+			/* construct z(i,k)+z(j,k)-z(i,j)<=1 */
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+
+					for (int k = j + 1; k < numberOfEvents; k++) {
+						int zjk = nameMap.get("z(" + j + "," + k + ")");
+						int zik = nameMap.get("z(" + i + "," + k + ")");
+						m = 0;
+						colno[m] = zik;
+						row[m++] = 1;
+
+						colno[m] = zjk;
+						row[m++] = 1;
+
+						colno[m] = zij;
+						row[m++] = -1;
+
+						/* add the row to lp_solve */
+						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+					}
+				}
+			}
+		}
 	}
 
 	private void addEntityTransitivityConstraint(LpSolve lp, int ret, int[] colno,
