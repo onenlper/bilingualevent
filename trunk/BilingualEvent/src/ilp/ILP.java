@@ -488,7 +488,7 @@ public class ILP {
 					double pij = probMap.get("e(" + i + "," + j + ")");
 
 					colno[m] = rij;
-					row[m++] = pij * beta;
+					row[m++] = (pij + 20)* beta;
 //					obj.put(rij, pij * beta);
 				}
 			}
@@ -907,6 +907,7 @@ public class ILP {
 		modelInput.close();
 
 		for (int k = 0; k < files.size(); k++) {
+			if(k%10==0)
 			System.err.println(k + "/" + files.size());
 			String file = files.get(k);
 			HashMap<String, ArrayList<String>> sameBVs = sameBVses.get(file);
