@@ -16,6 +16,8 @@ public class ToSemEval {
 	// public static String basePath =
 	// "/users/yzcchen/ACL12/model/ACE/coref_test_predict"+File.separator;
 
+	public static boolean singleton = false;
+	
 	public static void outputSemFormat(ArrayList<String> files, ArrayList<Integer> lengths,
 					String outputPath, ArrayList<ArrayList<EventChain>> chainses) throws Exception {
 		FileWriter fw = new FileWriter(outputPath);
@@ -34,8 +36,8 @@ public class ToSemEval {
 
 			for (int i = 0; i < chains.size(); i++) {
 				EventChain en = chains.get(i);
-				if(en.getEventMentions().size()==1) {
-//					continue;
+				if(en.getEventMentions().size()==1 && !singleton) {
+					continue;
 				}
 				for (EventMention em : en.getEventMentions()) {
 					int start = em.getAnchorStart();
@@ -84,7 +86,7 @@ public class ToSemEval {
 		
 			for (int i = 0; i < chains.size(); i++) {
 				Entity en = chains.get(i);
-				if(en.getMentions().size()==1) {
+				if(en.getMentions().size()==1 && !singleton) {
 					continue;
 				}
 				for (EntityMention em : en.mentions) {
