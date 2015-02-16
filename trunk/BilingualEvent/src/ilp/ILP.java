@@ -116,7 +116,7 @@ public class ILP {
 		 * We will build the model row by row So we start with creating a model
 		 * with 0 rows and 2 columns
 		 */
-		Ncol = numberOfEvents * 34 + numberOfEvents * (numberOfEvents - 1) / 2
+		Ncol = numberOfEvents * 34 + numberOfEvents * (numberOfEvents - 1)
 				+ numberOfEntities * (numberOfEntities - 1) / 2 + numberOfArgs
 				* Util.roles.size(); /* there are three variables in the model */
 		if (Ncol == 0) {
@@ -189,6 +189,15 @@ public class ILP {
 				}
 			}
 
+			for (int j = 0; j < numberOfEvents; j++) {
+				for (int i = 0; i < j; i++) {
+					String name = "c(" + i + "," + j + ")";
+					lp.setColName(vNo, name);
+					nameMap.put(name, vNo);
+					vNo++;
+				}
+			}
+			
 			entityEventOverlap = new HashSet<String>();
 			for (String key : entityCorefMaps.keySet()) {
 				if (eventCorefMaps != null && eventCorefMaps.containsKey(key)) {
@@ -199,152 +208,13 @@ public class ILP {
 
 			lp.setAddRowmode(true);
 		}
-		// constraint 1.a: only one type & has type <=> trigger
-		if (ret == 0) {
-			/* construct xi=sum y(i, k) over all k */
-			for (int i = 0; i < numberOfEvents; i++) {
-				m = 0;
-				// int yi34 = nameMap.get("y(" + i + ",34)");
-				// colno[m] = yi34;
-				// row[m++] = 1;
-				for (int k = 1; k <= 34; k++) {
-					int yik = nameMap.get("y(" + i + "," + k + ")");
-					colno[m] = yik;
-					row[m++] = 1;
-				}
-				/* add the row to lp_solve */
-				lp.addConstraintex(m, row, colno, LpSolve.EQ, 1);
-			}
-		}
+		basicConstraints(lp, ret, colno, row);
 
-		// constraint 1.b only one role & has role
-		for (int i = 0; i < numberOfArgs; i++) {
-			m = 0;
-			for (int k = 1; k <= Util.roles.size(); k++) {
-				int rik = nameMap.get("r(" + i + "," + k + ")");
-				colno[m] = rik;
-				row[m++] = 1;
-			}
-			/* add the row to lp_solve */
-			lp.addConstraintex(m, row, colno, LpSolve.EQ, 1);
-		}
+		eventCorefThenTriggerConstraint(lp, ret, colno, row);
 
-		// constraint 2.a: if coreference, then trigger
-		if (ret == 0) {
-			/* construct z(i, j) + Zij <= 1 */
-			for (int i = 0; i < numberOfEvents; i++) {
-				int yi34 = nameMap.get("y(" + i + ",34)");
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					m = 0;
-					colno[m] = yi34;
-					row[m++] = 1;
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-					colno[m] = zij;
-					row[m++] = 1;
-					/* add the row to lp_solve */
-					lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-				}
-			}
-		}
+		addEventTypeSame(lp, ret, colno, row);
 
-		// constraint 2.b: if coreference, then trigger
-		if (ret == 0) {
-			/* construct z(i, j) + Zij <= 1 */
-			for (int j = 0; j < numberOfEvents; j++) {
-				int yj34 = nameMap.get("y(" + j + ",34)");
-				for (int i = 0; i < j; i++) {
-					m = 0;
-					colno[m] = yj34;
-					row[m++] = 1;
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-					colno[m] = zij;
-					row[m++] = 1;
-					/* add the row to lp_solve */
-					lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-				}
-			}
-		}
-
-		// // constraint 3.a: if coreference, then type equal
-		if (ret == 0) {
-			/* construct 1 - zij >= yik - yjk, for all k */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = 1; k <= 34; k++) {
-						int yik = nameMap.get("y(" + i + "," + k + ")");
-						int yjk = nameMap.get("y(" + j + "," + k + ")");
-
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = yik;
-						row[m++] = 1;
-
-						colno[m] = yjk;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraint 3.b: if coreference, then type equal
-		if (ret == 0) {
-			/* construct 1 - zij >= yjk - yik, for all k */
-			for (int i = 0; i < numberOfEvents; i++) {
-				for (int j = i + 1; j < numberOfEvents; j++) {
-					int zij = nameMap.get("z(" + i + "," + j + ")");
-
-					for (int k = 1; k <= 34; k++) {
-						int yik = nameMap.get("y(" + i + "," + k + ")");
-						int yjk = nameMap.get("y(" + j + "," + k + ")");
-
-						m = 0;
-						colno[m] = zij;
-						row[m++] = 1;
-
-						colno[m] = yjk;
-						row[m++] = 1;
-
-						colno[m] = yik;
-						row[m++] = -1;
-
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
-					}
-				}
-			}
-		}
-
-		// constraints 6 same BV has the same fate
-		// yik == yjk, i+1=j
-		if (ret == 0) {
-			for (ArrayList<Integer> sameBV : sameBVs) {
-				for (int e = 0; e < sameBV.size() - 1; e++) {
-					int i = sameBV.get(e);
-					int j = sameBV.get(e + 1);
-					for (int k = 1; k <= 34; k++) {
-						if (k != 34) {
-							// continue;
-						}
-						m = 0;
-						int yik = nameMap.get("y(" + i + "," + k + ")");
-						int yjk = nameMap.get("y(" + j + "," + k + ")");
-						colno[m] = yjk;
-						row[m++] = 1;
-						colno[m] = yik;
-						row[m++] = -1;
-						/* add the row to lp_solve */
-						lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
-					}
-				}
-			}
-		}
+		sameTriggerWord(lp, ret, colno, row);
 
 		addEventTransitivityConstraint(lp, ret, colno, row);
 		addEntityTransitivityConstraint(lp, ret, colno, row);
@@ -397,65 +267,9 @@ public class ILP {
 			}
 		}
 
-		// constriant, rik + rjk - em1m2 + Ze1e2 <= 2
-		for (String role : discreteRoles) {
-			int k = Util.roles.indexOf(role) + 1;
-
-			for (int i = 0; i < this.args.size(); i++) {
-				EventMentionArgument arg1 = this.args.get(i);
-				for (int j = i + 1; j < this.args.size(); j++) {
-					EventMentionArgument arg2 = this.args.get(j);
-
-					if (arg1.getEventMention().confidence < 0
-							|| arg2.getEventMention().confidence < 0) {
-						// continue;
-					}
-
-					int e1 = this.eventPositionMap.get(arg1.getEventMention()
-							.toName());
-					int e2 = this.eventPositionMap.get(arg2.getEventMention()
-							.toName());
-
-					Integer m1 = this.entityPositionMap.get(arg1.toString());
-					Integer m2 = this.entityPositionMap.get(arg2.toString());
-
-					if (m1 != null && m2 != null && e1 != e2 && m1 < m2) {
-
-						int zij = nameMap.get("z(" + (e1 < e2 ? e1 : e2) + ","
-								+ (e1 < e2 ? e2 : e1) + ")");
-						int eij = nameMap.get("e(" + m1 + "," + m2 + ")");
-
-						m = 0;
-						colno[m] = nameMap.get("r(" + i + "," + k + ")");
-						row[m++] = 1;
-
-						colno[m] = nameMap.get("r(" + j + "," + k + ")");
-						row[m++] = 1;
-
-						colno[m] = eij;
-						row[m++] = 1;
-
-						colno[m] = zij;
-						row[m++] = -1;
-						lp.addConstraintex(m, row, colno, LpSolve.LE, 2);
-
-						m = 0;
-						colno[m] = nameMap.get("r(" + i + "," + k + ")");
-						row[m++] = 1;
-
-						colno[m] = nameMap.get("r(" + j + "," + k + ")");
-						row[m++] = 1;
-
-						colno[m] = eij;
-						row[m++] = -1;
-
-						colno[m] = zij;
-						row[m++] = 1;
-//						lp.addConstraintex(m, row, colno, LpSolve.LE, 2);
-					}
-				}
-			}
-		}
+//		addNewConstraint(lp, colno, row, discreteRoles);
+		
+		addEntityCorefThenEventCoref(lp, colno, row, discreteRoles);
 
 		// TODO OBJECTIVE FUNCTION
 //		HashMap<Integer, Double> obj = new HashMap<Integer, Double>();
@@ -671,6 +485,331 @@ public class ILP {
 		if (lp.getLp() != 0)
 			lp.deleteLp();
 		return (ret);
+	}
+
+	private void addEntityCorefThenEventCoref(LpSolve lp, int[] colno,
+			double[] row, List<String> discreteRoles) throws LpSolveException {
+		int m;
+		// constriant, rik + rjk - em1m2 + Ze1e2 <= 2
+		for (String role : discreteRoles) {
+			int k = Util.roles.indexOf(role) + 1;
+
+			for (int i = 0; i < this.args.size(); i++) {
+				EventMentionArgument arg1 = this.args.get(i);
+				for (int j = i + 1; j < this.args.size(); j++) {
+					EventMentionArgument arg2 = this.args.get(j);
+
+					if (arg1.getEventMention().confidence < 0
+							|| arg2.getEventMention().confidence < 0) {
+						// continue;
+					}
+
+					int e1 = this.eventPositionMap.get(arg1.getEventMention()
+							.toName());
+					int e2 = this.eventPositionMap.get(arg2.getEventMention()
+							.toName());
+
+					Integer m1 = this.entityPositionMap.get(arg1.toString());
+					Integer m2 = this.entityPositionMap.get(arg2.toString());
+
+					if (m1 != null && m2 != null && e1 != e2 && m1 < m2) {
+
+						int zij = nameMap.get("z(" + (e1 < e2 ? e1 : e2) + ","
+								+ (e1 < e2 ? e2 : e1) + ")");
+						int eij = nameMap.get("e(" + m1 + "," + m2 + ")");
+
+						m = 0;
+						colno[m] = nameMap.get("r(" + i + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = nameMap.get("r(" + j + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = eij;
+						row[m++] = 1;
+
+						colno[m] = zij;
+						row[m++] = -1;
+						lp.addConstraintex(m, row, colno, LpSolve.LE, 2);
+
+						m = 0;
+						colno[m] = nameMap.get("r(" + i + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = nameMap.get("r(" + j + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = eij;
+						row[m++] = -1;
+
+						colno[m] = zij;
+						row[m++] = 1;
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 2);
+					}
+				}
+			}
+		}
+	}
+
+	private void eventCorefThenTriggerConstraint(LpSolve lp, int ret,
+			int[] colno, double[] row) throws LpSolveException {
+		int m;
+		// constraint 2.a: if coreference, then trigger
+		if (ret == 0) {
+			/* construct z(i, j) + Zij <= 1 */
+			for (int i = 0; i < numberOfEvents; i++) {
+				int yi34 = nameMap.get("y(" + i + ",34)");
+				for (int j = i + 1; j < numberOfEvents; j++) {
+					m = 0;
+					colno[m] = yi34;
+					row[m++] = 1;
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+					colno[m] = zij;
+					row[m++] = 1;
+					/* add the row to lp_solve */
+					lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+				}
+			}
+		}
+
+		// constraint 2.b: if coreference, then trigger
+		if (ret == 0) {
+			/* construct z(i, j) + Zij <= 1 */
+			for (int j = 0; j < numberOfEvents; j++) {
+				int yj34 = nameMap.get("y(" + j + ",34)");
+				for (int i = 0; i < j; i++) {
+					m = 0;
+					colno[m] = yj34;
+					row[m++] = 1;
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+					colno[m] = zij;
+					row[m++] = 1;
+					/* add the row to lp_solve */
+					lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+				}
+			}
+		}
+	}
+
+	private void sameTriggerWord(LpSolve lp, int ret, int[] colno, double[] row)
+			throws LpSolveException {
+		int m;
+		// constraints 6 same BV has the same fate
+		// yik == yjk, i+1=j
+		if (ret == 0) {
+			for (ArrayList<Integer> sameBV : sameBVs) {
+				for (int e = 0; e < sameBV.size() - 1; e++) {
+					int i = sameBV.get(e);
+					int j = sameBV.get(e + 1);
+					for (int k = 1; k <= 34; k++) {
+						if (k != 34) {
+							// continue;
+						}
+						m = 0;
+						int yik = nameMap.get("y(" + i + "," + k + ")");
+						int yjk = nameMap.get("y(" + j + "," + k + ")");
+						colno[m] = yjk;
+						row[m++] = 1;
+						colno[m] = yik;
+						row[m++] = -1;
+						/* add the row to lp_solve */
+						lp.addConstraintex(m, row, colno, LpSolve.EQ, 0);
+					}
+				}
+			}
+		}
+	}
+
+	private void addEventTypeSame(LpSolve lp, int ret, int[] colno, double[] row)
+			throws LpSolveException {
+		int m;
+		// // constraint 3.a: if coreference, then type equal
+		if (ret == 0) {
+			/* construct 1 - zij >= yik - yjk, for all k */
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+
+					for (int k = 1; k <= 34; k++) {
+						int yik = nameMap.get("y(" + i + "," + k + ")");
+						int yjk = nameMap.get("y(" + j + "," + k + ")");
+
+						m = 0;
+						colno[m] = zij;
+						row[m++] = 1;
+
+						colno[m] = yik;
+						row[m++] = 1;
+
+						colno[m] = yjk;
+						row[m++] = -1;
+
+						/* add the row to lp_solve */
+						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+					}
+				}
+			}
+		}
+
+		// constraint 3.b: if coreference, then type equal
+		if (ret == 0) {
+			/* construct 1 - zij >= yjk - yik, for all k */
+			for (int i = 0; i < numberOfEvents; i++) {
+				for (int j = i + 1; j < numberOfEvents; j++) {
+					int zij = nameMap.get("z(" + i + "," + j + ")");
+
+					for (int k = 1; k <= 34; k++) {
+						int yik = nameMap.get("y(" + i + "," + k + ")");
+						int yjk = nameMap.get("y(" + j + "," + k + ")");
+
+						m = 0;
+						colno[m] = zij;
+						row[m++] = 1;
+
+						colno[m] = yjk;
+						row[m++] = 1;
+
+						colno[m] = yik;
+						row[m++] = -1;
+
+						/* add the row to lp_solve */
+						lp.addConstraintex(m, row, colno, LpSolve.LE, 1);
+					}
+				}
+			}
+		}
+	}
+
+	private void addNewConstraint(LpSolve lp, int[] colno, double[] row,
+			List<String> discreteRoles) throws LpSolveException {
+		
+		for(int i=0;i<this.numberOfEvents;i++) {
+			for(int j=i+1;j<this.numberOfEvents;j++) {
+				EventMention e1 = this.eventMentions.get(i);
+				EventMention e2 = this.eventMentions.get(j);
+				
+				for(EventMentionArgument arg1 : e1.eventMentionArguments) {
+					for(EventMentionArgument arg2 : e2.eventMentionArguments) {
+						
+						Integer m1 = this.entityPositionMap.get(arg1.toString());
+						Integer m2 = this.entityPositionMap.get(arg2.toString());
+						
+						if(m1!=null && m2!=null) {
+							EntityMention em1 = this.entityMentions.get(m1);
+							EntityMention em2 = this.entityMentions.get(m2);
+							
+							if(!em1.subType.equals(em2.subType)) {
+
+								for(String role : Util.roles) {
+									if(role.equals("null")) {
+										continue;
+									}
+									
+									
+									
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		
+		int m;
+		// constriant, rik + rjk - em1m2 + Ze1e2 <= 2
+		for (String role : discreteRoles) {
+			int k = Util.roles.indexOf(role) + 1;
+
+			for (int i = 0; i < this.args.size(); i++) {
+				EventMentionArgument arg1 = this.args.get(i);
+				for (int j = i + 1; j < this.args.size(); j++) {
+					EventMentionArgument arg2 = this.args.get(j);
+
+					if (arg1.getEventMention().confidence < 0
+							|| arg2.getEventMention().confidence < 0) {
+						// continue;
+					}
+
+					int e1 = this.eventPositionMap.get(arg1.getEventMention()
+							.toName());
+					int e2 = this.eventPositionMap.get(arg2.getEventMention()
+							.toName());
+
+					Integer m1 = this.entityPositionMap.get(arg1.toString());
+					Integer m2 = this.entityPositionMap.get(arg2.toString());
+
+					if (m1 != null && m2 != null && e1 != e2 && m1 < m2) {
+
+						int zij = nameMap.get("z(" + (e1 < e2 ? e1 : e2) + ","
+								+ (e1 < e2 ? e2 : e1) + ")");
+						int eij = nameMap.get("e(" + m1 + "," + m2 + ")");
+
+						m = 0;
+						colno[m] = nameMap.get("r(" + i + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = nameMap.get("r(" + j + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = eij;
+						row[m++] = 1;
+
+						colno[m] = zij;
+						row[m++] = -1;
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 2);
+
+						m = 0;
+						colno[m] = nameMap.get("r(" + i + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = nameMap.get("r(" + j + "," + k + ")");
+						row[m++] = 1;
+
+						colno[m] = eij;
+						row[m++] = -1;
+
+						colno[m] = zij;
+						row[m++] = 1;
+//						lp.addConstraintex(m, row, colno, LpSolve.LE, 2);
+					}
+				}
+			}
+		}
+	}
+
+	private void basicConstraints(LpSolve lp, int ret, int[] colno, double[] row)
+			throws LpSolveException {
+		int m;
+		// constraint 1.a: only one type & has type <=> trigger
+		if (ret == 0) {
+			/* construct xi=sum y(i, k) over all k */
+			for (int i = 0; i < numberOfEvents; i++) {
+				m = 0;
+				// int yi34 = nameMap.get("y(" + i + ",34)");
+				// colno[m] = yi34;
+				// row[m++] = 1;
+				for (int k = 1; k <= 34; k++) {
+					int yik = nameMap.get("y(" + i + "," + k + ")");
+					colno[m] = yik;
+					row[m++] = 1;
+				}
+				/* add the row to lp_solve */
+				lp.addConstraintex(m, row, colno, LpSolve.EQ, 1);
+			}
+		}
+
+		// constraint 1.b only one role & has role
+		for (int i = 0; i < numberOfArgs; i++) {
+			m = 0;
+			for (int k = 1; k <= Util.roles.size(); k++) {
+				int rik = nameMap.get("r(" + i + "," + k + ")");
+				colno[m] = rik;
+				row[m++] = 1;
+			}
+			/* add the row to lp_solve */
+			lp.addConstraintex(m, row, colno, LpSolve.EQ, 1);
+		}
 	}
 
 	private void addEventTransitivityConstraint(LpSolve lp, int ret,
