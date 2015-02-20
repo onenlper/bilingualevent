@@ -52,7 +52,8 @@ public class naiveBayes {
 	
 	static int feaSpaceSize = 0;
 	
-	static double smoother = 0.1;
+//	static double smoother = 0.01;
+	static double smoother = 0.01;
 	
 	public static void main(String args[]) {
 		if(args.length!=1) {
@@ -65,6 +66,11 @@ public class naiveBayes {
 		String testFile = "/users/yzcchen/chen3/eventBilingual/BilingualEvent/src/data/Joint_triggersFeature_test" + Util.part;
 		ArrayList<String> train = Common.getLines(trainFile);
 		HashMap<Integer, Double> priors = new HashMap<Integer, Double>();
+		for(int i=1;i<=34;i++) {
+			if(i!=34) {
+				priors.put(i, 6e12);
+			}
+		}
 		HashMap<Integer, HashMap<Integer, Double>> likelihood = new HashMap<Integer, HashMap<Integer, Double>>(); 
 		
 		HashSet<Integer> feaSpace = new HashSet<Integer>();
@@ -93,7 +99,8 @@ public class naiveBayes {
 		for(Integer label : likelihood.keySet()) {
 			probalistic(likelihood.get(label), smoother, feaSpaceSize);
 		}
-		probalistic(priors, 5000.0, priors.size());
+//		probalistic(priors, 60000.0, priors.size());
+		probalistic(priors, 10000.0, priors.size());
 
 		ArrayList<String> test = Common.getLines(testFile);
 		ArrayList<String> output = new ArrayList<String>();
@@ -101,11 +108,11 @@ public class naiveBayes {
 			String tks[] = line.split("\\s+");
 			HashMap<Integer, Double> result = new HashMap<Integer, Double>();
 			
-			double maxP = 0;
+			double maxP = -1;
 			Integer predict = -1;
 			
 			for(int label : priors.keySet()) {
-				double p = 1.0;
+				double p = 1.0e255;
 				p *= priors.get(label);
 				for(int i=1;i<tks.length;i++) {
 					int a = tks[i].indexOf(":");
@@ -119,6 +126,7 @@ public class naiveBayes {
 //					System.out.println(priors.get(label));
 //					System.out.println(getProb(conditions, label, idx));
 				}
+				
 				if(p>maxP) {
 					maxP = p;
 					predict = label;
