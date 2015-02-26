@@ -40,7 +40,7 @@ public class SemanticEvaluateMultiSeed {
 			
 			int typeIndex = Integer.valueOf(typeResult.get(i).split("\\s+")[0]);
 			
-			String type = SemanticTrainMultiSeed.types.get(typeIndex - 1);
+			String type = SemanticTrainMultiSeed.semClasses.get(typeIndex - 1);
 			if(type.equalsIgnoreCase("none") || type.equalsIgnoreCase("val") || type.equalsIgnoreCase("time")) {
 				continue;
 			}
