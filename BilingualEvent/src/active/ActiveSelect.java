@@ -78,7 +78,9 @@ public class ActiveSelect {
 		scores += event.subTypeConfidences.get(Util.subTypes.indexOf(event.subType));
 
 		if(event.subType.equals("null")) {
-			return -1;
+//			scores *= 2;
+//			return -1;
+			scores *= 3000;
 		}
 		
 		for(EventMentionArgument arg : event.getEventMentionArguments()) {
@@ -150,7 +152,11 @@ public class ActiveSelect {
 				selected.put(fileID, idxes);
 			}
 			for(int i=1;i<tks.length;i++) {
-				idxes.add(Integer.parseInt(tks[i]));
+				if(tks[i].equalsIgnoreCase("all")) {
+					idxes.add(-1);
+				} else {
+					idxes.add(Integer.parseInt(tks[i]));
+				}
 			}
 		}
 		return selected;
@@ -159,10 +165,13 @@ public class ActiveSelect {
 	public static void main(String args[]) {
 		Util.part = "6";
 		Util.seed = true;
-		int top = 500;
+		int top = 50;
 		
 		HashMap<String, HashSet<Integer>> lastSelecteds = loadSelectedEvents("ACE_Chinese_train6");
 		
+		
+		HashMap<String, HashSet<String>> knownTrigger = Common.readFile2Map6("chinese_trigger_known" + Util.part);
+		HashSet<String> train_words = Common.readFile2Set("train_words" + Util.part);
 		
 		HashMap<String, ArrayList<EntityMention>> entityMentionses = loadSVMResult("6");
 		ArrayList<String> files = Common.getLines("ACE_Chinese_test6");
@@ -187,20 +196,34 @@ public class ActiveSelect {
 			if(lastSelecteds.containsKey(file)) {
 				lastSelected = lastSelecteds.get(file);
 			}
+			if(lastSelected.contains(-1)) {
+				continue;
+			}
 			
+			double allScore = 0;
 			for(EventMention event : events) {
 				if(lastSelected.contains(event.getAnchorEnd())) {
 					continue;
 				}
 				
+				if(train_words.contains(event.getAnchor()) && !knownTrigger.containsKey(event.getAnchor())) {
+//					continue;
+				}
+				
 				double score = getActiveScore(event);
-				Entry entry = new Entry(doc, event.getAnchorEnd(), score);
-				entries.add(entry);
+				allScore += score;
 			}
+			Entry entry = new Entry(doc, -1, allScore/events.size());
+			entries.add(entry);
+			
+//			selectEvent(knownTrigger, train_words, entries, doc, events,
+//					lastSelected);
+			
+			
 		}
 		ArrayList<Entry> sortedEntry = new ArrayList<Entry>(entries);
 		Collections.sort(sortedEntry);
-		Collections.reverse(sortedEntry);
+//		Collections.reverse(sortedEntry);
 		
 		HashMap<String, HashSet<Integer>> selectedEvents = new HashMap<String, HashSet<Integer>>();
 		int selectedAmount = 0;
@@ -231,14 +254,37 @@ public class ActiveSelect {
 			StringBuilder sb = new StringBuilder();
 			sb.append(key).append(" ");
 			for(Integer idx : idxes) {
-				sb.append(idx).append(" ");
+				if(idx==-1) {
+					sb = new StringBuilder();
+					sb.append(key).append(" all");
+				} else {
+					sb.append(idx).append(" ");
+				}
 			}
 //			System.out.println(sb.toString().trim());
 			selectedLines.add(sb.toString().trim());
 		}
 		
 		System.out.println(selectedAmount + " new annotated events");
-		
 		Common.outputLines(selectedLines, "ACE_Chinese_train6");
+	}
+
+	private static void selectEvent(
+			HashMap<String, HashSet<String>> knownTrigger,
+			HashSet<String> train_words, HashSet<Entry> entries, ACEDoc doc,
+			ArrayList<EventMention> events, HashSet<Integer> lastSelected) {
+		for(EventMention event : events) {
+			if(lastSelected.contains(event.getAnchorEnd()) || lastSelected.contains(-1)) {
+				continue;
+			}
+			
+			if(train_words.contains(event.getAnchor()) && !knownTrigger.containsKey(event.getAnchor())) {
+				continue;
+			}
+			
+			double score = getActiveScore(event);
+			Entry entry = new Entry(doc, event.getAnchorEnd(), score);
+			entries.add(entry);
+		}
 	}
 }
