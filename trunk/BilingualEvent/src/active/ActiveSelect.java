@@ -165,7 +165,7 @@ public class ActiveSelect {
 	public static void main(String args[]) {
 		Util.part = "6";
 		Util.seed = true;
-		int top = 50;
+		int top = 500;
 		
 		HashMap<String, HashSet<Integer>> lastSelecteds = loadSelectedEvents("ACE_Chinese_train6");
 		
@@ -200,26 +200,19 @@ public class ActiveSelect {
 				continue;
 			}
 			
-			double allScore = 0;
 			for(EventMention event : events) {
-				if(lastSelected.contains(event.getAnchorEnd())) {
+				if(lastSelected.contains(event.getAnchorEnd()) || lastSelected.contains(-1)) {
 					continue;
 				}
 				
 				if(train_words.contains(event.getAnchor()) && !knownTrigger.containsKey(event.getAnchor())) {
-//					continue;
+					continue;
 				}
 				
 				double score = getActiveScore(event);
-				allScore += score;
+				Entry entry = new Entry(doc, event.getAnchorEnd(), score);
+				entries.add(entry);
 			}
-			Entry entry = new Entry(doc, -1, allScore/events.size());
-			entries.add(entry);
-			
-//			selectEvent(knownTrigger, train_words, entries, doc, events,
-//					lastSelected);
-			
-			
 		}
 		ArrayList<Entry> sortedEntry = new ArrayList<Entry>(entries);
 		Collections.sort(sortedEntry);
@@ -269,22 +262,40 @@ public class ActiveSelect {
 		Common.outputLines(selectedLines, "ACE_Chinese_train6");
 	}
 
-	private static void selectEvent(
-			HashMap<String, HashSet<String>> knownTrigger,
-			HashSet<String> train_words, HashSet<Entry> entries, ACEDoc doc,
-			ArrayList<EventMention> events, HashSet<Integer> lastSelected) {
-		for(EventMention event : events) {
-			if(lastSelected.contains(event.getAnchorEnd()) || lastSelected.contains(-1)) {
-				continue;
-			}
-			
-			if(train_words.contains(event.getAnchor()) && !knownTrigger.containsKey(event.getAnchor())) {
-				continue;
-			}
-			
-			double score = getActiveScore(event);
-			Entry entry = new Entry(doc, event.getAnchorEnd(), score);
-			entries.add(entry);
-		}
+	private static void selectDoc() {
+//		double allScore = 0;
+//		for(EventMention event : events) {
+//			if(lastSelected.contains(event.getAnchorEnd())) {
+//				continue;
+//			}
+//			
+//			if(train_words.contains(event.getAnchor()) && !knownTrigger.containsKey(event.getAnchor())) {
+////				continue;
+//			}
+//			
+//			double score = getActiveScore(event);
+//			allScore += score;
+//		}
+//		Entry entry = new Entry(doc, -1, allScore/events.size());
+//		entries.add(entry);
 	}
+	
+//	private static void selectEvent(
+//			HashMap<String, HashSet<String>> knownTrigger,
+//			HashSet<String> train_words, HashSet<Entry> entries, ACEDoc doc,
+//			ArrayList<EventMention> events, HashSet<Integer> lastSelected) {
+//		for(EventMention event : events) {
+//			if(lastSelected.contains(event.getAnchorEnd()) || lastSelected.contains(-1)) {
+//				continue;
+//			}
+//			
+//			if(train_words.contains(event.getAnchor()) && !knownTrigger.containsKey(event.getAnchor())) {
+//				continue;
+//			}
+//			
+//			double score = getActiveScore(event);
+//			Entry entry = new Entry(doc, event.getAnchorEnd(), score);
+//			entries.add(entry);
+//		}
+//	}
 }
