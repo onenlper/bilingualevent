@@ -733,6 +733,8 @@ public class JointTriggerIndentSeed {
 
 		ArrayList<String> systemEMses = new ArrayList<String>();
 
+		int trueMentions = 0;
+		int falseMentions = 0;
 		if (args[0].equalsIgnoreCase("train")) {
 
 			String content = SeedUtil.getContent();
@@ -752,6 +754,12 @@ public class JointTriggerIndentSeed {
 								Integer.toString(Util.subTypes
 										.indexOf(em.subType) + 1), goldEntities)
 								);
+				
+				if(!em.subType.equals("null")) {
+					trueMentions += 1;
+				} else {
+					falseMentions += 1;
+				}
 			}
 			
 			ArrayList<String> lines = Common.getLines("ACE_Chinese_train6");
@@ -763,8 +771,13 @@ public class JointTriggerIndentSeed {
 				}
 				String file = tks[0];
 				
+				boolean all = false;
 				HashSet<Integer> eventIDs = new HashSet<Integer>();
 				for(int i=1;i<tks.length;i++) {
+					if(tks[i].equals("all")) {
+						all = true;
+						break;
+					}
 					eventIDs.add(Integer.parseInt(tks[i]));
 				}
 				
@@ -772,16 +785,22 @@ public class JointTriggerIndentSeed {
 				candidateTriggers = getTrainEMs(document);
 				
 				for (EventMention em : candidateTriggers) {
-					if(eventIDs.contains(em.getAnchorEnd())) {
+					if(eventIDs.contains(em.getAnchorEnd()) || all) {
 						triggerSubTypeFeatures
 						.add(triggerFeature.buildFeature(em, document,
 								Integer.toString(Util.subTypes
-										.indexOf(em.subType) + 1)));	
+										.indexOf(em.subType) + 1)));
+						
+						if(!em.subType.equals("null")) {
+							trueMentions += 1;
+						} else {
+							falseMentions += 1;
+						}
 					}
 				}
 			}
-			
-			
+			System.out.println("True Mentions: " + trueMentions);
+			System.out.println("False Mentions: " + falseMentions);
 		} else {
 			ArrayList<String> files = Common.getLines("ACE_Chinese_test"
 					+ Util.part);
@@ -849,6 +868,13 @@ public class JointTriggerIndentSeed {
 				int end = pr.positions.get(i)[1];
 				String word = pr.words.get(i).replace("\n", "")
 						.replaceAll("\\s+", "");
+				
+				String POS = pr.posTags.get(i);
+				if(!POS.startsWith("V")
+						&& !POS.startsWith("NN") && !POS.startsWith("P")) {
+					continue;
+				}
+				
 				EventMention em = new EventMention();
 				em.setAnchorStart(start);
 				em.setAnchorEnd(end);
@@ -872,6 +898,13 @@ public class JointTriggerIndentSeed {
 				int end = pr.positions.get(i)[1];
 				String word = pr.words.get(i).replace("\n", "")
 						.replaceAll("\\s+", "");
+				
+				String POS = pr.posTags.get(i);
+				if(!POS.startsWith("V")
+						&& !POS.startsWith("NN") && !POS.startsWith("P")) {
+					continue;
+				}
+				
 				EventMention em = new EventMention();
 				em.setAnchorStart(start);
 				em.setAnchorEnd(end);
@@ -901,6 +934,13 @@ public class JointTriggerIndentSeed {
 				int end = pr.positions.get(i)[1];
 				String word = pr.words.get(i).replace("\n", "")
 						.replaceAll("\\s+", "");
+				
+				String POS = pr.posTags.get(i);
+				if(!POS.startsWith("V")
+						&& !POS.startsWith("NN") && !POS.startsWith("P")) {
+					continue;
+				}
+				
 				EventMention em = new EventMention();
 				em.setAnchorStart(start);
 				em.setAnchorEnd(end);
