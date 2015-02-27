@@ -80,7 +80,7 @@ public class ActiveSelect {
 		if(event.subType.equals("null")) {
 //			scores *= 2;
 //			return -1;
-			scores *= 3000;
+//			scores *= 3000;
 		}
 		
 		for(EventMentionArgument arg : event.getEventMentionArguments()) {
