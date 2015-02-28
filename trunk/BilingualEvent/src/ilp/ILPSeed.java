@@ -154,6 +154,7 @@ public class ILPSeed {
 		sameTriggerWord(lp, ret, colno, row);
 
 		addEventTransitivityConstraint(lp, ret, colno, row);
+		
 		addEntityTransitivityConstraint(lp, ret, colno, row);
 		
 		List<String> discreteRoles = new ArrayList<String>(Arrays.asList(
@@ -246,11 +247,19 @@ public class ILPSeed {
 				String name = "z(" + i + "," + j + ")";
 				lp.setColName(vNo, name);
 				nameMap.put(name, vNo);
-				
-				
-				probMap.put(name, 1.0 * this.eventCorefMaps
-						.get(this.eventMentions.get(i).toName() + " "
-								+ this.eventMentions.get(j).toName()));
+
+				String key = this.eventMentions.get(i).toName() + " "
+						+ this.eventMentions.get(j).toName();
+				if(this.eventCorefMaps.containsKey(key)) {
+					probMap.put(name, 1.0 * this.eventCorefMaps
+							.get(this.eventMentions.get(i).toName() + " "
+									+ this.eventMentions.get(j).toName()));
+				} else {
+					probMap.put(name, 1.0);
+					System.out.println(this.eventMentions.get(i).toName() + " "
+							+ this.eventMentions.get(j).toName() + ":" + this.eventMentions.get(i).getAnchor()+ "." 
+							+ this.eventMentions.get(j).getAnchor());
+				}
 				vNo++;
 			}
 		}
