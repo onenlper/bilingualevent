@@ -22,6 +22,9 @@ import util.Util;
  */
 public class SemanticTrainMultiSeed {
 
+	static int trueEntity = 0;
+	static int falseEntity = 0;
+	
 	public static void main(String args[]) throws Exception {
 		if (args.length != 1) {
 			System.err.println("java ~ folder");
@@ -34,7 +37,6 @@ public class SemanticTrainMultiSeed {
 		FileWriter typeFw = new FileWriter("multiType.train" + Util.part);
 
 		trainSeed(typeFw);
-		
 		trainActiveLearn(typeFw);
 
 		typeFw.close();
@@ -42,6 +44,9 @@ public class SemanticTrainMultiSeed {
 				+ Util.part);
 		Common.outputHashMap(SVMSemanticFeature.semDicFeatures, "semantic_dic"
 				+ Util.part);
+		
+		System.out.println("True EntityMentions: " + trueEntity);
+		System.out.println("False EntityMentions: " + falseEntity);
 	}
 	
 	private static void trainActiveLearn(FileWriter fw) throws IOException{
@@ -56,7 +61,12 @@ public class SemanticTrainMultiSeed {
 			ACEChiDoc doc = new ACEChiDoc(file);
 			
 			HashSet<Integer> sentIDs = new HashSet<Integer>();
+			boolean all = false;
 			for(int i=1;i<tks.length;i++) {
+				if(tks[i].equals("all")) {
+					all = true;
+					break;
+				}
 				int idx = Integer.parseInt(tks[i]);
 				sentIDs.add(doc.getParseResult(idx).id);
 			}
@@ -79,7 +89,7 @@ public class SemanticTrainMultiSeed {
 			String content = doc.content;
 			
 			for (ParseResult pr : doc.parseReults) {
-				if(!sentIDs.contains(pr.id)) {
+				if(!sentIDs.contains(pr.id) && !all) {
 					continue;
 				}
 				
@@ -118,6 +128,9 @@ public class SemanticTrainMultiSeed {
 					
 					if(typeMap.containsKey(key)) {
 						type = typeMap.get(key);
+						trueEntity += 1;
+					} else {
+						falseEntity += 1;
 					}
 					
 					int idx = semClasses.indexOf(type) + 1;
@@ -182,6 +195,9 @@ public class SemanticTrainMultiSeed {
 				String type = "none";
 				if(typeMap.containsKey(end)) {
 					type = typeMap.get(end);
+					trueEntity += 1;
+				} else {
+					falseEntity += 1;
 				}
 				
 				int idx = semClasses.indexOf(type) + 1;
