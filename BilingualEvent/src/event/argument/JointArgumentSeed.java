@@ -76,14 +76,19 @@ public class JointArgumentSeed {
 					continue;
 				}
 				String file = tks[0];
+				boolean all = false;
 				HashSet<Integer> eventIDs = new HashSet<Integer>();
 				for(int i=1;i<tks.length;i++) {
+					if(tks[i].equals("all")) {
+						all = true;
+						break;
+					}
 					eventIDs.add(Integer.parseInt(tks[i]));
 				}
 				
 				ACEChiDoc document = new ACEChiDoc(file);
 				for (EventMention eventMention : document.goldEventMentions) {
-					if(eventIDs.contains(eventMention.getAnchorEnd())) {
+					if(eventIDs.contains(eventMention.getAnchorEnd()) || all) {
 						argumentRoleFeatures.addAll(argumentFeature
 							.buildTrainRoleFeatures(eventMention, document));
 					}
