@@ -870,8 +870,8 @@ public class JointTriggerIndentSeed {
 						.replaceAll("\\s+", "");
 				
 				String POS = pr.posTags.get(i);
-				if(!POS.startsWith("V")
-						&& !POS.startsWith("NN") && !POS.startsWith("P")) {
+				if(!POS.equals("NN") && !POS.equals("P")
+						&& !POS.equals("VV")) {
 					continue;
 				}
 				
@@ -900,8 +900,8 @@ public class JointTriggerIndentSeed {
 						.replaceAll("\\s+", "");
 				
 				String POS = pr.posTags.get(i);
-				if(!POS.startsWith("V")
-						&& !POS.startsWith("NN") && !POS.startsWith("P")) {
+				if(!POS.equals("NN") && !POS.equals("P")
+						&& !POS.equals("VV")) {
 					continue;
 				}
 				
@@ -936,8 +936,8 @@ public class JointTriggerIndentSeed {
 						.replaceAll("\\s+", "");
 				
 				String POS = pr.posTags.get(i);
-				if(!POS.startsWith("V")
-						&& !POS.startsWith("NN") && !POS.startsWith("P")) {
+				if(!POS.equals("NN") && !POS.equals("P")
+						&& !POS.equals("VV")) {
 					continue;
 				}
 				
