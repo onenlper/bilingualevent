@@ -173,7 +173,7 @@ public class ActiveSelect {
 		Util.part = "6";
 		Util.seed = true;
 		Util.includeEvery = true;
-		int top = 500;
+		int top = 2000;
 
 		HashMap<String, HashSet<Integer>> lastSelecteds = loadSelectedEvents("ACE_Chinese_train6");
 
@@ -227,16 +227,16 @@ public class ActiveSelect {
 					continue;
 				}
 
-				if (train_words.contains(event.getAnchor())
-						&& !knownTrigger.containsKey(event.getAnchor())) {
-					continue;
-				}
-
-//				if (trainWordsCount.containsKey(event.getAnchor())
-//						&& trainWordsCount.get(event.getAnchor()) >= 2
+//				if (train_words.contains(event.getAnchor())
 //						&& !knownTrigger.containsKey(event.getAnchor())) {
 //					continue;
 //				}
+
+				if (trainWordsCount.containsKey(event.getAnchor())
+						&& trainWordsCount.get(event.getAnchor()) >= 2
+						&& !knownTrigger.containsKey(event.getAnchor())) {
+					continue;
+				}
 
 				if (allNounsMap.containsKey(event.getAnchorEnd())) {
 					continue;
@@ -261,7 +261,7 @@ public class ActiveSelect {
 		HashMap<String, HashSet<Integer>> selectedEvents = new HashMap<String, HashSet<Integer>>();
 		int selectedAmount = 0;
 		// for(int i=0;i<top/2 && i<sortedTrueEntry.size();i++) {
-		for (int i = 0; i < top * 3.0 / 4.0 && i < sortedTrueEntry.size(); i++) {
+		for (int i = 0; i < top * 1.0 / 10.0 && i < sortedTrueEntry.size(); i++) {
 			Entry entry = sortedTrueEntry.get(i);
 			String fileID = entry.doc.fileID;
 			HashSet<Integer> sents = selectedEvents.get(fileID);
@@ -318,7 +318,7 @@ public class ActiveSelect {
 		System.out.println(selectedAmount + " new annotated events");
 		System.out.println(selectedTrue + " predict true");
 		System.out.println((selectedAmount - selectedTrue)
-				+ " predict false true");
+				+ " predict false");
 
 		Common.outputLines(selectedLines, "ACE_Chinese_train6");
 	}
