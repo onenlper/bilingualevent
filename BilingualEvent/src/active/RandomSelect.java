@@ -166,7 +166,7 @@ public class RandomSelect {
 	public static void main(String args[]) {
 		Util.part = "6";
 		Util.seed = true;
-		int top = 250;
+		int top = 100;
 		
 		HashMap<String, HashSet<Integer>> lastSelecteds = loadSelectedEvents("ACE_Chinese_train6");
 		
