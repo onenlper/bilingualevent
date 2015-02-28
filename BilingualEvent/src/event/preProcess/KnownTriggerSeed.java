@@ -58,6 +58,59 @@ public class KnownTriggerSeed {
 			}
 			// trigger.add(mention.getAnchor().replaceAll("\\s+", ""));
 		}
+		
+		
+		ArrayList<String> lines = Common.getLines("ACE_Chinese_train6");
+		for (String line : lines) {
+			String tks[] = line.trim().split("\\s+");
+			if(tks.length==1) {
+				continue;
+			}
+			
+			String file = tks[0];
+			HashSet<Integer> eventIDs = new HashSet<Integer>();
+			
+			boolean all = false;
+			
+			for(int i=1;i<tks.length;i++) {
+				if(tks[i].equals("all")) {
+					all = true;
+					break;
+				}
+				eventIDs.add(Integer.parseInt(tks[i]));
+			}
+			
+//			System.out.println(file);
+			ACEChiDoc document = new ACEChiDoc(file);
+			mentions = document.goldEventMentions;
+			for(EventMention mention : mentions) {
+				if(!eventIDs.contains(mention.getAnchorEnd()) && !all) {
+					continue;
+				}
+				
+				int position[] = ChineseUtil.findParseFilePosition(mention.getAnchorStart(), mention.getAnchorEnd(), document);
+				ArrayList<String> words = document.parseReults.get(position[0]).words;
+				String word = words.get(position[1]);
+				if(position[1]==position[3] && position[2]==0 && position[4]==word.length()-1) {
+					
+				} else if(position[1]==position[3]) {
+//					System.out.println("Inconsistent: " + mention.getAnchor() + "&" + word);
+					errataTable1.add(mention.getAnchor() + "_" + word);
+				} else {
+					StringBuilder sb = new StringBuilder();
+					sb.append(mention.getAnchor());
+					for(int i=position[1];i<=position[3];i++) {
+						sb.append("_").append(words.get(i));
+					}
+					errataTable2.add(sb.toString());
+				} 
+//				trigger.add(mention.getAnchor().replaceAll("\\s+", ""));
+			}
+		}
+		
+		
+		
+		
 
 		// Common.outputHashSet(trigger, "chinese_trigger_known");
 		Common.outputHashSet(errataTable1, "errata1" + Util.part);
