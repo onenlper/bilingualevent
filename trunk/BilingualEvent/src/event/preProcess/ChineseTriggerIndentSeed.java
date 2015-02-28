@@ -372,6 +372,9 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 
 		HashMap<String, HashSet<String>> BVs = new HashMap<String, HashSet<String>>();
 		HashSet<String> trainWords = new HashSet<String>();
+		
+		HashMap<String, Integer> trainWordsCount = new HashMap<String, Integer>();
+		
 		HashMap<String, HashSet<String>> BVStruct = new HashMap<String, HashSet<String>>();
 		HashMap<String, HashSet<String>> knownTrigger = new HashMap<String, HashSet<String>>();
 
@@ -380,6 +383,13 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 		for (ParseResult pr : parseResults) {
 			for (int i = 1; i < pr.words.size(); i++) {
 				trainWords.add(pr.words.get(i));
+				String word = pr.words.get(i);
+				Integer in = trainWordsCount.get(pr.words.get(i));
+				if(in==null) {
+					trainWordsCount.put(word, 1);
+				} else {
+					trainWordsCount.put(word, in.intValue() + 1);
+				}
 			}
 		}
 		ArrayList<EventMention> ems = SeedUtil.getGoldEventMentions();
@@ -427,9 +437,105 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 				}
 			}
 		}
+		
+		
+		
+		
+		ArrayList<String> lines = Common.getLines("ACE_Chinese_train6");
+
+		for (String line : lines) {
+			String tks[] = line.trim().split("\\s+");
+			if(tks.length==1) {
+				continue;
+			}
+			String file = tks[0];
+			
+			boolean all = false;
+			HashSet<Integer> eventIDs = new HashSet<Integer>();
+			for(int i=1;i<tks.length;i++) {
+				if(tks[i].equals("all")) {
+					all = true;
+					break;
+				}
+				eventIDs.add(Integer.parseInt(tks[i]));
+			}
+			
+			ACEChiDoc document = new ACEChiDoc(file);
+			for (ParseResult pr : document.parseReults) {
+				for (int i = 1; i < pr.words.size(); i++) {
+					if(!eventIDs.contains(pr.positions.get(i)[1]) && !all) {
+						continue;
+					}
+					
+					String word = pr.words.get(i);
+					Integer in = trainWordsCount.get(pr.words.get(i));
+					if(in==null) {
+						trainWordsCount.put(word, 1);
+					} else {
+						trainWordsCount.put(word, in.intValue() + 1);
+					}
+					trainWords.add(pr.words.get(i));
+				}
+			}
+			ems = document.goldEventMentions;
+			for (EventMention em : ems) {
+				if(!eventIDs.contains(em.getAnchorEnd()) && !all) {
+					continue;
+				}
+				
+				int start = em.getAnchorStart();
+				int end = em.getAnchorEnd();
+				int position[] = ChineseUtil.findParseFilePosition(start, end, document);
+				ParseResult pr = document.parseReults.get(position[0]);
+				String posTag = pr.posTags.get(position[1]);
+				addEntry(knownTrigger, em.getAnchor(), posTag);
+				if (start == end && posTag.equalsIgnoreCase("VV")) {
+					addEntry(BVs, em.getAnchor(), posTag);
+					addEntry(BVStruct, em.getAnchor(), "BV");
+					BVPatterns.put(em.getAnchor()+"_BV", em.getAnchor());
+					continue;
+				} else if (start + 1 == end) {
+					String trigger = em.getAnchor();
+					String str1 = Character.toString(trigger.charAt(0));
+					String str2 = Character.toString(trigger.charAt(1));
+					if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
+						addEntry(BVs, str1, posTag);
+						if (str2.equals("了")) {
+							addEntry(BVStruct, str1, "BV_comp");
+							BVPatterns.put(str1+"_BV_comp", em.getAnchor());
+						} else if (pos2.containsKey(str2) && pos2.get(str2).startsWith("V")) {
+							addEntry(BVStruct, str1, "BV_verb");
+							BVPatterns.put(str1+"_BV_verb", em.getAnchor());
+						} else {
+							addEntry(BVStruct, str1, "BV_np/adj");
+							BVPatterns.put(str1+"_BV_np/adj", em.getAnchor());
+						}
+					}
+					if (pos2.containsKey(str2) && pos2.get(str2).startsWith("V")) {
+						addEntry(BVs, str2, posTag);
+						if (pos2.containsKey(str1) && pos2.get(str1).startsWith("V")) {
+							addEntry(BVStruct, str2, "verb_BV");
+							BVPatterns.put(str2+"_verb_BV", em.getAnchor());
+						} else {
+							addEntry(BVStruct, str2, "np/adj_BV");
+							BVPatterns.put(str2+"_np/adj_BV", em.getAnchor());
+						}
+					}
+				}
+			}
+		}
+		
+		
+		
+		
+		
+		
+		
+		
 		Common.outputHashMap6(knownTrigger, "chinese_trigger_known" + Util.part);
 		Common.outputHashMap6(BVs, "chinese_BVs" + Util.part);
 		Common.outputHashSet(trainWords, "train_words" + Util.part);
+		Common.outputHashMap(trainWordsCount, "trainWordsCount" + Util.part);
 		Common.outputHashMap6(BVStruct, "BVPositions" + Util.part);
 		Common.outputHashMap(BVPatterns, "BVPatterns" + Util.part);
 	}
