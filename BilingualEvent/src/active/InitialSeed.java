@@ -3,6 +3,7 @@ package active;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import model.ACEChiDoc;
 import model.ACEDoc;
@@ -19,8 +20,11 @@ public class InitialSeed {
 
 		int eventCount = 0;
 
+		ArrayList<String> sources; 
+		
 		public Entry(String str) {
 			this.str = str;
+			this.sources = new ArrayList<String>();
 		}
 
 		public void increase() {
@@ -31,6 +35,10 @@ public class InitialSeed {
 			this.eventCount += 1;
 		}
 
+		public void addSource(String source) {
+			this.sources.add(source);
+		}
+		
 		@Override
 		public int compareTo(Entry arg0) {
 			// TODO Auto-generated method stub
@@ -77,6 +85,8 @@ public class InitialSeed {
 					if (eventMap.containsKey(end)) {
 						entry.increaseEvent();
 					}
+					String key = file + " " + end;
+					entry.sources.add(key);
 				}
 			}
 		}
@@ -86,15 +96,48 @@ public class InitialSeed {
 		Collections.reverse(entries);
 
 		double tmp = 0;
-		for (int i = 0; i < entries.size(); i++) {
+		
+		int topN = 1000;
+		int per = 5;
+		
+		HashMap<String, HashSet<Integer>> map = new HashMap<String, HashSet<Integer>>();
+		
+		for (int i = 0; i < entries.size() && i<topN; i++) {
 			Entry e = entries.get(i);
 			tmp += e.eventCount;
-			System.out.println(e.count + "\t" + e.eventCount + "\t" + (tmp/eventAmount) 
-					+ "\t" + i + "\t" + e.str);
+//			System.out.println(e.count + "\t" + e.eventCount + "\t" + (tmp/eventAmount) 
+//					+ "\t" + i + "\t" + e.str);
+			
+			for(int j=0;j<per && j<e.sources.size();j++) {
+				String tks[] = e.sources.get(j).split("\\s+");
+				String file = tks[0];
+				int position = Integer.parseInt(tks[1]);
+				
+				HashSet<Integer> positions = map.get(file);
+				if(positions==null) {
+					positions = new HashSet<Integer>();
+					map.put(file, positions);
+				}
+				positions.add(position);
+			}
+		}
+		int annotated = 0;
+		ArrayList<String> output = new ArrayList<String>();
+		for(String file : lines) {
+			HashSet<Integer> positions = map.get(file);
+			StringBuilder sb = new StringBuilder();
+			sb.append(file).append(" ");
+			if(positions!=null) {
+				for(Integer position : positions) {
+					sb.append(position).append(" ");
+					annotated += 1;
+				}
+			}
+			output.add(sb.toString().trim());
 		}
 		
-		System.out.println(entityAmount);
-		System.out.println(chainAmount);
+		Common.outputLines(output, "ACE_Chinese_train6");
+		System.out.println("Annotated: " + annotated);
 	}
 
 }
