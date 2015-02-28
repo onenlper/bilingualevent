@@ -304,7 +304,7 @@ public class EMLearnSeed {
 		}
 		int annotatedDoc = 0;
 		
-		
+		int eventMentionCount = 0;
 		for (int i=0;i<lines.size();i++) {
 			String line = lines.get(i);
 			ACEDoc d = new ACEChiDoc(line);
@@ -324,6 +324,12 @@ public class EMLearnSeed {
 				String ms[] = corefLine.trim().split("\\s+");
 				StringBuilder sb = new StringBuilder();
 				for(String m : ms) {
+//					System.out.println(m);
+//					String tks[] = m.split(",");
+//					int start = Integer.parseInt(tks[0]);
+//					int end = Integer.parseInt(tks[1]);
+//					System.out.println(d.content.substring(start, end+1));
+//					System.out.println(line);
 					mMap.get(m).entity = e;
 					sb.append(mMap.get(m).head).append(" ");
 				}
@@ -341,7 +347,7 @@ public class EMLearnSeed {
 			if(allEventMentions.containsKey(line)) {
 				eventMentions.addAll(allEventMentions.get(line).values());
 			}
-			
+			eventMentionCount += eventMentions.size();
 			if(annotated.contains(line)) {
 				annotatedDoc += 1;
 				ArrayList<EntityMention> goldEntityMentions = new ArrayList<EntityMention>();
@@ -350,11 +356,18 @@ public class EMLearnSeed {
 				goldEntityMentions.addAll(d.goldValueMentions);
 				groups.addAll(extractGroups(d, d.goldEventMentions, goldEntityMentions));
 			} else {
-				groups.addAll(extractGroups(d, eventMentions, entityMentions));
+				ArrayList<EventMention> predictEvents = new ArrayList<EventMention>();
+				for(EventMention m : eventMentions) {
+					if(!m.subType.equals("null")) {
+						predictEvents.add(m);
+					}
+				}
+				groups.addAll(extractGroups(d, predictEvents, entityMentions));
 			}
 		}
-
+		
 		System.out.println(groups.size());
+		System.out.println(eventMentionCount + " ## event mentions " + Util.includeEvery);
 	}
 
 	private static void addOne(String key, HashMap<String, Double> map) {
@@ -634,8 +647,8 @@ public class EMLearnSeed {
 	}
 
 	private static void run() throws IOException, FileNotFoundException {
+		Util.includeEvery = false;
 		init();
-
 		EMUtil.train = true;
 
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
