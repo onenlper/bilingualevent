@@ -8,7 +8,7 @@ run("rm ACE_Chinese_train6")
 run("touch ACE_Chinese_train6")
 
 
-for i in range(0, 5):
+for i in range(0, 15):
 
 	print "--------ITERATION", i,  "---------"
 	print 
@@ -29,8 +29,8 @@ for i in range(0, 5):
         print
 
 
-	print "<<<<<<<<<<<<<Apply to ACE TEST DATA"
-	run("./run_event_extract_seed.sh 0")
-	print "Apply to ACE TEST DATA>>>>>>>"
+#	print "<<<<<<<<<<<<<Apply to ACE TEST DATA"
+#	run("./run_event_extract_seed.sh 0")
+#	print "Apply to ACE TEST DATA>>>>>>>"
 
 	run("cp ACE_Chinese_train6 ACE_Chinese_train6." + str(i))
