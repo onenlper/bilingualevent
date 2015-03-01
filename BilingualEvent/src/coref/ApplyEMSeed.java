@@ -140,6 +140,7 @@ public class ApplyEMSeed {
 	public void test() {
 		Util.seed = true;
 		String dataset = "test";
+		
 		ArrayList<String> files = Common.getLines("ACE_Chinese_test"
 				+ Util.part);
 		HashMap<String, ArrayList<EventMention>> corefResults = new HashMap<String, ArrayList<EventMention>>();
@@ -203,6 +204,7 @@ public class ApplyEMSeed {
 
 			ArrayList<EventMention> events = Util.loadSystemComponentsSeed(doc,
 					entityMentions);
+//			System.out.println(Util.includeEvery);
 
 			for (int i = 0; i < events.size(); i++) {
 				EventMention event = events.get(i);
@@ -735,6 +737,8 @@ public class ApplyEMSeed {
 		Util.modalityMaps = null;
 
 		EMUtil.train = false;
+		Util.includeEvery = false;
+		
 		ApplyEMSeed test = new ApplyEMSeed(folder);
 		test.test();
 		System.out.println("RUNN: " + folder);
