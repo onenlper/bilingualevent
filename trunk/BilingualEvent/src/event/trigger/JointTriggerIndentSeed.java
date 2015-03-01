@@ -748,7 +748,6 @@ public class JointTriggerIndentSeed {
 
 			candidateTriggers = getTrainEMs(parseResults, goldEMs);
 			for (EventMention em : candidateTriggers) {
-
 				triggerSubTypeFeatures
 						.add(triggerFeature.buildFeature(em, content, parseResults,
 								Integer.toString(Util.subTypes
@@ -763,29 +762,34 @@ public class JointTriggerIndentSeed {
 			}
 			
 			ArrayList<String> lines = Common.getLines("ACE_Chinese_train6");
-
+			int annotatedSent = 0;
 			for (String line : lines) {
 				String tks[] = line.trim().split("\\s+");
 				if(tks.length==1) {
 					continue;
 				}
 				String file = tks[0];
+				ACEChiDoc document = new ACEChiDoc(file);
 				
 				boolean all = false;
-				HashSet<Integer> eventIDs = new HashSet<Integer>();
+				HashSet<Integer> sentIDs = new HashSet<Integer>();
 				for(int i=1;i<tks.length;i++) {
 					if(tks[i].equals("all")) {
 						all = true;
 						break;
 					}
-					eventIDs.add(Integer.parseInt(tks[i]));
+					annotatedSent += 1;
+					sentIDs.add(Integer.parseInt(tks[i]));
+					if(Integer.parseInt(tks[i])>=document.parseReults.size()) {
+						Common.bangErrorPOS("");
+					}
 				}
 				
-				ACEChiDoc document = new ACEChiDoc(file);
+				
 				candidateTriggers = getTrainEMs(document);
 				
 				for (EventMention em : candidateTriggers) {
-					if(eventIDs.contains(em.getAnchorEnd()) || all) {
+					if(sentIDs.contains(document.getSentID(em.getAnchorEnd())) || all) {
 						triggerSubTypeFeatures
 						.add(triggerFeature.buildFeature(em, document,
 								Integer.toString(Util.subTypes
@@ -801,6 +805,7 @@ public class JointTriggerIndentSeed {
 			}
 			System.out.println("True Mentions: " + trueMentions);
 			System.out.println("False Mentions: " + falseMentions);
+			System.out.println("Annotated Sent: " + annotatedSent);
 		} else {
 			ArrayList<String> files = Common.getLines("ACE_Chinese_test"
 					+ Util.part);
