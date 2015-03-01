@@ -68,7 +68,7 @@ public class KnownTriggerSeed {
 			}
 			
 			String file = tks[0];
-			HashSet<Integer> eventIDs = new HashSet<Integer>();
+			HashSet<Integer> sentIDs = new HashSet<Integer>();
 			
 			boolean all = false;
 			
@@ -77,14 +77,14 @@ public class KnownTriggerSeed {
 					all = true;
 					break;
 				}
-				eventIDs.add(Integer.parseInt(tks[i]));
+				sentIDs.add(Integer.parseInt(tks[i]));
 			}
 			
 //			System.out.println(file);
 			ACEChiDoc document = new ACEChiDoc(file);
 			mentions = document.goldEventMentions;
 			for(EventMention mention : mentions) {
-				if(!eventIDs.contains(mention.getAnchorEnd()) && !all) {
+				if(!sentIDs.contains(document.getSentID(mention.getAnchorEnd())) && !all) {
 					continue;
 				}
 				
