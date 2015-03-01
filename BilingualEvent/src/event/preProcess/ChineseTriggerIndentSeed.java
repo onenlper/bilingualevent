@@ -437,12 +437,7 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 				}
 			}
 		}
-		
-		
-		
-		
 		ArrayList<String> lines = Common.getLines("ACE_Chinese_train6");
-
 		for (String line : lines) {
 			String tks[] = line.trim().split("\\s+");
 			if(tks.length==1) {
@@ -451,19 +446,19 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 			String file = tks[0];
 			
 			boolean all = false;
-			HashSet<Integer> eventIDs = new HashSet<Integer>();
+			HashSet<Integer> sentIDs = new HashSet<Integer>();
 			for(int i=1;i<tks.length;i++) {
 				if(tks[i].equals("all")) {
 					all = true;
 					break;
 				}
-				eventIDs.add(Integer.parseInt(tks[i]));
+				sentIDs.add(Integer.parseInt(tks[i]));
 			}
 			
 			ACEChiDoc document = new ACEChiDoc(file);
 			for (ParseResult pr : document.parseReults) {
 				for (int i = 1; i < pr.words.size(); i++) {
-					if(!eventIDs.contains(pr.positions.get(i)[1]) && !all) {
+					if(!sentIDs.contains(pr.id) && !all) {
 						continue;
 					}
 					
@@ -479,7 +474,7 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 			}
 			ems = document.goldEventMentions;
 			for (EventMention em : ems) {
-				if(!eventIDs.contains(em.getAnchorEnd()) && !all) {
+				if(!sentIDs.contains(document.getSentID(em.getAnchorEnd())) && !all) {
 					continue;
 				}
 				
@@ -524,13 +519,6 @@ public class ChineseTriggerIndentSeed implements TriggerIndent {
 				}
 			}
 		}
-		
-		
-		
-		
-		
-		
-		
 		
 		Common.outputHashMap6(knownTrigger, "chinese_trigger_known" + Util.part);
 		Common.outputHashMap6(BVs, "chinese_BVs" + Util.part);
