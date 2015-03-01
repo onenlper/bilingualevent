@@ -429,15 +429,6 @@ public class EMLearnSeed {
 			for (Entry entry : rg.entries) {
 				Context context = entry.context;
 
-				double p_tense = tenseP.getVal(entry.ant.tense, rg.m.tense);
-				double p_polarity = polarityP.getVal(entry.ant.polarity,
-						rg.m.polarity);
-				double p_modality = modalityP.getVal(entry.ant.modality,
-						rg.m.modality);
-
-				double p_genericity = genericityP.getVal(entry.ant.genericity,
-						rg.m.genericity);
-
 				double p_anchor = 0;
 				if (entry.isFake) {
 					p_anchor = P_anchor_fake;
@@ -447,20 +438,6 @@ public class EMLearnSeed {
 				}
 
 				double p_context = .5;
-				// Double d = contextVals.get(context.toString());
-				// if (contextVals.containsKey(context.toString())) {
-				// p_context = d.doubleValue();
-				// } else {
-				// p_context = .5;
-				// // if(context.toString().startsWith("0")) {
-				// // p_context = .1;
-				// // }
-				// }
-
-				// multiFracContextsCountl0.get(i).clear();
-				// multiFracContextsCountl1.get(i).clear();
-				// multiFracContextsProbl0.get(i).clear();
-				// multiFracContextsProbl1.get(i).clear();
 
 				double p_context_l1 = pl1;
 				double p_context_l0 = pl0;
@@ -489,14 +466,8 @@ public class EMLearnSeed {
 
 				p_context = p_context_l1 / (p_context_l1 + p_context_l0);
 
-				// double pdenom = 0;
-
 				entry.p = p_context * entry.p_c * p_anchor;
-				// entry.p *= 1 * p_tense
-				// * p_polarity
-				// // * p_eventSubType
-				// * p_genericity * p_modality
-				// ;
+				
 				norm += entry.p;
 			}
 
@@ -551,24 +522,13 @@ public class EMLearnSeed {
 				double p = entry.p;
 				Context context = entry.context;
 
-//				tenseP.addFracCount(entry.ant.tense, group.m.tense, p);
-//				polarityP.addFracCount(entry.ant.polarity, group.m.polarity, p);
-//				if (!entry.isFake) {
-//					triggerP.addFracCount(entry.ant.getAnchor(),
-//							group.m.getAnchor(), p);
+//				Double d = fracContextCount.get(context.toString());
+//				if (d == null) {
+//					fracContextCount.put(context.toString(), p);
+//				} else {
+//					fracContextCount.put(context.toString(), d.doubleValue()
+//							+ p);
 //				}
-//				genericityP.addFracCount(entry.ant.genericity,
-//						group.m.genericity, p);
-//
-//				modalityP.addFracCount(entry.ant.modality, group.m.modality, p);
-
-				Double d = fracContextCount.get(context.toString());
-				if (d == null) {
-					fracContextCount.put(context.toString(), p);
-				} else {
-					fracContextCount.put(context.toString(), d.doubleValue()
-							+ p);
-				}
 
 				for (int i = 0; i < Context.getSubContext().size(); i++) {
 					int ps[] = Context.getSubContext().get(i);
