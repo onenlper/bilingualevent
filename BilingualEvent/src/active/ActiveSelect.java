@@ -89,17 +89,16 @@ public class ActiveSelect {
 		for (EventMentionArgument arg : event.getEventMentionArguments()) {
 
 			if (!event.subType.equals("null")) {
-				scores += arg.roleConfidences.get(JointArgumentSeed.roles
-						.indexOf(arg.role));
-				divide += 1;
+//				scores += arg.roleConfidences.get(JointArgumentSeed.roles
+//						.indexOf(arg.role));
+//				divide += 1;
 			} else {
 			}
-
-			EntityMention mention = arg.mention;
-			scores += mention.semClassConf
-					.get(SemanticTrainMultiSeed.semClasses
-							.indexOf(mention.semClass));
-			divide += 1;
+//			EntityMention mention = arg.mention;
+//			scores += mention.semClassConf
+//					.get(SemanticTrainMultiSeed.semClasses
+//							.indexOf(mention.semClass));
+//			divide += 1;
 		}
 		return scores / divide;
 	}
@@ -221,8 +220,11 @@ public class ActiveSelect {
 				continue;
 			}
 
+			HashMap<Integer, Entry> entrySentMap = new HashMap<Integer, Entry>();
+			
 			for (EventMention event : events) {
-				if (lastSelected.contains(event.getAnchorEnd())
+				int sentID = doc.getSentID(event.getAnchorEnd());
+				if (lastSelected.contains(sentID)
 						|| lastSelected.contains(-1)) {
 					continue;
 				}
@@ -234,22 +236,38 @@ public class ActiveSelect {
 
 				if (trainWordsCount.containsKey(event.getAnchor())
 						&& trainWordsCount.get(event.getAnchor()) >= 2
-						&& !knownTrigger.containsKey(event.getAnchor())) {
+//						&& !knownTrigger.containsKey(event.getAnchor())
+						) {
 					continue;
 				}
+				
+//				if(trainWordsCount.containsKey(event.getAnchor())
+//						&& trainWordsCount.get(event.getAnchor()) >= 5
+//						&& knownTrigger.containsKey(event.getAnchor())) {
+//					continue;
+//				}
 
 				if (allNounsMap.containsKey(event.getAnchorEnd())) {
 					continue;
 				}
 
 				double score = getActiveScore(event);
-				Entry entry = new Entry(doc, event.getAnchorEnd(), score);
-
-				if (!event.subType.equals("null")) {
+				
+				Entry entry = entrySentMap.get(sentID);
+				if(entry==null) {
+					entry = new Entry(doc, sentID, score);
 					trueTriggerEntries.add(entry);
 				} else {
-					falseTriggerEntries.add(entry);
+					if(score<entry.score) {
+						entry.score = score;
+					}
 				}
+				
+//				if (!event.subType.equals("null")) {
+//					trueTriggerEntries.add(entry);
+//				} else {
+//					falseTriggerEntries.add(entry);
+//				}
 			}
 		}
 		System.out.println("All Events: " + amount);
@@ -315,7 +333,7 @@ public class ActiveSelect {
 			selectedLines.add(sb.toString().trim());
 		}
 
-		System.out.println(selectedAmount + " new annotated events");
+		System.out.println(selectedAmount + " new annotated sentences");
 		System.out.println(selectedTrue + " predict true");
 		System.out.println((selectedAmount - selectedTrue)
 				+ " predict false");
