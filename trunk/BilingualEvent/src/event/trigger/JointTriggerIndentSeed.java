@@ -73,11 +73,11 @@ public class JointTriggerIndentSeed {
 
 	public String buildFeature(EventMention em, ACEDoc doc, 
 			String label) {
-		return this.buildFeature(em, doc.content, doc.parseReults, label, doc.goldEntityMentions);
+		return this.buildFeature(em, doc.content, doc.parseReults, label, doc.goldEntityMentions, doc.semanticRoles);
 	}
 	
 	public String buildFeature(EventMention em, String content, ArrayList<ParseResult> parseResults, 
-					String label, ArrayList<EntityMention> entityMentions) {
+					String label, ArrayList<EntityMention> entityMentions,HashMap<EventMention, SemanticRole> semanticRoles) {
 		String trigger = em.getAnchor();
 		int position[] = ChineseUtil.findParseFilePosition(em.getAnchorStart(),
 				em.getAnchorEnd(), content, parseResults);
@@ -285,7 +285,7 @@ public class JointTriggerIndentSeed {
 		// }
 
 		addCharFeature(features, trigger);
-		// addSemanticRoleFeature(features, document, em);
+		addSemanticRoleFeature(features, semanticRoles, em);
 
 		// String documentType = "";
 		// documentType = this.getMainLabel(pipeEventMentions);
@@ -316,9 +316,9 @@ public class JointTriggerIndentSeed {
 	}
 
 	public void addSemanticRoleFeature(ArrayList<String> features,
-			ACEChiDoc document, EventMention em) {
+			HashMap<EventMention, SemanticRole> semanticRoles, EventMention em) {
 		HashMap<EventMention, SemanticRole> predicates = new HashMap<EventMention, SemanticRole>();
-		for (SemanticRole role : document.semanticRoles.values()) {
+		for (SemanticRole role : semanticRoles.values()) {
 			predicates.put(role.predict, role);
 		}
 		SemanticRole role = predicates.get(em);
@@ -532,9 +532,12 @@ public class JointTriggerIndentSeed {
 //			triggerProb = Common.readFile2Map5("pipeline/triggerProbability"
 //					+ Util.part);
 //		}
-
-		double prob = 0;
-
+//
+//		double prob = 0;
+//		 if (triggerProb.containsKey(origEM.getAnchor())) {
+//			 prob = triggerProb.get(origEM.getAnchor());
+//		 }
+//		 sb.append(" 701000:").append(prob);
 		// if (pipeMentionTest != null) {
 		// if (triggerProb.containsKey(pipeMentionTest.getAnchor())) {
 		// prob = triggerProb.get(pipeMentionTest.getAnchor());
@@ -751,7 +754,8 @@ public class JointTriggerIndentSeed {
 				triggerSubTypeFeatures
 						.add(triggerFeature.buildFeature(em, content, parseResults,
 								Integer.toString(Util.subTypes
-										.indexOf(em.subType) + 1), goldEntities)
+										.indexOf(em.subType) + 1), goldEntities, 
+										(new HashMap<EventMention, SemanticRole>()))
 								);
 				
 				if(!em.subType.equals("null")) {
@@ -785,16 +789,13 @@ public class JointTriggerIndentSeed {
 					}
 				}
 				
-				
 				candidateTriggers = getTrainEMs(document);
-				
 				for (EventMention em : candidateTriggers) {
 					if(sentIDs.contains(document.getSentID(em.getAnchorEnd())) || all) {
 						triggerSubTypeFeatures
 						.add(triggerFeature.buildFeature(em, document,
 								Integer.toString(Util.subTypes
 										.indexOf(em.subType) + 1)));
-						
 						if(!em.subType.equals("null")) {
 							trueMentions += 1;
 						} else {
@@ -809,12 +810,12 @@ public class JointTriggerIndentSeed {
 		} else {
 			ArrayList<String> files = Common.getLines("ACE_Chinese_test"
 					+ Util.part);
-			
+			int eventNumber = 0;
 			for (int i = 0; i < files.size(); i++) {
 				String file = files.get(i);
 				ACEChiDoc document = new ACEChiDoc(file);
 				ArrayList<EventMention> candidateTriggers = getTestEMs(document);
-				
+				eventNumber += candidateTriggers.size();
 				for (EventMention em : candidateTriggers) {
 					StringBuilder sb = new StringBuilder();
 					sb.append(file).append(" ").append(em.getAnchorStart())
@@ -828,6 +829,7 @@ public class JointTriggerIndentSeed {
 											.indexOf(em.subType) + 1)));
 				}
 			}
+			System.out.println("eventNumber:\t" + eventNumber);
 		}
 
 		Common.outputLines(systemEMses, "data/Joint_triggers_" + args[0]
@@ -849,10 +851,9 @@ public class JointTriggerIndentSeed {
 //	public static ArrayList<EventMention> getz
 	
 	public static ArrayList<EventMention> getTestEMs(ACEChiDoc document) {
-		if(Util.part.equals("6")) {
-			return getTestEMsForActive(document);
-		}
-		
+//		if(Util.part.equals("6") || true) {
+//			return getTestEMsForActive(document);
+//		}
 		HashSet<EventMention> testEMs = new HashSet<EventMention>();
 		HashSet<EventMention> candidateEMSet = new HashSet<EventMention>();
 		TriggerIndent triggerIndent = new ChineseTriggerIndent();
@@ -862,6 +863,32 @@ public class JointTriggerIndentSeed {
 		testEMs.addAll(candidates);
 		ArrayList<EventMention> ems = new ArrayList<EventMention>();
 		ems.addAll(testEMs);
+		
+		for (ParseResult pr : document.parseReults) {
+			for (int i = 1; i < pr.words.size(); i++) {
+				int start = pr.positions.get(i)[0];
+				int end = pr.positions.get(i)[1];
+				String word = pr.words.get(i).replace("\n", "")
+						.replaceAll("\\s+", "");
+				
+				String POS = pr.posTags.get(i);
+				if(!POS.equals("NN") && !POS.equals("P")
+						&& !POS.equals("VV")) {
+//					continue;
+				}
+				
+				EventMention em = new EventMention();
+				em.setAnchorStart(start);
+				em.setAnchorEnd(end);
+				em.setAnchor(word);
+				em.setType("null");
+				em.setSubType("null");
+				
+				if(!candidateEMSet.contains(em)) {
+					ems.add(em);
+				}
+			}
+		}
 		return ems;
 	}
 
@@ -877,7 +904,7 @@ public class JointTriggerIndentSeed {
 				String POS = pr.posTags.get(i);
 				if(!POS.equals("NN") && !POS.equals("P")
 						&& !POS.equals("VV")) {
-					continue;
+//					continue;
 				}
 				
 				EventMention em = new EventMention();
@@ -907,7 +934,7 @@ public class JointTriggerIndentSeed {
 				String POS = pr.posTags.get(i);
 				if(!POS.equals("NN") && !POS.equals("P")
 						&& !POS.equals("VV")) {
-					continue;
+//					continue;
 				}
 				
 				EventMention em = new EventMention();
@@ -943,7 +970,7 @@ public class JointTriggerIndentSeed {
 				String POS = pr.posTags.get(i);
 				if(!POS.equals("NN") && !POS.equals("P")
 						&& !POS.equals("VV")) {
-					continue;
+//					continue;
 				}
 				
 				EventMention em = new EventMention();
